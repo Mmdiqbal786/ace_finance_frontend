@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import StatusBadge from "../components/StatusBadge";
 import TimelineView from "../components/TimelineView";
+import { API_URL } from "../lib/api";
 
 const CATEGORIES = [
   { id: "Travel", label: "Travel & Lodging", icon: "✈️" },
@@ -87,7 +88,7 @@ export default function PublicPortal() {
     setSubmitSuccess(null);
 
     try {
-      const response = await fetch("http://localhost:3001/expenses", {
+      const response = await fetch(`${API_URL}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -134,7 +135,7 @@ export default function PublicPortal() {
     try {
       if (query.trim().startsWith("EXP-")) {
         // Query is a Request ID
-        const response = await fetch(`http://localhost:3001/expenses/${query.trim()}`);
+        const response = await fetch(`${API_URL}/expenses/${query.trim()}`);
         if (!response.ok) {
           throw new Error("Request ID not found.");
         }
@@ -143,7 +144,7 @@ export default function PublicPortal() {
       } else if (query.includes("@")) {
         // Query is an Email
         const response = await fetch(
-          `http://localhost:3001/expenses?email=${encodeURIComponent(query.trim())}`
+          `${API_URL}/expenses?email=${encodeURIComponent(query.trim())}`
         );
         if (!response.ok) {
           throw new Error("Error fetching requests for email.");
