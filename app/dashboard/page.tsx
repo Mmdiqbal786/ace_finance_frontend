@@ -6,6 +6,7 @@ import StatusBadge from "../../components/StatusBadge";
 import Modal from "../../components/Modal";
 import TimelineView from "../../components/TimelineView";
 import { getUser, isAuthenticated, authHeaders, logout, AuthUser } from "../../lib/auth";
+import { API_URL } from "../../lib/api";
 
 interface HistoryLog {
   action: string;
@@ -122,8 +123,8 @@ export default function DashboardPortal() {
     setError("");
     try {
       const headers = authHeaders();
-      const expensesResponse = await fetch("http://localhost:3001/expenses", { headers });
-      const statsResponse = await fetch("http://localhost:3001/expenses/stats", { headers });
+      const expensesResponse = await fetch(`${API_URL}/expenses`, { headers });
+      const statsResponse = await fetch(`${API_URL}/expenses/stats`, { headers });
 
       if (!expensesResponse.ok || !statsResponse.ok) {
         throw new Error("Failed to load dashboard data from backend.");
@@ -144,7 +145,7 @@ export default function DashboardPortal() {
   const fetchUsers = async () => {
     setUsersLoading(true);
     try {
-      const res = await fetch("http://localhost:3001/users", { headers: authHeaders() });
+      const res = await fetch(`${API_URL}/users`, { headers: authHeaders() });
       if (res.ok) setUsers(await res.json());
     } catch {}
     setUsersLoading(false);
@@ -165,7 +166,7 @@ export default function DashboardPortal() {
 
     if (actionType === "edit") {
       try {
-        const response = await fetch(`http://localhost:3001/expenses/${selectedExpense.id}`, {
+        const response = await fetch(`${API_URL}/expenses/${selectedExpense.id}`, {
           method: "PUT",
           headers: authHeaders() as any,
           body: JSON.stringify({
@@ -209,7 +210,7 @@ export default function DashboardPortal() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3001/expenses/${selectedExpense.id}/${endpoint}`, {
+      const response = await fetch(`${API_URL}/expenses/${selectedExpense.id}/${endpoint}`, {
         method: "PATCH",
         headers: authHeaders() as any,
         body: JSON.stringify({ notes: actionNotes }),
@@ -234,7 +235,7 @@ export default function DashboardPortal() {
     e.preventDefault();
     setUserActionMsg("");
     try {
-      const res = await fetch("http://localhost:3001/users", {
+      const res = await fetch(`${API_URL}/users`, {
         method: "POST",
         headers: authHeaders() as any,
         body: JSON.stringify({ name: newUserName, email: newUserEmail, password: newUserPassword, role: newUserRole }),
@@ -249,7 +250,7 @@ export default function DashboardPortal() {
 
   const handleDeleteUser = async (id: string) => {
     try {
-      await fetch(`http://localhost:3001/users/${id}`, { method: "DELETE", headers: authHeaders() as any });
+      await fetch(`${API_URL}/users/${id}`, { method: "DELETE", headers: authHeaders() as any });
       setDeleteUserId(null);
       fetchUsers();
     } catch {}
@@ -257,7 +258,7 @@ export default function DashboardPortal() {
 
   const handleToggleActive = async (user: any) => {
     try {
-      await fetch(`http://localhost:3001/users/${user._id}`, {
+      await fetch(`${API_URL}/users/${user._id}`, {
         method: "PUT",
         headers: authHeaders() as any,
         body: JSON.stringify({ isActive: !user.isActive }),
@@ -293,7 +294,7 @@ export default function DashboardPortal() {
 
     setSubmittingAction(true);
     try {
-      const response = await fetch(`http://localhost:3001/expenses/${selectedExpense.id}`, {
+      const response = await fetch(`${API_URL}/expenses/${selectedExpense.id}`, {
         method: "DELETE",
         headers: authHeaders() as any,
       });

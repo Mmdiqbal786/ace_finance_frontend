@@ -1,8 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { setAuth } from '../../lib/auth';
-
-const API = 'http://localhost:3001';
+import { API_URL } from '../../lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -17,7 +16,7 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API}/auth/login`, {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -40,7 +39,7 @@ export default function LoginPage() {
     setSeeding(true);
     setSeedMsg('');
     try {
-      const res = await fetch(`${API}/auth/seed`, { method: 'POST' });
+      const res = await fetch(`${API_URL}/auth/seed`, { method: 'POST' });
       const data = await res.json();
       setSeedMsg(data.message);
     } catch {
