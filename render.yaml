@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ace_finance_frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./out
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://ace-finance-backend.onrender.com
+      - key: NODE_VERSION
+        value: "22"
