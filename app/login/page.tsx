@@ -4,8 +4,48 @@ import { setAuth, isAuthenticated, getUser } from '../../lib/auth';
 import { getDefaultDashboardRoute } from '../../lib/dashboard/routes';
 import { API_URL } from '../../lib/api';
 
+function LoginSpinner({ className = "h-5 w-5 text-white" }: { className?: string }) {
+  return (
+    <svg className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+}
+
+function FullPageLoader({ message }: { message: string }) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-4"
+      style={{
+        background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
+        fontFamily: "'Inter', sans-serif",
+      }}
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="flex flex-col items-center gap-5 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-lg font-extrabold text-white shadow-lg shadow-indigo-500/30">
+          AF
+        </div>
+        <LoginSpinner className="h-10 w-10 text-indigo-400" />
+        <div>
+          <p className="text-base font-semibold text-white">{message}</p>
+          <p className="mt-1 text-sm text-zinc-400">Please wait a moment...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,12 +55,21 @@ export default function LoginPage() {
   // const [seedMsg, setSeedMsg] = useState('');
 
   useEffect(() => {
-    setMounted(true);
     if (isAuthenticated()) {
+      setRedirecting(true);
       const user = getUser();
       window.location.href = user ? getDefaultDashboardRoute(user.role) : '/dashboard/';
+      return;
     }
+    setMounted(true);
   }, []);
+
+  const showFullPageLoader = !mounted || loading || redirecting;
+  const loaderMessage = redirecting
+    ? 'Redirecting to dashboard...'
+    : loading
+      ? 'Signing you in...'
+      : 'Loading AceFinance...';
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -39,9 +88,9 @@ export default function LoginPage() {
       const data = await res.json();
       setAuth(data.access_token, data.user);
       window.location.href = getDefaultDashboardRoute(data.user.role);
+      return;
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   }
@@ -61,6 +110,10 @@ export default function LoginPage() {
   // }
 
   return (
+    <>
+      {showFullPageLoader && <FullPageLoader message={loaderMessage} />}
+
+      {mounted && !redirecting && (
     <div
       className="login-page flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center p-4 sm:min-h-[calc(100dvh-4rem)]"
       style={{
@@ -104,7 +157,6 @@ export default function LoginPage() {
             Enter your credentials to access the dashboard
           </p>
 
-          {mounted ? (
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} suppressHydrationWarning>
             <div>
               <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '0.4rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
@@ -119,6 +171,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 placeholder="you@acefinance.com"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -136,6 +189,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   placeholder="••••••••"
                   required
+                  disabled={loading}
                 />
                 <button
                   type="button"
@@ -175,7 +229,7 @@ export default function LoginPage() {
               disabled={loading}
               style={{
                 padding: '0.875rem', borderRadius: '10px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-                background: loading ? 'rgba(99,102,241,0.5)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                 color: '#fff', fontSize: '0.95rem', fontWeight: 600, letterSpacing: '0.02em',
                 transition: 'all 0.2s', transform: 'translateY(0)',
                 boxShadow: '0 4px 15px rgba(99,102,241,0.3)',
@@ -183,25 +237,9 @@ export default function LoginPage() {
               onMouseEnter={e => { if (!loading) (e.target as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
               onMouseLeave={e => (e.target as HTMLButtonElement).style.transform = 'translateY(0)'}
             >
-              {loading ? 'Signing in...' : 'Sign In →'}
+              Sign In →
             </button>
           </form>
-          ) : (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-                minHeight: '220px',
-                justifyContent: 'center',
-                alignItems: 'center',
-                color: 'rgba(255,255,255,0.4)',
-                fontSize: '0.875rem',
-              }}
-            >
-              Loading sign in...
-            </div>
-          )}
 
           {/* Seed admin section — hidden for production
           <div style={{
@@ -245,5 +283,7 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+      )}
+    </>
   );
 }
