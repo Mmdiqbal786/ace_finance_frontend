@@ -423,7 +423,7 @@ export default function DashboardWorkspace() {
   const sectionMeta = SECTION_META[activeSection];
 
   return (
-    <>
+    <div className="flex min-h-0 w-full flex-1">
       <DashboardSidebar
         user={currentUser}
         pendingApproverCount={pendingApproverList.length}
@@ -432,7 +432,7 @@ export default function DashboardWorkspace() {
         onMobileClose={() => setSidebarOpen(false)}
       />
 
-      <div className="portal-page relative min-h-0 min-w-0 flex-1 overflow-y-auto">
+      <div className="portal-page relative min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="portal-bg" aria-hidden="true">
           <div className="portal-orb portal-orb--violet" />
           <div className="portal-orb portal-orb--indigo" />
@@ -1544,6 +1544,6 @@ export default function DashboardWorkspace() {
       )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

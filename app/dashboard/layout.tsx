@@ -10,7 +10,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] w-full overflow-hidden sm:h-[calc(100dvh-4rem)]">
+    <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden" suppressHydrationWarning>
       {children}
     </div>
   );
