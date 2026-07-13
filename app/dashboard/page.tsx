@@ -10,6 +10,7 @@ import { API_URL } from "../../lib/api";
 import DashboardSidebar from "../../components/DashboardSidebar";
 import TableToolbar from "../../components/TableToolbar";
 import TablePagination from "../../components/TablePagination";
+import TableRowActions from "../../components/TableRowActions";
 import { usePaginatedList } from "../../hooks/usePaginatedList";
 
 interface HistoryLog {
@@ -173,6 +174,12 @@ export default function DashboardPortal() {
   const [newUserRole, setNewUserRole] = useState<"ADMIN"|"APPROVER"|"PROCESSOR">("APPROVER");
   const [userActionMsg, setUserActionMsg] = useState("");
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [userModalType, setUserModalType] = useState<"view" | "edit" | null>(null);
+  const [editUserName, setEditUserName] = useState("");
+  const [editUserRole, setEditUserRole] = useState<"ADMIN" | "APPROVER" | "PROCESSOR">("APPROVER");
+  const [editUserActive, setEditUserActive] = useState(true);
+  const [editUserPassword, setEditUserPassword] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleTabChange = (tab: "approver" | "processor" | "tracker" | "users") => {
@@ -318,11 +325,22 @@ export default function DashboardPortal() {
         body: JSON.stringify({ name: newUserName, email: newUserEmail, password: newUserPassword, role: newUserRole }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
-      setNewUserName(""); setNewUserEmail(""); setNewUserPassword(""); setNewUserRole("APPROVER");
-      setShowCreateUser(false);
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserRole("APPROVER");
+      closeCreateUserModal();
       setUserActionMsg("✅ User created successfully!");
       fetchUsers();
     } catch (err: any) { setUserActionMsg(`❌ ${err.message}`); }
+  };
+
+  const closeCreateUserModal = () => {
+    setShowCreateUser(false);
+    setNewUserName("");
+    setNewUserEmail("");
+    setNewUserPassword("");
+    setNewUserRole("APPROVER");
   };
 
   const handleDeleteUser = async (id: string) => {
@@ -342,6 +360,55 @@ export default function DashboardPortal() {
       });
       fetchUsers();
     } catch {}
+  };
+
+  const openUserView = (user: any) => {
+    setSelectedUser(user);
+    setUserModalType("view");
+  };
+
+  const openUserEdit = (user: any) => {
+    setSelectedUser(user);
+    setUserModalType("edit");
+    setEditUserName(user.name);
+    setEditUserRole(user.role);
+    setEditUserActive(user.isActive);
+    setEditUserPassword("");
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+
+    setUserActionMsg("");
+    try {
+      const body: Record<string, unknown> = {
+        name: editUserName,
+        role: editUserRole,
+        isActive: editUserActive,
+      };
+      if (editUserPassword.trim()) {
+        body.password = editUserPassword;
+      }
+
+      const res = await fetch(`${API_URL}/users/${selectedUser._id}`, {
+        method: "PUT",
+        headers: authHeaders() as any,
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to update user.");
+      }
+
+      setUserModalType(null);
+      setSelectedUser(null);
+      setUserActionMsg("✅ User updated successfully!");
+      fetchUsers();
+    } catch (err: any) {
+      setUserActionMsg(`❌ ${err.message}`);
+    }
   };
 
   const openActionModal = (expense: Expense, type: typeof actionType) => {
@@ -631,39 +698,26 @@ export default function DashboardPortal() {
                           </td>
                           <td className="py-3.5 px-4 text-right font-bold text-white">${e.amount.toFixed(2)}</td>
                           <td className="py-3.5 px-4 text-center">
-                            <div className="flex justify-center items-center gap-2">
-                              <button
-                                onClick={() => openActionModal(e, "approve")}
-                                className="inline-flex h-8 items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => openActionModal(e, "reject")}
-                                className="inline-flex h-8 items-center justify-center rounded-lg bg-rose-600 hover:bg-rose-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
-                              >
-                                Reject
-                              </button>
-                              <button
-                                onClick={() => openActionModal(e, "view")}
-                                className="inline-flex h-8 items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 px-3 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
-                              >
-                                Details
-                              </button>
-                              <button
-                                onClick={() => openEditModal(e)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 transition-colors cursor-pointer"
-                                title="Edit Request"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() => triggerDeleteConfirm(e)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-xs text-rose-400 transition-colors cursor-pointer"
-                                title="Delete Request"
-                              >
-                                🗑️
-                              </button>
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="flex justify-center items-center gap-2 flex-wrap">
+                                <button
+                                  onClick={() => openActionModal(e, "approve")}
+                                  className="inline-flex h-8 items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => openActionModal(e, "reject")}
+                                  className="inline-flex h-8 items-center justify-center rounded-lg bg-rose-600 hover:bg-rose-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                              <TableRowActions
+                                onView={() => openActionModal(e, "view")}
+                                onEdit={() => openEditModal(e)}
+                                onDelete={() => triggerDeleteConfirm(e)}
+                              />
                             </div>
                           </td>
                         </tr>
@@ -760,39 +814,26 @@ export default function DashboardPortal() {
                           </td>
                           <td className="py-3.5 px-4 text-right font-bold text-white">${e.amount.toFixed(2)}</td>
                           <td className="py-3.5 px-4 text-center">
-                            <div className="flex justify-center items-center gap-2">
-                              <button
-                                onClick={() => openActionModal(e, "process")}
-                                className="inline-flex h-8 items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
-                              >
-                                Mark Paid
-                              </button>
-                              <button
-                                onClick={() => openActionModal(e, "processor-reject")}
-                                className="inline-flex h-8 items-center justify-center rounded-lg bg-rose-600 hover:bg-rose-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
-                              >
-                                Reject Payout
-                              </button>
-                              <button
-                                onClick={() => openActionModal(e, "view")}
-                                className="inline-flex h-8 items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 px-3 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
-                              >
-                                Details
-                              </button>
-                              <button
-                                onClick={() => openEditModal(e)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 transition-colors cursor-pointer"
-                                title="Edit Request"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() => triggerDeleteConfirm(e)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-xs text-rose-400 transition-colors cursor-pointer"
-                                title="Delete Request"
-                              >
-                                🗑️
-                              </button>
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="flex justify-center items-center gap-2 flex-wrap">
+                                <button
+                                  onClick={() => openActionModal(e, "process")}
+                                  className="inline-flex h-8 items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
+                                >
+                                  Mark Paid
+                                </button>
+                                <button
+                                  onClick={() => openActionModal(e, "processor-reject")}
+                                  className="inline-flex h-8 items-center justify-center rounded-lg bg-rose-600 hover:bg-rose-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
+                                >
+                                  Reject Payout
+                                </button>
+                              </div>
+                              <TableRowActions
+                                onView={() => openActionModal(e, "view")}
+                                onEdit={() => openEditModal(e)}
+                                onDelete={() => triggerDeleteConfirm(e)}
+                              />
                             </div>
                           </td>
                         </tr>
@@ -972,28 +1013,12 @@ export default function DashboardPortal() {
                               </td>
                               <td className="py-3 px-3 text-right font-semibold text-white">${e.amount.toFixed(2)}</td>
                               <td className="py-3 px-3 text-center">
-                                <div className="flex justify-center items-center gap-1.5">
-                                  <button
-                                    onClick={() => openActionModal(e, "view")}
-                                    className="inline-flex h-7 items-center justify-center rounded bg-zinc-800 hover:bg-zinc-700 px-2 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
-                                  >
-                                    Timeline
-                                  </button>
-                                  <button
-                                    onClick={() => openEditModal(e)}
-                                    className="inline-flex h-7 w-7 items-center justify-center rounded bg-zinc-800 hover:bg-zinc-750 text-xs text-zinc-300 transition-colors cursor-pointer"
-                                    title="Edit Request"
-                                  >
-                                    ✏️
-                                  </button>
-                                  <button
-                                    onClick={() => triggerDeleteConfirm(e)}
-                                    className="inline-flex h-7 w-7 items-center justify-center rounded bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-xs text-rose-400 transition-colors cursor-pointer"
-                                    title="Delete Request"
-                                  >
-                                    🗑️
-                                  </button>
-                                </div>
+                                <TableRowActions
+                                  compact
+                                  onView={() => openActionModal(e, "view")}
+                                  onEdit={() => openEditModal(e)}
+                                  onDelete={() => triggerDeleteConfirm(e)}
+                                />
                               </td>
                             </tr>
                           );
@@ -1313,8 +1338,12 @@ export default function DashboardPortal() {
               <p className="text-sm text-zinc-400 mt-1">Create and manage dashboard user accounts and their roles.</p>
             </div>
             <button
-              onClick={() => { setShowCreateUser(true); setUserActionMsg(""); }}
-              className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white transition-colors"
+              onClick={() => {
+                closeCreateUserModal();
+                setUserActionMsg("");
+                setShowCreateUser(true);
+              }}
+              className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white transition-colors cursor-pointer"
             >
               + Add New User
             </button>
@@ -1323,49 +1352,6 @@ export default function DashboardPortal() {
           {userActionMsg && (
             <div className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${userActionMsg.startsWith("✅") ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400" : "bg-rose-500/10 border border-rose-500/30 text-rose-400"}`}>
               {userActionMsg}
-            </div>
-          )}
-
-          {/* Create User Form */}
-          {showCreateUser && (
-            <div className="mb-6 rounded-xl bg-zinc-900 border border-zinc-800 p-6">
-              <h3 className="text-sm font-bold text-white mb-4">Create New User Account</h3>
-              <form onSubmit={handleCreateUser} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Full Name</label>
-                  <input value={newUserName} onChange={e => setNewUserName(e.target.value)} required placeholder="Jane Smith"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Email Address</label>
-                  <input type="email" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} required placeholder="jane@acefinance.com"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Password</label>
-                  <input type="password" value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} required placeholder="Min 8 characters"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Role</label>
-                  <select value={newUserRole} onChange={e => setNewUserRole(e.target.value as any)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors">
-                    <option value="APPROVER">APPROVER — Reviews & approves expenses</option>
-                    <option value="PROCESSOR">PROCESSOR — Processes approved expenses</option>
-                    <option value="ADMIN">ADMIN — Full access + user management</option>
-                  </select>
-                </div>
-                <div className="sm:col-span-2 flex gap-3 justify-end">
-                  <button type="button" onClick={() => setShowCreateUser(false)}
-                    className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition-colors">
-                    Cancel
-                  </button>
-                  <button type="submit"
-                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white transition-colors">
-                    Create User
-                  </button>
-                </div>
-              </form>
             </div>
           )}
 
@@ -1437,12 +1423,13 @@ export default function DashboardPortal() {
                         </button>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {u.email !== currentUser?.email && (
-                          <button onClick={() => setDeleteUserId(u._id)}
-                            className="text-xs text-zinc-500 hover:text-rose-400 transition-colors font-medium px-2 py-1 rounded hover:bg-rose-500/10">
-                            Delete
-                          </button>
-                        )}
+                        <TableRowActions
+                          align="end"
+                          onView={() => openUserView(u)}
+                          onEdit={() => openUserEdit(u)}
+                          onDelete={() => setDeleteUserId(u._id)}
+                          showDelete={u.email !== currentUser?.email}
+                        />
                       </td>
                         </tr>
                         ))}
@@ -1487,6 +1474,191 @@ export default function DashboardPortal() {
               </div>
             </div>
           )}
+
+          <Modal
+            isOpen={showCreateUser}
+            onClose={closeCreateUserModal}
+            title="Create New User Account"
+            maxWidthClass="max-w-lg"
+          >
+            <form onSubmit={handleCreateUser} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Full Name</label>
+                <input
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  required
+                  placeholder="Jane Smith"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Email Address</label>
+                <input
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  required
+                  placeholder="jane@acefinance.com"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Password</label>
+                <input
+                  type="password"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  required
+                  placeholder="Min 8 characters"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Role</label>
+                <select
+                  value={newUserRole}
+                  onChange={(e) => setNewUserRole(e.target.value as "ADMIN" | "APPROVER" | "PROCESSOR")}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                >
+                  <option value="APPROVER">APPROVER — Reviews & approves expenses</option>
+                  <option value="PROCESSOR">PROCESSOR — Processes approved expenses</option>
+                  <option value="ADMIN">ADMIN — Full access + user management</option>
+                </select>
+              </div>
+              <div className="sm:col-span-2 flex gap-3 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={closeCreateUserModal}
+                  className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white transition-colors cursor-pointer"
+                >
+                  Create User
+                </button>
+              </div>
+            </form>
+          </Modal>
+
+          <Modal
+            isOpen={!!selectedUser && userModalType === "view"}
+            onClose={() => { setSelectedUser(null); setUserModalType(null); }}
+            title="User Details"
+            maxWidthClass="max-w-md"
+          >
+            {selectedUser && (
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between gap-4">
+                  <span className="text-zinc-500">Name</span>
+                  <span className="font-semibold text-white text-right">{selectedUser.name}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-zinc-500">Email</span>
+                  <span className="text-zinc-300 text-right break-all">{selectedUser.email}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-zinc-500">Role</span>
+                  <span className="font-semibold text-indigo-300">{selectedUser.role}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-zinc-500">Status</span>
+                  <span className={selectedUser.isActive ? "text-emerald-400" : "text-rose-400"}>
+                    {selectedUser.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedUser(null); setUserModalType(null); }}
+                    className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+          </Modal>
+
+          <Modal
+            isOpen={!!selectedUser && userModalType === "edit"}
+            onClose={() => { setSelectedUser(null); setUserModalType(null); }}
+            title="Edit User"
+            maxWidthClass="max-w-lg"
+          >
+            {selectedUser && (
+              <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Full Name</label>
+                  <input
+                    value={editUserName}
+                    onChange={(e) => setEditUserName(e.target.value)}
+                    required
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Email</label>
+                  <input
+                    value={selectedUser.email}
+                    disabled
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-500 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Role</label>
+                  <select
+                    value={editUserRole}
+                    onChange={(e) => setEditUserRole(e.target.value as "ADMIN" | "APPROVER" | "PROCESSOR")}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                  >
+                    <option value="APPROVER">APPROVER</option>
+                    <option value="PROCESSOR">PROCESSOR</option>
+                    <option value="ADMIN">ADMIN</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">Status</label>
+                  <select
+                    value={editUserActive ? "ACTIVE" : "INACTIVE"}
+                    onChange={(e) => setEditUserActive(e.target.value === "ACTIVE")}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider">New Password (optional)</label>
+                  <input
+                    type="password"
+                    value={editUserPassword}
+                    onChange={(e) => setEditUserPassword(e.target.value)}
+                    placeholder="Leave blank to keep current password"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-colors"
+                  />
+                </div>
+                <div className="flex gap-3 justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedUser(null); setUserModalType(null); }}
+                    className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white transition-colors cursor-pointer"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            )}
+          </Modal>
         </div>
       )}
         </div>
