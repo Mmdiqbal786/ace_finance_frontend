@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { setAuth } from '../../lib/auth';
+import { setAuth, isAuthenticated, getUser } from '../../lib/auth';
+import { getDefaultDashboardRoute } from '../../lib/dashboard/routes';
 import { API_URL } from '../../lib/api';
 
 export default function LoginPage() {
@@ -14,6 +15,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     setMounted(true);
+    if (isAuthenticated()) {
+      const user = getUser();
+      window.location.href = user ? getDefaultDashboardRoute(user.role) : '/dashboard/';
+    }
   }, []);
 
   async function handleLogin(e: React.FormEvent) {
@@ -32,7 +37,7 @@ export default function LoginPage() {
       }
       const data = await res.json();
       setAuth(data.access_token, data.user);
-      window.location.href = '/dashboard';
+      window.location.href = getDefaultDashboardRoute(data.user.role);
     } catch (err: any) {
       setError(err.message);
     } finally {

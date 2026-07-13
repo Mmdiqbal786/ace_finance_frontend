@@ -1,9 +1,10 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { getUser, logout, AuthUser } from '../lib/auth';
+import { getUser, logout, AuthUser, isAuthenticated } from '../lib/auth';
 import { usePathname } from 'next/navigation';
 import Modal from './Modal';
+import { DASHBOARD_ROUTES } from '../lib/dashboard/routes';
 
 const roleBadgeClass: Record<string, string> = {
   ADMIN: 'bg-amber-500/15 text-amber-300 border-amber-500/25',
@@ -38,10 +39,12 @@ export default function Header() {
 
   useEffect(() => {
     setMounted(true);
-    if (isDashboard) {
+    if (isAuthenticated()) {
       setUser(getUser());
+    } else {
+      setUser(null);
     }
-  }, [isDashboard]);
+  }, [isDashboard, pathname]);
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -64,6 +67,8 @@ export default function Header() {
     };
   }, [userMenuOpen]);
 
+  const logoHref = user ? DASHBOARD_ROUTES.home : '/';
+
   return (
     <header className={`sticky top-0 z-50 shrink-0 w-full border-b border-zinc-800 bg-zinc-950 ${isDashboard ? "" : "bg-zinc-950/80 backdrop-blur-md"}`}>
       <div
@@ -71,7 +76,7 @@ export default function Header() {
         className="flex min-h-14 w-full items-center justify-between gap-2 px-4 py-2 sm:min-h-16 sm:gap-3 sm:px-6 lg:px-8"
       >
         <div suppressHydrationWarning className="flex min-w-0 items-center">
-          <Link href="/" className="flex min-w-0 items-center gap-2 group sm:gap-2.5">
+          <Link href={logoHref} className="flex min-w-0 items-center gap-2 group sm:gap-2.5">
             <div suppressHydrationWarning className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-indigo-500/20 transition-transform group-hover:scale-105">
               <span className="text-xs sm:text-sm font-bold text-white tracking-wider">AF</span>
             </div>

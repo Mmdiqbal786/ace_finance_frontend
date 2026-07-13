@@ -1,0 +1,88 @@
+import { Expense } from "./types";
+
+export const CATEGORY_COLORS: { [key: string]: string } = {
+  Travel: "from-amber-500 to-orange-500",
+  Meals: "from-pink-500 to-rose-500",
+  Office: "from-teal-500 to-emerald-500",
+  Software: "from-violet-500 to-indigo-500",
+  Other: "from-blue-500 to-cyan-500",
+};
+
+export const CATEGORY_ICONS: { [key: string]: string } = {
+  Travel: "✈️",
+  Meals: "🍔",
+  Office: "📎",
+  Software: "💻",
+  Other: "📦",
+};
+
+export const CATEGORY_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Categories" },
+  { value: "Travel", label: "Travel" },
+  { value: "Meals", label: "Meals" },
+  { value: "Office", label: "Office" },
+  { value: "Software", label: "Software" },
+  { value: "Other", label: "Other" },
+];
+
+export const STATUS_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Statuses" },
+  { value: "PENDING_APPROVER", label: "Pending Approver" },
+  { value: "APPROVED_APPROVER", label: "Pending processing" },
+  { value: "PROCESSED", label: "Processed & Paid" },
+  { value: "REJECTED_APPROVER", label: "Rejected by Approver" },
+  { value: "REJECTED_PROCESSOR", label: "Rejected by Processor" },
+];
+
+export const ROLE_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Roles" },
+  { value: "ADMIN", label: "Admin" },
+  { value: "APPROVER", label: "Approver" },
+  { value: "PROCESSOR", label: "Processor" },
+];
+
+export const USER_STATUS_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Statuses" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
+];
+
+export function matchesExpenseSearch(e: Expense, search: string): boolean {
+  if (!search.trim()) return true;
+  const q = search.toLowerCase();
+  return (
+    e.id.toLowerCase().includes(q) ||
+    e.requesterName.toLowerCase().includes(q) ||
+    e.requesterEmail.toLowerCase().includes(q) ||
+    e.description.toLowerCase().includes(q)
+  );
+}
+
+export function filterExpenseTable(e: Expense, search: string, filters: Record<string, string>) {
+  const matchesCategory = filters.category === "ALL" || e.category === filters.category;
+  return matchesExpenseSearch(e, search) && matchesCategory;
+}
+
+export function filterTrackerTable(e: Expense, search: string, filters: Record<string, string>) {
+  const matchesStatus = filters.status === "ALL" || e.status === filters.status;
+  const matchesCategory = filters.category === "ALL" || e.category === filters.category;
+  return matchesExpenseSearch(e, search) && matchesStatus && matchesCategory;
+}
+
+export function filterUserTable(
+  u: { _id: string; name: string; email: string; role: string; isActive: boolean },
+  search: string,
+  filters: Record<string, string>
+) {
+  const q = search.toLowerCase();
+  const matchesSearch =
+    !search.trim() ||
+    u.name.toLowerCase().includes(q) ||
+    u.email.toLowerCase().includes(q);
+  const matchesRole = filters.role === "ALL" || u.role === filters.role;
+  const matchesStatus =
+    filters.status === "ALL" ||
+    (filters.status === "ACTIVE" && u.isActive) ||
+    (filters.status === "INACTIVE" && !u.isActive);
+  return matchesSearch && matchesRole && matchesStatus;
+}

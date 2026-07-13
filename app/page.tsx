@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import StatusBadge from "../components/StatusBadge";
 import TimelineView from "../components/TimelineView";
 import { API_URL } from "../lib/api";
+import { getUser, isAuthenticated } from "../lib/auth";
+import { getDefaultDashboardRoute } from "../lib/dashboard/routes";
 
 const CATEGORIES = [
   { id: "Travel", label: "Travel & Lodging", icon: "✈️" },
@@ -103,6 +105,12 @@ export default function PublicPortal() {
   };
 
   useEffect(() => {
+    if (isAuthenticated()) {
+      const user = getUser();
+      window.location.href = user ? getDefaultDashboardRoute(user.role) : "/dashboard/";
+      return;
+    }
+
     setMounted(true);
     setDate(new Date().toISOString().split("T")[0]);
 

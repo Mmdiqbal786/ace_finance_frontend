@@ -1,0 +1,57 @@
+export interface HistoryLog {
+  action: string;
+  timestamp: string;
+  user: string;
+  notes?: string;
+}
+
+export interface Expense {
+  id: string;
+  requesterName: string;
+  requesterEmail: string;
+  amount: number;
+  category: string;
+  description: string;
+  date: string;
+  status: string;
+  submittedAt: string;
+  approverNotes?: string;
+  approvedAt?: string;
+  processorNotes?: string;
+  processedAt?: string;
+  history: HistoryLog[];
+}
+
+export interface DashboardStats {
+  totalRequests: number;
+  pendingApproval: number;
+  pendingProcessing: number;
+  processed: number;
+  rejected: number;
+  totalRequestedAmount: number;
+  totalProcessedAmount: number;
+  byCategory: { [key: string]: number };
+  recentActivity: {
+    expenseId: string;
+    requesterName: string;
+    action: string;
+    timestamp: string;
+    user: string;
+  }[];
+}
+
+export type ExpenseActionType =
+  | "approve"
+  | "reject"
+  | "process"
+  | "processor-reject"
+  | "view"
+  | "edit"
+  | "delete";
+
+export type DashboardSection =
+  | "home"
+  | "approver"
+  | "processor"
+  | "user-management"
+  | "analytics";

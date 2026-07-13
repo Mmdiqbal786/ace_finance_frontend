@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AuthUser, logout } from "../lib/auth";
 import Modal from "./Modal";
-
-export type DashboardTab = "approver" | "processor" | "tracker" | "users";
+import {
+  DASHBOARD_ROUTES,
+  pathnameToSection,
+} from "../lib/dashboard/routes";
+import { DashboardSection } from "../lib/dashboard/types";
 
 interface DashboardSidebarProps {
   user: AuthUser | null;
-  activeTab: DashboardTab;
-  onTabChange: (tab: DashboardTab) => void;
   pendingApproverCount: number;
   pendingProcessorCount: number;
   mobileOpen: boolean;
@@ -20,22 +23,24 @@ interface NavItemProps {
   icon: string;
   label: string;
   shortLabel?: string;
+  href: string;
   active: boolean;
   badge?: number;
   pulse?: boolean;
   accent?: "indigo" | "amber";
-  onClick: () => void;
+  onNavigate?: () => void;
 }
 
 function NavItem({
   icon,
   label,
   shortLabel,
+  href,
   active,
   badge = 0,
   pulse = false,
   accent = "indigo",
-  onClick,
+  onNavigate,
 }: NavItemProps) {
   const activeStyles =
     accent === "amber"
@@ -43,9 +48,9 @@ function NavItem({
       : "bg-indigo-600/15 text-indigo-300 border-indigo-500/20";
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <Link
+      href={href}
+      onClick={onNavigate}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer border ${
         active ? activeStyles : "text-zinc-400 hover:bg-zinc-900 hover:text-white border-transparent"
       }`}
@@ -64,25 +69,23 @@ function NavItem({
           {badge}
         </span>
       )}
-    </button>
+    </Link>
   );
+}
+
+function isSectionActive(pathname: string | null, section: DashboardSection): boolean {
+  return pathnameToSection(pathname) === section;
 }
 
 export default function DashboardSidebar({
   user,
-  activeTab,
-  onTabChange,
   pendingApproverCount,
   pendingProcessorCount,
   mobileOpen,
   onMobileClose,
 }: DashboardSidebarProps) {
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-  const handleSelect = (tab: DashboardTab) => {
-    onTabChange(tab);
-    onMobileClose();
-  };
+  const pathname = usePathname();
+  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
   return (
     <>
@@ -117,14 +120,24 @@ export default function DashboardSidebar({
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          <NavItem
+            icon="🏠"
+            label="Dashboard"
+            shortLabel="Home"
+            href={DASHBOARD_ROUTES.home}
+            active={isSectionActive(pathname, "home")}
+            onNavigate={onMobileClose}
+          />
+
           {(user?.role === "APPROVER" || user?.role === "ADMIN") && (
             <NavItem
               icon="🛡️"
               label="Approver"
-              active={activeTab === "approver"}
+              href={DASHBOARD_ROUTES.approver}
+              active={isSectionActive(pathname, "approver")}
               badge={pendingApproverCount}
               pulse
-              onClick={() => handleSelect("approver")}
+              onNavigate={onMobileClose}
             />
           )}
 
@@ -132,9 +145,10 @@ export default function DashboardSidebar({
             <NavItem
               icon="💸"
               label="Processor"
-              active={activeTab === "processor"}
+              href={DASHBOARD_ROUTES.processor}
+              active={isSectionActive(pathname, "processor")}
               badge={pendingProcessorCount}
-              onClick={() => handleSelect("processor")}
+              onNavigate={onMobileClose}
             />
           )}
 
@@ -143,9 +157,10 @@ export default function DashboardSidebar({
               icon="👥"
               label="User Management"
               shortLabel="Users"
-              active={activeTab === "users"}
+              href={DASHBOARD_ROUTES.userManagement}
+              active={isSectionActive(pathname, "user-management")}
               accent="amber"
-              onClick={() => handleSelect("users")}
+              onNavigate={onMobileClose}
             />
           )}
 
@@ -153,8 +168,9 @@ export default function DashboardSidebar({
             icon="📊"
             label="Analytics & Tracker"
             shortLabel="Analytics"
-            active={activeTab === "tracker"}
-            onClick={() => handleSelect("tracker")}
+            href={DASHBOARD_ROUTES.analytics}
+            active={isSectionActive(pathname, "analytics")}
+            onNavigate={onMobileClose}
           />
         </nav>
 
