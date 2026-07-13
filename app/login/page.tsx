@@ -1,15 +1,20 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { setAuth } from '../../lib/auth';
 import { API_URL } from '../../lib/api';
 
 export default function LoginPage() {
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [seeding, setSeeding] = useState(false);
-  const [seedMsg, setSeedMsg] = useState('');
+  // const [seeding, setSeeding] = useState(false);
+  // const [seedMsg, setSeedMsg] = useState('');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -35,19 +40,19 @@ export default function LoginPage() {
     }
   }
 
-  async function handleSeed() {
-    setSeeding(true);
-    setSeedMsg('');
-    try {
-      const res = await fetch(`${API_URL}/auth/seed`, { method: 'POST' });
-      const data = await res.json();
-      setSeedMsg(data.message);
-    } catch {
-      setSeedMsg('Seed failed. Is the backend running?');
-    } finally {
-      setSeeding(false);
-    }
-  }
+  // async function handleSeed() {
+  //   setSeeding(true);
+  //   setSeedMsg('');
+  //   try {
+  //     const res = await fetch(`${API_URL}/auth/seed`, { method: 'POST' });
+  //     const data = await res.json();
+  //     setSeedMsg(data.message);
+  //   } catch {
+  //     setSeedMsg('Seed failed. Is the backend running?');
+  //   } finally {
+  //     setSeeding(false);
+  //   }
+  // }
 
   return (
     <div style={{
@@ -96,7 +101,8 @@ export default function LoginPage() {
             Enter your credentials to access the dashboard
           </p>
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {mounted ? (
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} suppressHydrationWarning>
             <div>
               <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '0.4rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 Email Address
@@ -167,8 +173,24 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign In →'}
             </button>
           </form>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                minHeight: '220px',
+                justifyContent: 'center',
+                alignItems: 'center',
+                color: 'rgba(255,255,255,0.4)',
+                fontSize: '0.875rem',
+              }}
+            >
+              Loading sign in...
+            </div>
+          )}
 
-          {/* Seed admin section */}
+          {/* Seed admin section — hidden for production
           <div style={{
             marginTop: '1.75rem', paddingTop: '1.5rem',
             borderTop: '1px solid rgba(255,255,255,0.08)',
@@ -200,6 +222,7 @@ export default function LoginPage() {
               </p>
             )}
           </div>
+          */}
         </div>
 
         {/* Footer hint */}

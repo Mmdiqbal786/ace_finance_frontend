@@ -373,26 +373,27 @@ export default function DashboardPortal() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex-1 flex flex-col justify-start">
+    <div className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8 flex-1 flex flex-col justify-start w-full min-w-0">
       {/* Header and Quick Switcher */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+      <div className="flex flex-col mb-6 sm:mb-8 gap-4 sm:gap-5">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-tight">
             Workspace <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Dashboard</span>
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">
+          <p className="mt-1.5 text-xs sm:text-sm text-zinc-400 leading-relaxed">
             Welcome back, <span className="text-white font-semibold">{currentUser?.name || "—"}</span>
-            {" "}&mdash; <span className={currentUser?.role === "ADMIN" ? "text-amber-400" : currentUser?.role === "PROCESSOR" ? "text-emerald-400" : "text-indigo-400"}>{currentUser?.role}</span>
+            <span className="hidden sm:inline">{" "}&mdash; </span>
+            <span className={`block sm:inline mt-0.5 sm:mt-0 font-semibold ${currentUser?.role === "ADMIN" ? "text-amber-400" : currentUser?.role === "PROCESSOR" ? "text-emerald-400" : "text-indigo-400"}`}>{currentUser?.role}</span>
           </p>
         </div>
 
         {/* Role toggle tabs — visible based on user's role */}
-        <div className="inline-flex rounded-xl bg-zinc-900 border border-zinc-800 p-1.5 self-start">
+        <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:gap-0 w-full sm:w-auto sm:inline-flex rounded-xl bg-zinc-900 border border-zinc-800 p-1.5 sm:self-start">
           {/* Approver tab — visible to APPROVER and ADMIN */}
           {(currentUser?.role === "APPROVER" || currentUser?.role === "ADMIN") && (
             <button
               onClick={() => setActiveTab("approver")}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer w-full sm:w-auto whitespace-nowrap ${
                 activeTab === "approver"
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/10"
                   : "text-zinc-400 hover:text-white"
@@ -410,7 +411,7 @@ export default function DashboardPortal() {
           {(currentUser?.role === "PROCESSOR" || currentUser?.role === "ADMIN") && (
             <button
               onClick={() => setActiveTab("processor")}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer w-full sm:w-auto whitespace-nowrap ${
                 activeTab === "processor"
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/10"
                   : "text-zinc-400 hover:text-white"
@@ -427,25 +428,29 @@ export default function DashboardPortal() {
           {/* Analytics tab — visible to all */}
           <button
             onClick={() => setActiveTab("tracker")}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer w-full sm:w-auto whitespace-nowrap ${
               activeTab === "tracker"
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/10"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            <span>📊</span> Analytics & Tracker
+            <span>📊</span>
+            <span className="sm:hidden">Analytics</span>
+            <span className="hidden sm:inline">Analytics & Tracker</span>
           </button>
           {/* Users Management tab — ADMIN only */}
           {currentUser?.role === "ADMIN" && (
             <button
               onClick={() => { setActiveTab("users"); fetchUsers(); }}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer w-full sm:w-auto whitespace-nowrap ${
                 activeTab === "users"
                   ? "bg-amber-600 text-white shadow-md shadow-amber-500/10"
                   : "text-zinc-400 hover:text-white"
               }`}
             >
-              <span>👥</span> User Management
+              <span>👥</span>
+              <span className="sm:hidden">Users</span>
+              <span className="hidden sm:inline">User Management</span>
             </button>
           )}
         </div>
@@ -462,7 +467,7 @@ export default function DashboardPortal() {
 
       {/* Metrics Widgets */}
       {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <StatCard
             title="Total Requested"
             value={`$${stats.totalRequestedAmount.toFixed(2)}`}
@@ -512,13 +517,13 @@ export default function DashboardPortal() {
         <>
           {/* TAB 1: APPROVER VIEW (USER 1) */}
           {activeTab === "approver" && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 sm:p-8">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6 pb-4 border-b border-zinc-800">
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 text-sm">🛡️</span>
-                  Approver Panel (User 1 - Manager)
+                  <span className="leading-snug">Approver Panel (User 1 - Manager)</span>
                 </h2>
-                <span className="text-xs text-zinc-400 font-medium">
+                <span className="text-[11px] sm:text-xs text-zinc-400 font-medium">
                   Showing {pendingApproverList.length} expenses awaiting your sign-off
                 </span>
               </div>
@@ -611,13 +616,13 @@ export default function DashboardPortal() {
 
           {/* TAB 2: PROCESSOR VIEW (USER 2) */}
           {activeTab === "processor" && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 sm:p-8">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6 pb-4 border-b border-zinc-800">
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 text-sm">💸</span>
-                  Processor Panel (User 2 - Finance Officer)
+                  <span className="leading-snug">Processor Panel (User 2 - Finance Officer)</span>
                 </h2>
-                <span className="text-xs text-zinc-400 font-medium">
+                <span className="text-[11px] sm:text-xs text-zinc-400 font-medium">
                   Showing {approvedApproverList.length} approved expenses awaiting payment release
                 </span>
               </div>
@@ -786,7 +791,7 @@ export default function DashboardPortal() {
               )}
 
               {/* Data Table with Filters */}
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 sm:p-8">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                   <h3 className="text-lg font-bold text-white">All Expense Database</h3>
                   

@@ -38,13 +38,15 @@ interface Expense {
 }
 
 export default function PublicPortal() {
+  const [mounted, setMounted] = useState(false);
+
   // Form states
   const [requesterName, setRequesterName] = useState("");
   const [requesterEmail, setRequesterEmail] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Software");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState<Expense | null>(null);
@@ -58,24 +60,69 @@ export default function PublicPortal() {
   
   // Tracked recently submitted IDs in this browser
   const [recentRequests, setRecentRequests] = useState<string[]>([]);
+  const [lastSearch, setLastSearch] = useState("");
 
-  useEffect(() => {
-    // Load recently submitted expense IDs from localStorage
-    const saved = localStorage.getItem("ace_finance_my_requests");
-    if (saved) {
-      try {
-        setRecentRequests(JSON.parse(saved));
-      } catch (e) {
-        // Ignore
-      }
+  const persistRecentRequests = (ids: string[]) => {
+    setRecentRequests(ids);
+    if (ids.length > 0) {
+      localStorage.setItem("ace_finance_my_requests", JSON.stringify(ids));
+    } else {
+      localStorage.removeItem("ace_finance_my_requests");
     }
-  }, []);
+  };
+
+  const persistLastSearch = (query: string) => {
+    setLastSearch(query);
+    localStorage.setItem("ace_finance_last_search", query);
+  };
 
   const saveToRecent = (id: string) => {
-    const updated = [id, ...recentRequests.filter((r) => r !== id)].slice(0, 5);
-    setRecentRequests(updated);
-    localStorage.setItem("ace_finance_my_requests", JSON.stringify(updated));
+    setRecentRequests((prev) => {
+      const updated = [id, ...prev.filter((r) => r !== id)].slice(0, 5);
+      localStorage.setItem("ace_finance_my_requests", JSON.stringify(updated));
+      return updated;
+    });
   };
+
+  const validateRecentRequests = async (ids: string[]) => {
+    const validIds: string[] = [];
+
+    for (const id of ids) {
+      try {
+        const response = await fetch(`${API_URL}/expenses/${id}`);
+        if (response.ok) {
+          validIds.push(id);
+        }
+      } catch {
+        // Ignore failed lookups while cleaning stale IDs
+      }
+    }
+
+    persistRecentRequests(validIds);
+    return validIds;
+  };
+
+  useEffect(() => {
+    setMounted(true);
+    setDate(new Date().toISOString().split("T")[0]);
+
+    const savedLastSearch = localStorage.getItem("ace_finance_last_search");
+    if (savedLastSearch) {
+      setLastSearch(savedLastSearch);
+    }
+
+    const saved = localStorage.getItem("ace_finance_my_requests");
+    if (!saved) return;
+
+    try {
+      const parsed = JSON.parse(saved) as string[];
+      if (!Array.isArray(parsed) || parsed.length === 0) return;
+
+      void validateRecentRequests(parsed);
+    } catch {
+      localStorage.removeItem("ace_finance_my_requests");
+    }
+  }, []);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +188,7 @@ export default function PublicPortal() {
         }
         const item = (await response.json()) as Expense;
         setSearchResults([item]);
+        persistLastSearch(query.trim());
       } else if (query.includes("@")) {
         // Query is an Email
         const response = await fetch(
@@ -152,13 +200,22 @@ export default function PublicPortal() {
         const list = (await response.json()) as Expense[];
         if (list.length === 0) {
           setSearchError("No requests found for this email.");
+        } else {
+          setSearchResults(list);
+          persistLastSearch(query.trim());
         }
-        setSearchResults(list);
       } else {
         setSearchError("Please enter a valid Request ID (EXP-xxx) or Email.");
       }
     } catch (err: any) {
       setSearchError(err.message || "No records found.");
+
+      if (query.trim().startsWith("EXP-")) {
+        const cleaned = recentRequests.filter((id) => id !== query.trim());
+        if (cleaned.length !== recentRequests.length) {
+          persistRecentRequests(cleaned);
+        }
+      }
     } finally {
       setSearching(false);
     }
@@ -187,7 +244,15 @@ export default function PublicPortal() {
           </h2>
 
           {submitSuccess && (
-            <div className="mb-6 rounded-xl bg-indigo-500/10 border border-indigo-500/30 p-5 text-zinc-100">
+            <div className="relative mb-6 rounded-xl bg-indigo-500/10 border border-indigo-500/30 p-5 pr-12 text-zinc-100">
+              <button
+                type="button"
+                onClick={() => setSubmitSuccess(null)}
+                className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-indigo-500/10 hover:text-white transition-colors cursor-pointer"
+                aria-label="Dismiss success message"
+              >
+                ✕
+              </button>
               <div className="flex items-center gap-3 mb-2 text-indigo-400 font-bold">
                 <span className="text-xl">🎉</span> Request Submitted Successfully!
               </div>
@@ -218,7 +283,8 @@ export default function PublicPortal() {
             </div>
           )}
 
-          <form onSubmit={handleFormSubmit} className="space-y-5">
+          {mounted ? (
+          <form onSubmit={handleFormSubmit} className="space-y-5" suppressHydrationWarning>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="requesterName" className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
@@ -345,6 +411,11 @@ export default function PublicPortal() {
               )}
             </button>
           </form>
+          ) : (
+            <div className="flex min-h-[420px] items-center justify-center text-sm text-zinc-500">
+              Loading form...
+            </div>
+          )}
         </div>
 
         {/* Right Column: Status Tracker */}
@@ -358,7 +429,8 @@ export default function PublicPortal() {
               Enter your unique Request ID (e.g. EXP-17...) or your email to track approvals.
             </p>
 
-            <div className="flex gap-2">
+            {mounted ? (
+            <div className="flex gap-2" suppressHydrationWarning>
               <input
                 type="text"
                 value={searchQuery}
@@ -377,6 +449,9 @@ export default function PublicPortal() {
                 {searching ? "Searching..." : "Track"}
               </button>
             </div>
+            ) : (
+              <div className="h-10 rounded-xl bg-zinc-950 border border-zinc-800 animate-pulse" />
+            )}
 
             {searchError && (
               <div className="mt-4 rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-400 font-medium">
@@ -384,25 +459,39 @@ export default function PublicPortal() {
               </div>
             )}
 
-            {/* Recently Submitted Links */}
-            {recentRequests.length > 0 && (
+            {/* Recent submissions, or last successful search as fallback */}
+            {(recentRequests.length > 0 || lastSearch) && (
               <div className="mt-4 pt-3 border-t border-zinc-800/60">
                 <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider block mb-2">
-                  Your Recent Requests
+                  {recentRequests.length > 0 ? "Your Recent Requests" : "Last Tracked"}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {recentRequests.map((rId) => (
+                  {recentRequests.length > 0 ? (
+                    recentRequests.map((rId) => (
+                      <button
+                        key={rId}
+                        onClick={() => {
+                          setSearchQuery(rId);
+                          handleSearch(rId);
+                        }}
+                        className="text-xs bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
+                      >
+                        {rId.substring(0, 14)}...
+                      </button>
+                    ))
+                  ) : (
                     <button
-                      key={rId}
                       onClick={() => {
-                        setSearchQuery(rId);
-                        handleSearch(rId);
+                        setSearchQuery(lastSearch);
+                        handleSearch(lastSearch);
                       }}
                       className="text-xs bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
                     >
-                      {rId.substring(0, 14)}...
+                      {lastSearch.startsWith("EXP-")
+                        ? `${lastSearch.substring(0, 14)}...`
+                        : lastSearch}
                     </button>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
@@ -410,8 +499,16 @@ export default function PublicPortal() {
 
           {/* Search Result Timeline */}
           {searchResults.length > 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 sm:p-8 space-y-6">
-              <div className="flex justify-between items-start border-b border-zinc-800 pb-4">
+            <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 sm:p-8 pr-12 space-y-6">
+              <button
+                type="button"
+                onClick={() => setSearchResults([])}
+                className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
+                aria-label="Close tracking details"
+              >
+                ✕
+              </button>
+              <div className="flex justify-between items-start border-b border-zinc-800 pb-4 pr-2">
                 <div>
                   <h3 className="text-sm font-semibold text-zinc-500 font-mono">{searchResults[0].id}</h3>
                   <p className="text-lg font-bold text-white mt-0.5">{searchResults[0].category}</p>
