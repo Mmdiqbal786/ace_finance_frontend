@@ -16,10 +16,8 @@ export const DASHBOARD_SECTION_PATHS: Record<Exclude<DashboardSection, "home">, 
   analytics: DASHBOARD_ROUTES.analytics,
 };
 
-export function getDefaultDashboardRoute(role: AuthUser["role"]): string {
-  if (role === "PROCESSOR") return DASHBOARD_ROUTES.processor;
-  if (role === "ADMIN") return DASHBOARD_ROUTES.home;
-  return DASHBOARD_ROUTES.approver;
+export function getDefaultDashboardRoute(_role: AuthUser["role"]): string {
+  return DASHBOARD_ROUTES.home;
 }
 
 export function pathnameToSection(pathname: string | null): DashboardSection {
