@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import StatusBadge from "../components/StatusBadge";
 import TimelineView from "../components/TimelineView";
 import { API_URL } from "../lib/api";
+import { getUser, isAuthenticated } from "../lib/auth";
+import { getDefaultDashboardRoute } from "../lib/dashboard/routes";
 
 const CATEGORIES = [
   { id: "Travel", label: "Travel & Lodging", icon: "✈️" },
@@ -103,6 +105,12 @@ export default function PublicPortal() {
   };
 
   useEffect(() => {
+    if (isAuthenticated()) {
+      const user = getUser();
+      window.location.href = user ? getDefaultDashboardRoute(user.role) : "/dashboard/";
+      return;
+    }
+
     setMounted(true);
     setDate(new Date().toISOString().split("T")[0]);
 
@@ -224,7 +232,7 @@ export default function PublicPortal() {
 
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex-1 flex flex-col justify-center">
+    <div className="mx-auto max-w-7xl flex flex-1 flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
       {/* Hero Header */}
       <div className="text-center md:text-left mb-10">
         <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
