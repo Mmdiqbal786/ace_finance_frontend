@@ -28,9 +28,9 @@ export default function Modal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
       <div
-        className={`w-full ${maxWidthClass} bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative`}
+        className={`w-full ${maxWidthClass} max-h-[92vh] sm:max-h-[90vh] overflow-y-auto bg-zinc-900 border border-zinc-800 rounded-t-2xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 relative`}
       >
         <button
           onClick={onClose}
