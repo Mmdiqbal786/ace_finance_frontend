@@ -55,14 +55,9 @@ export default function LoginPage() {
   // }
 
   return (
-    <div style={{
-      minHeight: '100vh',
+    <div className="flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center p-4 sm:min-h-[calc(100dvh-4rem)]" style={{
       background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
       fontFamily: "'Inter', sans-serif",
-      padding: '1rem',
     }}>
       <div style={{ width: '100%', maxWidth: '420px' }}>
         {/* Logo */}

@@ -7,6 +7,10 @@ import Modal from "../../components/Modal";
 import TimelineView from "../../components/TimelineView";
 import { getUser, isAuthenticated, authHeaders, logout, AuthUser } from "../../lib/auth";
 import { API_URL } from "../../lib/api";
+import DashboardSidebar from "../../components/DashboardSidebar";
+import TableToolbar from "../../components/TableToolbar";
+import TablePagination from "../../components/TablePagination";
+import { usePaginatedList } from "../../hooks/usePaginatedList";
 
 interface HistoryLog {
   action: string;
@@ -66,6 +70,77 @@ const CATEGORY_ICONS: { [key: string]: string } = {
   Other: "📦",
 };
 
+const CATEGORY_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Categories" },
+  { value: "Travel", label: "Travel" },
+  { value: "Meals", label: "Meals" },
+  { value: "Office", label: "Office" },
+  { value: "Software", label: "Software" },
+  { value: "Other", label: "Other" },
+];
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Statuses" },
+  { value: "PENDING_APPROVER", label: "Pending Approver" },
+  { value: "APPROVED_APPROVER", label: "Pending processing" },
+  { value: "PROCESSED", label: "Processed & Paid" },
+  { value: "REJECTED_APPROVER", label: "Rejected by Approver" },
+  { value: "REJECTED_PROCESSOR", label: "Rejected by Processor" },
+];
+
+const ROLE_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Roles" },
+  { value: "ADMIN", label: "Admin" },
+  { value: "APPROVER", label: "Approver" },
+  { value: "PROCESSOR", label: "Processor" },
+];
+
+const USER_STATUS_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Statuses" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
+];
+
+function matchesExpenseSearch(e: Expense, search: string): boolean {
+  if (!search.trim()) return true;
+  const q = search.toLowerCase();
+  return (
+    e.id.toLowerCase().includes(q) ||
+    e.requesterName.toLowerCase().includes(q) ||
+    e.requesterEmail.toLowerCase().includes(q) ||
+    e.description.toLowerCase().includes(q)
+  );
+}
+
+function filterExpenseTable(e: Expense, search: string, filters: Record<string, string>) {
+  const matchesCategory = filters.category === "ALL" || e.category === filters.category;
+  return matchesExpenseSearch(e, search) && matchesCategory;
+}
+
+function filterTrackerTable(e: Expense, search: string, filters: Record<string, string>) {
+  const matchesStatus = filters.status === "ALL" || e.status === filters.status;
+  const matchesCategory = filters.category === "ALL" || e.category === filters.category;
+  return matchesExpenseSearch(e, search) && matchesStatus && matchesCategory;
+}
+
+function filterUserTable(
+  u: { _id: string; name: string; email: string; role: string; isActive: boolean },
+  search: string,
+  filters: Record<string, string>
+) {
+  const q = search.toLowerCase();
+  const matchesSearch =
+    !search.trim() ||
+    u.name.toLowerCase().includes(q) ||
+    u.email.toLowerCase().includes(q);
+  const matchesRole = filters.role === "ALL" || u.role === filters.role;
+  const matchesStatus =
+    filters.status === "ALL" ||
+    (filters.status === "ACTIVE" && u.isActive) ||
+    (filters.status === "INACTIVE" && !u.isActive);
+  return matchesSearch && matchesRole && matchesStatus;
+}
+
 export default function DashboardPortal() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [activeTab, setActiveTab] = useState<"approver" | "processor" | "tracker" | "users">("approver");
@@ -88,11 +163,6 @@ export default function DashboardPortal() {
   const [editDescription, setEditDescription] = useState("");
   const [editDate, setEditDate] = useState("");
 
-  // Filters for Tracker view
-  const [trackerStatusFilter, setTrackerStatusFilter] = useState("ALL");
-  const [trackerCategoryFilter, setTrackerCategoryFilter] = useState("ALL");
-  const [trackerSearch, setTrackerSearch] = useState("");
-
   // Users Management State (Admin only)
   const [users, setUsers] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -103,6 +173,13 @@ export default function DashboardPortal() {
   const [newUserRole, setNewUserRole] = useState<"ADMIN"|"APPROVER"|"PROCESSOR">("APPROVER");
   const [userActionMsg, setUserActionMsg] = useState("");
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleTabChange = (tab: "approver" | "processor" | "tracker" | "users") => {
+    setActiveTab(tab);
+    if (tab === "users") fetchUsers();
+    setSidebarOpen(false);
+  };
 
   // Auth check on mount
   useEffect(() => {
@@ -310,8 +387,32 @@ export default function DashboardPortal() {
     }
   };
 
+  // Filtered lists & table controls
+  const pendingApproverList = expenses.filter((e) => e.status === "PENDING_APPROVER");
+  const approvedApproverList = expenses.filter((e) => e.status === "APPROVED_APPROVER");
+
+  const approverTable = usePaginatedList(pendingApproverList, {
+    filterFn: filterExpenseTable,
+    initialFilters: { category: "ALL" },
+  });
+
+  const processorTable = usePaginatedList(approvedApproverList, {
+    filterFn: filterExpenseTable,
+    initialFilters: { category: "ALL" },
+  });
+
+  const trackerTable = usePaginatedList(expenses, {
+    filterFn: filterTrackerTable,
+    initialFilters: { status: "ALL", category: "ALL" },
+  });
+
+  const usersTable = usePaginatedList(users, {
+    filterFn: filterUserTable,
+    initialFilters: { role: "ALL", status: "ALL" },
+  });
+
   const handleExportCSV = () => {
-    if (filteredTrackerList.length === 0) {
+    if (trackerTable.filtered.length === 0) {
       alert("No data available to export.");
       return;
     }
@@ -330,7 +431,7 @@ export default function DashboardPortal() {
       "Finance Notes"
     ];
 
-    const rows = filteredTrackerList.map((e) => [
+    const rows = trackerTable.filtered.map((e) => [
       e.id,
       e.requesterName,
       e.requesterEmail,
@@ -357,104 +458,41 @@ export default function DashboardPortal() {
     document.body.removeChild(link);
   };
 
-  // Filtered lists
-  const pendingApproverList = expenses.filter((e) => e.status === "PENDING_APPROVER");
-  const approvedApproverList = expenses.filter((e) => e.status === "APPROVED_APPROVER");
-
-  const filteredTrackerList = expenses.filter((e) => {
-    const matchesStatus = trackerStatusFilter === "ALL" || e.status === trackerStatusFilter;
-    const matchesCategory = trackerCategoryFilter === "ALL" || e.category === trackerCategoryFilter;
-    const matchesSearch =
-      e.id.toLowerCase().includes(trackerSearch.toLowerCase()) ||
-      e.requesterName.toLowerCase().includes(trackerSearch.toLowerCase()) ||
-      e.requesterEmail.toLowerCase().includes(trackerSearch.toLowerCase()) ||
-      e.description.toLowerCase().includes(trackerSearch.toLowerCase());
-    return matchesStatus && matchesCategory && matchesSearch;
-  });
-
   return (
-    <div className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8 flex-1 flex flex-col justify-start w-full min-w-0">
-      {/* Header and Quick Switcher */}
-      <div className="flex flex-col mb-6 sm:mb-8 gap-4 sm:gap-5">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-tight">
-            Workspace <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Dashboard</span>
-          </h1>
-          <p className="mt-1.5 text-xs sm:text-sm text-zinc-400 leading-relaxed">
-            Welcome back, <span className="text-white font-semibold">{currentUser?.name || "—"}</span>
-            <span className="hidden sm:inline">{" "}&mdash; </span>
-            <span className={`block sm:inline mt-0.5 sm:mt-0 font-semibold ${currentUser?.role === "ADMIN" ? "text-amber-400" : currentUser?.role === "PROCESSOR" ? "text-emerald-400" : "text-indigo-400"}`}>{currentUser?.role}</span>
-          </p>
-        </div>
+    <>
+      <DashboardSidebar
+        user={currentUser}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        pendingApproverCount={pendingApproverList.length}
+        pendingProcessorCount={approvedApproverList.length}
+        mobileOpen={sidebarOpen}
+        onMobileClose={() => setSidebarOpen(false)}
+      />
 
-        {/* Role toggle tabs — visible based on user's role */}
-        <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:gap-0 w-full sm:w-auto sm:inline-flex rounded-xl bg-zinc-900 border border-zinc-800 p-1.5 sm:self-start">
-          {/* Approver tab — visible to APPROVER and ADMIN */}
-          {(currentUser?.role === "APPROVER" || currentUser?.role === "ADMIN") && (
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+          <div className="flex items-start justify-between gap-3 mb-6 sm:mb-8">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-tight">
+                Workspace <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Dashboard</span>
+              </h1>
+              <p className="mt-1.5 text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                Welcome back, <span className="text-white font-semibold">{currentUser?.name || "—"}</span>
+                <span className="hidden sm:inline">{" "}&mdash; </span>
+                <span className={`block sm:inline mt-0.5 sm:mt-0 font-semibold ${currentUser?.role === "ADMIN" ? "text-amber-400" : currentUser?.role === "PROCESSOR" ? "text-emerald-400" : "text-indigo-400"}`}>{currentUser?.role}</span>
+              </p>
+            </div>
+
             <button
-              onClick={() => setActiveTab("approver")}
-              className={`px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer w-full sm:w-auto whitespace-nowrap ${
-                activeTab === "approver"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/10"
-                  : "text-zinc-400 hover:text-white"
-              }`}
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
             >
-              <span>🛡️</span> Approver
-              {pendingApproverList.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded bg-rose-500 text-[10px] text-white font-bold leading-none animate-pulse">
-                  {pendingApproverList.length}
-                </span>
-              )}
+              <span>☰</span>
+              <span>Menu</span>
             </button>
-          )}
-          {/* Processor tab — visible to PROCESSOR and ADMIN */}
-          {(currentUser?.role === "PROCESSOR" || currentUser?.role === "ADMIN") && (
-            <button
-              onClick={() => setActiveTab("processor")}
-              className={`px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer w-full sm:w-auto whitespace-nowrap ${
-                activeTab === "processor"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/10"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <span>💸</span> Processor
-              {approvedApproverList.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded bg-rose-500 text-[10px] text-white font-bold leading-none">
-                  {approvedApproverList.length}
-                </span>
-              )}
-            </button>
-          )}
-          {/* Analytics tab — visible to all */}
-          <button
-            onClick={() => setActiveTab("tracker")}
-            className={`px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer w-full sm:w-auto whitespace-nowrap ${
-              activeTab === "tracker"
-                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/10"
-                : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            <span>📊</span>
-            <span className="sm:hidden">Analytics</span>
-            <span className="hidden sm:inline">Analytics & Tracker</span>
-          </button>
-          {/* Users Management tab — ADMIN only */}
-          {currentUser?.role === "ADMIN" && (
-            <button
-              onClick={() => { setActiveTab("users"); fetchUsers(); }}
-              className={`px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer w-full sm:w-auto whitespace-nowrap ${
-                activeTab === "users"
-                  ? "bg-amber-600 text-white shadow-md shadow-amber-500/10"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <span>👥</span>
-              <span className="sm:hidden">Users</span>
-              <span className="hidden sm:inline">User Management</span>
-            </button>
-          )}
-        </div>
-      </div>
+          </div>
 
       {error && (
         <div className="mb-6 rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 text-sm text-rose-400">
@@ -524,7 +562,7 @@ export default function DashboardPortal() {
                   <span className="leading-snug">Approver Panel (User 1 - Manager)</span>
                 </h2>
                 <span className="text-[11px] sm:text-xs text-zinc-400 font-medium">
-                  Showing {pendingApproverList.length} expenses awaiting your sign-off
+                  Showing {approverTable.totalCount} expenses awaiting your sign-off
                 </span>
               </div>
 
@@ -535,21 +573,44 @@ export default function DashboardPortal() {
                   <p className="text-xs mt-1 text-zinc-600">No public expense requests are currently pending review.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
-                    <thead>
-                      <tr className="text-zinc-400 font-semibold text-xs uppercase tracking-wider">
-                        <th className="py-3 px-4">Request ID</th>
-                        <th className="py-3 px-4">Requester</th>
-                        <th className="py-3 px-4">Category</th>
-                        <th className="py-3 px-4">Date Submitted</th>
-                        <th className="py-3 px-4">Description</th>
-                        <th className="py-3 px-4 text-right">Amount</th>
-                        <th className="py-3 px-4 text-center">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
-                      {pendingApproverList.map((e) => (
+                <>
+                  <div className="mb-4">
+                    <TableToolbar
+                      search={approverTable.search}
+                      onSearchChange={approverTable.setSearch}
+                      searchPlaceholder="Search requester, ID, desc..."
+                      filters={[
+                        {
+                          id: "category",
+                          value: approverTable.filters.category,
+                          onChange: (value) => approverTable.setFilter("category", value),
+                          options: CATEGORY_FILTER_OPTIONS,
+                        },
+                      ]}
+                    />
+                  </div>
+
+                  {approverTable.totalCount === 0 ? (
+                    <div className="text-center py-12 text-zinc-500">
+                      <p className="text-sm font-semibold">No results match filters</p>
+                      <p className="text-xs mt-1">Try resetting search or selecting another category.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
+                        <thead>
+                          <tr className="text-zinc-400 font-semibold text-xs uppercase tracking-wider">
+                            <th className="py-3 px-4">Request ID</th>
+                            <th className="py-3 px-4">Requester</th>
+                            <th className="py-3 px-4">Category</th>
+                            <th className="py-3 px-4">Date Submitted</th>
+                            <th className="py-3 px-4">Description</th>
+                            <th className="py-3 px-4 text-right">Amount</th>
+                            <th className="py-3 px-4 text-center">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+                          {approverTable.paginated.map((e) => (
                         <tr key={e.id} className="hover:bg-zinc-950/40 transition-colors">
                           <td className="py-3.5 px-4 font-mono text-xs text-indigo-400 font-bold">{e.id}</td>
                           <td className="py-3.5 px-4">
@@ -606,10 +667,21 @@ export default function DashboardPortal() {
                             </div>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  <TablePagination
+                    page={approverTable.page}
+                    totalPages={approverTable.totalPages}
+                    pageSize={approverTable.pageSize}
+                    totalCount={approverTable.totalCount}
+                    onPageChange={approverTable.setPage}
+                    onPageSizeChange={approverTable.setPageSize}
+                  />
+                </>
               )}
             </div>
           )}
@@ -623,7 +695,7 @@ export default function DashboardPortal() {
                   <span className="leading-snug">Processor Panel (User 2 - Finance Officer)</span>
                 </h2>
                 <span className="text-[11px] sm:text-xs text-zinc-400 font-medium">
-                  Showing {approvedApproverList.length} approved expenses awaiting payment release
+                  Showing {processorTable.totalCount} approved expenses awaiting payment release
                 </span>
               </div>
 
@@ -634,20 +706,43 @@ export default function DashboardPortal() {
                   <p className="text-xs mt-1 text-zinc-600">No approved requests are currently waiting to be processed.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
-                    <thead>
-                      <tr className="text-zinc-400 font-semibold text-xs uppercase tracking-wider">
-                        <th className="py-3 px-4">Request ID</th>
-                        <th className="py-3 px-4">Requester</th>
-                        <th className="py-3 px-4">Category</th>
-                        <th className="py-3 px-4">Approver's Notes</th>
-                        <th className="py-3 px-4 text-right">Amount</th>
-                        <th className="py-3 px-4 text-center">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
-                      {approvedApproverList.map((e) => (
+                <>
+                  <div className="mb-4">
+                    <TableToolbar
+                      search={processorTable.search}
+                      onSearchChange={processorTable.setSearch}
+                      searchPlaceholder="Search requester, ID, desc..."
+                      filters={[
+                        {
+                          id: "category",
+                          value: processorTable.filters.category,
+                          onChange: (value) => processorTable.setFilter("category", value),
+                          options: CATEGORY_FILTER_OPTIONS,
+                        },
+                      ]}
+                    />
+                  </div>
+
+                  {processorTable.totalCount === 0 ? (
+                    <div className="text-center py-12 text-zinc-500">
+                      <p className="text-sm font-semibold">No results match filters</p>
+                      <p className="text-xs mt-1">Try resetting search or selecting another category.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
+                        <thead>
+                          <tr className="text-zinc-400 font-semibold text-xs uppercase tracking-wider">
+                            <th className="py-3 px-4">Request ID</th>
+                            <th className="py-3 px-4">Requester</th>
+                            <th className="py-3 px-4">Category</th>
+                            <th className="py-3 px-4">Approver's Notes</th>
+                            <th className="py-3 px-4 text-right">Amount</th>
+                            <th className="py-3 px-4 text-center">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+                          {processorTable.paginated.map((e) => (
                         <tr key={e.id} className="hover:bg-zinc-950/40 transition-colors">
                           <td className="py-3.5 px-4 font-mono text-xs text-indigo-400 font-bold">{e.id}</td>
                           <td className="py-3.5 px-4">
@@ -701,10 +796,21 @@ export default function DashboardPortal() {
                             </div>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  <TablePagination
+                    page={processorTable.page}
+                    totalPages={processorTable.totalPages}
+                    pageSize={processorTable.pageSize}
+                    totalCount={processorTable.totalCount}
+                    onPageChange={processorTable.setPage}
+                    onPageSizeChange={processorTable.setPageSize}
+                  />
+                </>
               )}
             </div>
           )}
@@ -792,75 +898,59 @@ export default function DashboardPortal() {
 
               {/* Data Table with Filters */}
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+                <div className="flex flex-col gap-4 mb-6">
                   <h3 className="text-lg font-bold text-white">All Expense Database</h3>
-                  
-                  {/* Search and Filters panel */}
-                  <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
-                    <input
-                      type="text"
-                      value={trackerSearch}
-                      onChange={(e) => setTrackerSearch(e.target.value)}
-                      placeholder="Search requester, ID, desc..."
-                      className="rounded-xl bg-zinc-950 border border-zinc-800 px-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:border-indigo-500 focus:outline-none transition-colors"
-                    />
 
-                    <select
-                      value={trackerStatusFilter}
-                      onChange={(e) => setTrackerStatusFilter(e.target.value)}
-                      className="rounded-xl bg-zinc-950 border border-zinc-800 px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none transition-colors cursor-pointer"
-                    >
-                      <option value="ALL">All Statuses</option>
-                      <option value="PENDING_APPROVER">Pending Approver</option>
-                      <option value="APPROVED_APPROVER">Pending processing</option>
-                      <option value="PROCESSED">Processed & Paid</option>
-                      <option value="REJECTED_APPROVER">Rejected by Approver</option>
-                      <option value="REJECTED_PROCESSOR">Rejected by Processor</option>
-                    </select>
-
-                    <select
-                      value={trackerCategoryFilter}
-                      onChange={(e) => setTrackerCategoryFilter(e.target.value)}
-                      className="rounded-xl bg-zinc-950 border border-zinc-800 px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none transition-colors cursor-pointer"
-                    >
-                      <option value="ALL">All Categories</option>
-                      <option value="Travel">Travel</option>
-                      <option value="Meals">Meals</option>
-                      <option value="Office">Office</option>
-                      <option value="Software">Software</option>
-                      <option value="Other">Other</option>
-                    </select>
-
+                  <TableToolbar
+                    search={trackerTable.search}
+                    onSearchChange={trackerTable.setSearch}
+                    searchPlaceholder="Search requester, ID, desc..."
+                    filters={[
+                      {
+                        id: "status",
+                        value: trackerTable.filters.status,
+                        onChange: (value) => trackerTable.setFilter("status", value),
+                        options: STATUS_FILTER_OPTIONS,
+                      },
+                      {
+                        id: "category",
+                        value: trackerTable.filters.category,
+                        onChange: (value) => trackerTable.setFilter("category", value),
+                        options: CATEGORY_FILTER_OPTIONS,
+                      },
+                    ]}
+                  >
                     <button
                       onClick={handleExportCSV}
                       className="inline-flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-500 px-3.5 py-1.5 text-xs font-bold text-white shadow transition-colors cursor-pointer"
                     >
                       📥 Export CSV Report
                     </button>
-                  </div>
+                  </TableToolbar>
                 </div>
 
-                {filteredTrackerList.length === 0 ? (
+                {trackerTable.totalCount === 0 ? (
                   <div className="text-center py-12 text-zinc-500">
                     <p className="text-sm font-semibold">No results match filters</p>
                     <p className="text-xs mt-1">Try resetting search string or selecting another status filter.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
-                      <thead>
-                        <tr className="text-zinc-400 font-semibold text-xs uppercase tracking-wider">
-                          <th className="py-2.5 px-3">ID</th>
-                          <th className="py-2.5 px-3">Requester</th>
-                          <th className="py-2.5 px-3">Category</th>
-                          <th className="py-2.5 px-3">Submission Date</th>
-                          <th className="py-2.5 px-3">Status</th>
-                          <th className="py-2.5 px-3 text-right">Amount</th>
-                          <th className="py-2.5 px-3 text-center">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-800/50 text-zinc-300">
-                        {filteredTrackerList.map((e) => {
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
+                        <thead>
+                          <tr className="text-zinc-400 font-semibold text-xs uppercase tracking-wider">
+                            <th className="py-2.5 px-3">ID</th>
+                            <th className="py-2.5 px-3">Requester</th>
+                            <th className="py-2.5 px-3">Category</th>
+                            <th className="py-2.5 px-3">Submission Date</th>
+                            <th className="py-2.5 px-3">Status</th>
+                            <th className="py-2.5 px-3 text-right">Amount</th>
+                            <th className="py-2.5 px-3 text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/50 text-zinc-300">
+                          {trackerTable.paginated.map((e) => {
                           return (
                             <tr key={e.id} className="hover:bg-zinc-950/40 transition-colors">
                               <td className="py-3 px-3 font-mono text-xs text-indigo-400 font-bold">{e.id}</td>
@@ -910,7 +1000,17 @@ export default function DashboardPortal() {
                         })}
                       </tbody>
                     </table>
-                  </div>
+                    </div>
+
+                    <TablePagination
+                      page={trackerTable.page}
+                      totalPages={trackerTable.totalPages}
+                      pageSize={trackerTable.pageSize}
+                      totalCount={trackerTable.totalCount}
+                      onPageChange={trackerTable.setPage}
+                      onPageSizeChange={trackerTable.setPageSize}
+                    />
+                  </>
                 )}
               </div>
             </div>
@@ -1273,19 +1373,49 @@ export default function DashboardPortal() {
           {usersLoading ? (
             <div className="text-center py-12 text-zinc-500">Loading users...</div>
           ) : (
-            <div className="rounded-xl border border-zinc-800 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-zinc-900 border-b border-zinc-800">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Role</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-zinc-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800/50">
-                  {users.map(u => (
+            <div className="rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900/40">
+              <div className="p-4 border-b border-zinc-800">
+                <TableToolbar
+                  search={usersTable.search}
+                  onSearchChange={usersTable.setSearch}
+                  searchPlaceholder="Search name or email..."
+                  filters={[
+                    {
+                      id: "role",
+                      value: usersTable.filters.role,
+                      onChange: (value) => usersTable.setFilter("role", value),
+                      options: ROLE_FILTER_OPTIONS,
+                    },
+                    {
+                      id: "status",
+                      value: usersTable.filters.status,
+                      onChange: (value) => usersTable.setFilter("status", value),
+                      options: USER_STATUS_FILTER_OPTIONS,
+                    },
+                  ]}
+                />
+              </div>
+
+              {usersTable.totalCount === 0 ? (
+                <div className="text-center py-12 text-zinc-500">
+                  <p className="text-sm font-semibold">No users match filters</p>
+                  <p className="text-xs mt-1">Try resetting search or changing role/status filters.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-zinc-900 border-b border-zinc-800">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Name</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Email</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Role</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Status</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-zinc-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-800/50">
+                        {usersTable.paginated.map((u) => (
                     <tr key={u._id} className="hover:bg-zinc-900/50 transition-colors">
                       <td className="px-4 py-3 font-medium text-white">{u.name}</td>
                       <td className="px-4 py-3 text-zinc-400">{u.email}</td>
@@ -1314,13 +1444,24 @@ export default function DashboardPortal() {
                           </button>
                         )}
                       </td>
-                    </tr>
-                  ))}
-                  {users.length === 0 && (
-                    <tr><td colSpan={5} className="px-4 py-8 text-center text-zinc-500">No users found.</td></tr>
-                  )}
-                </tbody>
-              </table>
+                        </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="px-4 pb-4">
+                    <TablePagination
+                      page={usersTable.page}
+                      totalPages={usersTable.totalPages}
+                      pageSize={usersTable.pageSize}
+                      totalCount={usersTable.totalCount}
+                      onPageChange={usersTable.setPage}
+                      onPageSizeChange={usersTable.setPageSize}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -1348,7 +1489,8 @@ export default function DashboardPortal() {
           )}
         </div>
       )}
-    </div>
-
+        </div>
+      </div>
+    </>
   );
 }

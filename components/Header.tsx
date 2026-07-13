@@ -1,9 +1,30 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { getUser, logout, AuthUser } from '../lib/auth';
 import { usePathname } from 'next/navigation';
 import Modal from './Modal';
+
+const roleBadgeClass: Record<string, string> = {
+  ADMIN: 'bg-amber-500/15 text-amber-300 border-amber-500/25',
+  APPROVER: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/25',
+  PROCESSOR: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
+};
+
+const roleIcon: Record<string, string> = {
+  ADMIN: '👑',
+  APPROVER: '✅',
+  PROCESSOR: '💳',
+};
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
 
 export default function Header() {
   const pathname = usePathname();
@@ -12,6 +33,8 @@ export default function Header() {
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -20,21 +43,33 @@ export default function Header() {
     }
   }, [isDashboard]);
 
-  const roleBadgeStyle: Record<string, React.CSSProperties> = {
-    ADMIN: { background: 'rgba(234,179,8,0.15)', color: '#fbbf24', border: '1px solid rgba(234,179,8,0.25)' },
-    APPROVER: { background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.25)' },
-    PROCESSOR: { background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' },
-  };
+  useEffect(() => {
+    if (!userMenuOpen) return;
 
-  const roleIcon: Record<string, string> = {
-    ADMIN: '👑',
-    APPROVER: '✅',
-    PROCESSOR: '💳',
-  };
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setUserMenuOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [userMenuOpen]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md">
-      <div suppressHydrationWarning className="mx-auto flex max-w-7xl min-h-14 sm:min-h-16 items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-6 lg:px-8">
+    <header className={`sticky top-0 z-50 shrink-0 w-full border-b border-zinc-800 bg-zinc-950 ${isDashboard ? "" : "bg-zinc-950/80 backdrop-blur-md"}`}>
+      <div
+        suppressHydrationWarning
+        className="flex min-h-14 w-full items-center justify-between gap-2 px-4 py-2 sm:min-h-16 sm:gap-3 sm:px-6 lg:px-8"
+      >
         <div suppressHydrationWarning className="flex min-w-0 items-center">
           <Link href="/" className="flex min-w-0 items-center gap-2 group sm:gap-2.5">
             <div suppressHydrationWarning className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-indigo-500/20 transition-transform group-hover:scale-105">
@@ -48,39 +83,64 @@ export default function Header() {
 
         <div suppressHydrationWarning className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           {!mounted ? (
-            // Placeholder skeleton to avoid layout shift during mount
-            <div suppressHydrationWarning className="h-8 w-28 rounded-lg bg-zinc-800/50 animate-pulse" />
+            <div suppressHydrationWarning className="h-9 w-32 rounded-lg bg-zinc-800/50 animate-pulse" />
           ) : mounted && isDashboard && user ? (
-            <>
-              {/* Role Badge */}
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  borderRadius: '9999px',
-                  padding: '0.2rem 0.5rem',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.05em',
-                  whiteSpace: 'nowrap',
-                  ...roleBadgeStyle[user.role],
-                }}
-              >
-                {roleIcon[user.role]}
-                <span className="hidden sm:inline">{user.role}</span>
-              </span>
-              <span className="hidden md:block max-w-[120px] truncate text-sm text-zinc-300 font-medium">
-                {user.name}
-              </span>
+            <div ref={userMenuRef} className="relative">
               <button
-                onClick={() => setShowLogoutConfirm(true)}
-                className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-700 px-2 sm:px-3 text-xs font-medium text-zinc-400 hover:border-red-500/50 hover:text-red-400 transition-colors cursor-pointer whitespace-nowrap"
+                type="button"
+                onClick={() => setUserMenuOpen((open) => !open)}
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+                className="inline-flex h-9 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/80 px-2 sm:px-3 text-sm font-medium text-zinc-200 hover:bg-zinc-800 hover:border-zinc-600 transition-colors cursor-pointer"
               >
-                <span className="sm:hidden">Out</span>
-                <span className="hidden sm:inline">Sign Out</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-[10px] font-bold text-white">
+                  {getInitials(user.name)}
+                </span>
+                <span className="hidden sm:block max-w-[120px] truncate">{user.name}</span>
+                <svg
+                  className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
-            </>
+
+              {userMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-64 rounded-xl border border-zinc-800 bg-zinc-950 shadow-xl shadow-black/40 overflow-hidden z-50"
+                >
+                  <div className="px-4 py-3 border-b border-zinc-800">
+                    <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+                    <p className="text-xs text-zinc-500 truncate mt-0.5">{user.email}</p>
+                    <span
+                      className={`inline-flex items-center gap-1.5 mt-2 rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide ${roleBadgeClass[user.role]}`}
+                    >
+                      {roleIcon[user.role]}
+                      {user.role}
+                    </span>
+                  </div>
+
+                  <div className="p-2">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        setShowLogoutConfirm(true);
+                      }}
+                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
+                    >
+                      <span>🚪</span>
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <span className="hidden sm:inline-flex items-center rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-500/20">

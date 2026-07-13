@@ -1,9 +1,16 @@
-import React from "react";
+"use client";
+
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+  const isDashboard = pathname?.startsWith("/dashboard");
+
+  if (isDashboard) return null;
+
   return (
-    <footer className="border-t border-zinc-900 bg-zinc-950 py-6">
-      <div suppressHydrationWarning className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center sm:flex sm:items-center sm:justify-between">
+    <footer className="shrink-0 w-full border-t border-zinc-900 bg-zinc-950 py-6">
+      <div suppressHydrationWarning className="flex w-full flex-col px-4 text-center sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <p className="text-xs text-zinc-500">
           &copy; {new Date().getFullYear()} AceFinance Corp. All rights reserved.
         </p>

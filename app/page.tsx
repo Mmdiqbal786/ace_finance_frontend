@@ -224,7 +224,7 @@ export default function PublicPortal() {
 
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex-1 flex flex-col justify-center">
+    <div className="mx-auto max-w-7xl flex flex-1 flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
       {/* Hero Header */}
       <div className="text-center md:text-left mb-10">
         <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
