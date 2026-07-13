@@ -1,3 +1,3 @@
-import DashboardWorkspace from "../../components/dashboard/DashboardWorkspace";
+import DashboardWorkspace from "../../components/dashboard/DashboardClientEntry";
 
 export default DashboardWorkspace;

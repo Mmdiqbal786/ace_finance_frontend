@@ -232,11 +232,19 @@ export default function PublicPortal() {
 
 
   return (
-    <div className="mx-auto max-w-7xl flex flex-1 flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
+    <div className="portal-page relative flex flex-1 flex-col overflow-hidden">
+      <div className="portal-bg" aria-hidden="true">
+        <div className="portal-orb portal-orb--violet" />
+        <div className="portal-orb portal-orb--indigo" />
+        <div className="portal-orb portal-orb--cyan" />
+        <div className="portal-grid" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-7xl flex flex-1 flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
       {/* Hero Header */}
       <div className="text-center md:text-left mb-10">
         <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-          Public Expense <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">Portal</span>
+          Public Expense <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400">Portal</span>
         </h1>
         <p className="mt-3 max-w-2xl text-lg text-zinc-400">
           Submit reimbursement requests directly to management and track your payments in real-time.
@@ -245,7 +253,7 @@ export default function PublicPortal() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Form */}
-        <div className="lg:col-span-7 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden p-6 sm:p-8">
+        <div className="portal-card lg:col-span-7 rounded-2xl p-6 sm:p-8">
           <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-400 text-sm">📝</span>
             New Expense Request
@@ -375,8 +383,8 @@ export default function PublicPortal() {
                     onClick={() => setCategory(cat.id)}
                     className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
                       category === cat.id
-                        ? "bg-indigo-600/10 border-indigo-500 text-indigo-400 shadow-md shadow-indigo-500/5"
-                        : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white"
+                        ? "bg-gradient-to-br from-indigo-600/20 to-violet-600/10 border-indigo-400/60 text-indigo-300 shadow-lg shadow-indigo-500/10"
+                        : "bg-zinc-950/80 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-white"
                     }`}
                   >
                     <span className="text-xl mb-1">{cat.icon}</span>
@@ -404,7 +412,7 @@ export default function PublicPortal() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex h-12 items-center justify-center rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/15 hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 hover:from-indigo-500 hover:to-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {submitting ? (
                 <span className="flex items-center gap-2">
@@ -428,7 +436,7 @@ export default function PublicPortal() {
 
         {/* Right Column: Status Tracker */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 sm:p-8">
+          <div className="portal-card portal-card--track rounded-2xl p-6 sm:p-8">
             <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-md bg-violet-500/10 text-violet-400 text-sm">🔍</span>
               Track Status
@@ -452,7 +460,7 @@ export default function PublicPortal() {
               <button
                 onClick={() => handleSearch()}
                 disabled={searching}
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-500 px-5 text-sm font-semibold text-white shadow transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-600/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 {searching ? "Searching..." : "Track"}
               </button>
@@ -507,7 +515,7 @@ export default function PublicPortal() {
 
           {/* Search Result Timeline */}
           {searchResults.length > 0 && (
-            <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 sm:p-8 pr-12 space-y-6">
+            <div className="portal-card relative rounded-2xl p-6 sm:p-8 pr-12 space-y-6">
               <button
                 type="button"
                 onClick={() => setSearchResults([])}
@@ -591,6 +599,7 @@ export default function PublicPortal() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

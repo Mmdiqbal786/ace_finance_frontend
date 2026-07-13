@@ -16,7 +16,7 @@ export default function StatCard({
   valueColor = "text-white",
 }: StatCardProps) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-sm">
+    <div className="portal-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
       <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block pr-10 leading-snug">
         {title}
       </span>
