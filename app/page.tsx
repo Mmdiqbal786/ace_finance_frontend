@@ -244,7 +244,15 @@ export default function PublicPortal() {
           </h2>
 
           {submitSuccess && (
-            <div className="mb-6 rounded-xl bg-indigo-500/10 border border-indigo-500/30 p-5 text-zinc-100">
+            <div className="relative mb-6 rounded-xl bg-indigo-500/10 border border-indigo-500/30 p-5 pr-12 text-zinc-100">
+              <button
+                type="button"
+                onClick={() => setSubmitSuccess(null)}
+                className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-indigo-500/10 hover:text-white transition-colors cursor-pointer"
+                aria-label="Dismiss success message"
+              >
+                ✕
+              </button>
               <div className="flex items-center gap-3 mb-2 text-indigo-400 font-bold">
                 <span className="text-xl">🎉</span> Request Submitted Successfully!
               </div>
@@ -491,8 +499,16 @@ export default function PublicPortal() {
 
           {/* Search Result Timeline */}
           {searchResults.length > 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 sm:p-8 space-y-6">
-              <div className="flex justify-between items-start border-b border-zinc-800 pb-4">
+            <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 sm:p-8 pr-12 space-y-6">
+              <button
+                type="button"
+                onClick={() => setSearchResults([])}
+                className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
+                aria-label="Close tracking details"
+              >
+                ✕
+              </button>
+              <div className="flex justify-between items-start border-b border-zinc-800 pb-4 pr-2">
                 <div>
                   <h3 className="text-sm font-semibold text-zinc-500 font-mono">{searchResults[0].id}</h3>
                   <p className="text-lg font-bold text-white mt-0.5">{searchResults[0].category}</p>

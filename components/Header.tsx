@@ -3,16 +3,15 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getUser, logout, AuthUser } from '../lib/auth';
 import { usePathname } from 'next/navigation';
+import Modal from './Modal';
 
 export default function Header() {
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith('/dashboard');
 
-  // Use mounted state to avoid SSR/client hydration mismatch.
-  // localStorage is only available on the client, so we read it
-  // after mount to prevent server-rendered HTML differing from client.
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -75,7 +74,7 @@ export default function Header() {
                 {user.name}
               </span>
               <button
-                onClick={logout}
+                onClick={() => setShowLogoutConfirm(true)}
                 className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-700 px-2 sm:px-3 text-xs font-medium text-zinc-400 hover:border-red-500/50 hover:text-red-400 transition-colors cursor-pointer whitespace-nowrap"
               >
                 <span className="sm:hidden">Out</span>
@@ -97,6 +96,33 @@ export default function Header() {
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="Sign Out?"
+        maxWidthClass="max-w-md"
+      >
+        <p className="text-sm text-zinc-400">
+          Are you sure you want to sign out of your dashboard session?
+        </p>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setShowLogoutConfirm(false)}
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-700 px-4 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={logout}
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-500 transition-colors cursor-pointer"
+          >
+            Sign Out
+          </button>
+        </div>
+      </Modal>
     </header>
   );
 }
