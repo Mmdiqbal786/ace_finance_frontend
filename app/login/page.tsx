@@ -20,16 +20,18 @@ function LoginSpinner({ className = "h-5 w-5 text-white" }: { className?: string
 function FullPageLoader({ message }: { message: string }) {
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-4"
-      style={{
-        background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
-        fontFamily: "'Inter', sans-serif",
-      }}
+      className="portal-page fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden px-4"
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="flex flex-col items-center gap-5 text-center">
+      <div className="portal-bg" aria-hidden="true">
+        <div className="portal-orb portal-orb--violet" />
+        <div className="portal-orb portal-orb--indigo" />
+        <div className="portal-orb portal-orb--cyan" />
+        <div className="portal-grid" />
+      </div>
+      <div className="relative z-10 flex flex-col items-center gap-5 text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-lg font-extrabold text-white shadow-lg shadow-indigo-500/30">
           AF
         </div>
@@ -114,52 +116,38 @@ export default function LoginPage() {
       {showFullPageLoader && <FullPageLoader message={loaderMessage} />}
 
       {mounted && !redirecting && (
-    <div
-      className="login-page flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center p-4 sm:min-h-[calc(100dvh-4rem)]"
-      style={{
-      background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
-      fontFamily: "'Inter', sans-serif",
-    }}>
-      <div style={{ width: '100%', maxWidth: '420px' }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
-            background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px',
-            padding: '0.75rem 1.25rem',
-          }}>
-            <div style={{
-              width: '36px', height: '36px', borderRadius: '8px',
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1rem', fontWeight: 800, color: '#fff',
-            }}>AF</div>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: '1.25rem' }}>
-              Ace<span style={{ color: '#818cf8' }}>Finance</span>
+    <div className="portal-page login-page relative flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center overflow-hidden p-4 sm:min-h-[calc(100dvh-4rem)]">
+      <div className="portal-bg" aria-hidden="true">
+        <div className="portal-orb portal-orb--violet" />
+        <div className="portal-orb portal-orb--indigo" />
+        <div className="portal-orb portal-orb--cyan" />
+        <div className="portal-grid" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-[420px]">
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-3 backdrop-blur-md">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-sm font-extrabold text-white shadow-lg shadow-indigo-500/25">
+              AF
+            </div>
+            <span className="text-xl font-bold text-white">
+              Ace<span className="text-indigo-400">Finance</span>
             </span>
           </div>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', marginTop: '1rem' }}>
-            Dashboard Login — Staff Only
-          </p>
+          <p className="mt-4 text-sm text-zinc-400">Dashboard Login — Staff Only</p>
         </div>
 
-        {/* Card */}
-        <div style={{
-          background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px',
-          padding: '2rem',
-        }}>
-          <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-            Sign In
+        <div className="portal-card rounded-[20px] p-8">
+          <h1 className="text-2xl font-bold text-white">
+            Sign <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400">In</span>
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', marginBottom: '1.75rem' }}>
+          <p className="mt-2 mb-7 text-sm text-zinc-400">
             Enter your credentials to access the dashboard
           </p>
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} suppressHydrationWarning>
+          <form onSubmit={handleLogin} className="flex flex-col gap-4" suppressHydrationWarning>
             <div>
-              <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '0.4rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              <label htmlFor="login-email" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
                 Email Address
               </label>
               <input
@@ -176,7 +164,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '0.4rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              <label htmlFor="login-password" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
                 Password
               </label>
               <div className="relative">
@@ -215,10 +203,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div style={{
-                background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
-                borderRadius: '8px', padding: '0.75rem 1rem', color: '#fca5a5', fontSize: '0.875rem',
-              }}>
+              <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
                 ⚠️ {error}
               </div>
             )}
@@ -227,15 +212,7 @@ export default function LoginPage() {
               id="login-submit"
               type="submit"
               disabled={loading}
-              style={{
-                padding: '0.875rem', borderRadius: '10px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                color: '#fff', fontSize: '0.95rem', fontWeight: 600, letterSpacing: '0.02em',
-                transition: 'all 0.2s', transform: 'translateY(0)',
-                boxShadow: '0 4px 15px rgba(99,102,241,0.3)',
-              }}
-              onMouseEnter={e => { if (!loading) (e.target as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => (e.target as HTMLButtonElement).style.transform = 'translateY(0)'}
+              className="w-full rounded-[10px] bg-gradient-to-r from-indigo-600 to-violet-600 py-3.5 text-[0.95rem] font-semibold text-white shadow-lg shadow-indigo-600/25 transition-all hover:from-indigo-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               Sign In →
             </button>
@@ -276,10 +253,9 @@ export default function LoginPage() {
           */}
         </div>
 
-        {/* Footer hint */}
-        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
+        <p className="mt-6 text-center text-xs text-zinc-500">
           Public expense form available at{' '}
-          <a href="/" style={{ color: '#818cf8', textDecoration: 'none' }}>the homepage</a>
+          <a href="/" className="text-indigo-400 no-underline hover:text-indigo-300">the homepage</a>
         </p>
       </div>
     </div>
