@@ -432,8 +432,15 @@ export default function DashboardWorkspace() {
         onMobileClose={() => setSidebarOpen(false)}
       />
 
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <div className="portal-page relative min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <div className="portal-bg" aria-hidden="true">
+          <div className="portal-orb portal-orb--violet" />
+          <div className="portal-orb portal-orb--indigo" />
+          <div className="portal-orb portal-orb--cyan" />
+          <div className="portal-grid" />
+        </div>
+
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
           <DashboardBreadcrumb section={activeSection} />
 
           <div className="flex items-start justify-between gap-3 mb-6 sm:mb-8">
@@ -443,7 +450,7 @@ export default function DashboardWorkspace() {
                 {sectionMeta.titleAccent && (
                   <>
                     {" "}
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400">
                       {sectionMeta.titleAccent}
                     </span>
                   </>
@@ -499,7 +506,7 @@ export default function DashboardWorkspace() {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-zinc-900/40 rounded-2xl border border-zinc-800">
+        <div className="portal-card flex flex-col items-center justify-center rounded-2xl py-20">
           <svg className="animate-spin h-8 w-8 text-indigo-500 mb-3" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -513,7 +520,7 @@ export default function DashboardWorkspace() {
           )}
 
           {activeSection === "approver" && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
+            <div className="portal-card rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6 pb-4 border-b border-zinc-800">
                 <span className="text-[11px] sm:text-xs text-zinc-400 font-medium">
                   Showing {approverTable.totalCount} expenses awaiting your sign-off
@@ -627,7 +634,7 @@ export default function DashboardWorkspace() {
 
           {/* TAB 2: PROCESSOR VIEW (USER 2) */}
           {activeSection === "processor" && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
+            <div className="portal-card rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6 pb-4 border-b border-zinc-800">
                 <span className="text-[11px] sm:text-xs text-zinc-400 font-medium">
                   Showing {processorTable.totalCount} approved expenses awaiting payment release
@@ -742,7 +749,7 @@ export default function DashboardWorkspace() {
               {stats && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Category Breakdown Card */}
-                  <div className="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+                  <div className="md:col-span-2 portal-card rounded-2xl p-6 shadow-xl">
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-1.5">
                       <span>📊</span> Volume by Category
                     </h3>
@@ -779,7 +786,7 @@ export default function DashboardWorkspace() {
                   </div>
 
                   {/* Recent Activity Log Card */}
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+                  <div className="portal-card rounded-2xl p-6 shadow-xl">
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-1.5">
                       <span>⏱️</span> Audit Activity Log
                     </h3>
@@ -817,7 +824,7 @@ export default function DashboardWorkspace() {
               )}
 
               {/* Data Table with Filters */}
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
+              <div className="portal-card rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
                 <div className="flex flex-col gap-4 mb-6">
                   <h3 className="text-lg font-bold text-white">All Expense Database</h3>
 
@@ -1233,7 +1240,7 @@ export default function DashboardWorkspace() {
           {usersLoading ? (
             <div className="text-center py-12 text-zinc-500">Loading users...</div>
           ) : (
-            <div className="rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900/40">
+            <div className="portal-card rounded-xl overflow-hidden">
               <div className="p-4 border-b border-zinc-800">
                 <TableToolbar
                   search={usersTable.search}

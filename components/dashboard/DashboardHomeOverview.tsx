@@ -66,7 +66,7 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+        <div className="lg:col-span-2 portal-card rounded-2xl p-6 shadow-xl">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
             <span>📈</span> 6-Month Trend
           </h3>
@@ -109,7 +109,7 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
           </div>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+        <div className="portal-card rounded-2xl p-6 shadow-xl">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-1.5">
             <span>📊</span> Spending by Category
           </h3>
@@ -143,7 +143,7 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
       </div>
 
       {stats && stats.recentActivity.length > 0 && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+        <div className="portal-card rounded-2xl p-6 shadow-xl">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-1.5">
             <span>⏱️</span> Recent Activity
           </h3>
