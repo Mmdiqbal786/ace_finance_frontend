@@ -585,27 +585,25 @@ export default function DashboardWorkspace() {
                           </td>
                           <td className="py-3.5 px-4 text-right font-bold text-white">${e.amount.toFixed(2)}</td>
                           <td className="py-3.5 px-4 text-center">
-                            <div className="flex flex-col items-center gap-2">
-                              <div className="flex justify-center items-center gap-2 flex-wrap">
-                                <button
-                                  onClick={() => openActionModal(e, "approve")}
-                                  className="inline-flex h-8 items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() => openActionModal(e, "reject")}
-                                  className="inline-flex h-8 items-center justify-center rounded-lg bg-rose-600 hover:bg-rose-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
-                                >
-                                  Reject
-                                </button>
-                              </div>
-                              <TableRowActions
-                                onView={() => openActionModal(e, "view")}
-                                onEdit={() => openEditModal(e)}
-                                onDelete={() => triggerDeleteConfirm(e)}
-                              />
-                            </div>
+                            <TableRowActions
+                              onView={() => openActionModal(e, "view")}
+                              onEdit={() => openEditModal(e)}
+                              onDelete={() => triggerDeleteConfirm(e)}
+                              extraActions={[
+                                {
+                                  label: "Approve",
+                                  icon: "✅",
+                                  tone: "success",
+                                  onClick: () => openActionModal(e, "approve"),
+                                },
+                                {
+                                  label: "Reject",
+                                  icon: "❌",
+                                  tone: "danger",
+                                  onClick: () => openActionModal(e, "reject"),
+                                },
+                              ]}
+                            />
                           </td>
                         </tr>
                           ))}
@@ -697,27 +695,25 @@ export default function DashboardWorkspace() {
                           </td>
                           <td className="py-3.5 px-4 text-right font-bold text-white">${e.amount.toFixed(2)}</td>
                           <td className="py-3.5 px-4 text-center">
-                            <div className="flex flex-col items-center gap-2">
-                              <div className="flex justify-center items-center gap-2 flex-wrap">
-                                <button
-                                  onClick={() => openActionModal(e, "process")}
-                                  className="inline-flex h-8 items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
-                                >
-                                  Mark Paid
-                                </button>
-                                <button
-                                  onClick={() => openActionModal(e, "processor-reject")}
-                                  className="inline-flex h-8 items-center justify-center rounded-lg bg-rose-600 hover:bg-rose-500 px-3 text-xs font-bold text-white transition-colors cursor-pointer"
-                                >
-                                  Reject Payout
-                                </button>
-                              </div>
-                              <TableRowActions
-                                onView={() => openActionModal(e, "view")}
-                                onEdit={() => openEditModal(e)}
-                                onDelete={() => triggerDeleteConfirm(e)}
-                              />
-                            </div>
+                            <TableRowActions
+                              onView={() => openActionModal(e, "view")}
+                              onEdit={() => openEditModal(e)}
+                              onDelete={() => triggerDeleteConfirm(e)}
+                              extraActions={[
+                                {
+                                  label: "Mark Paid",
+                                  icon: "💸",
+                                  tone: "success",
+                                  onClick: () => openActionModal(e, "process"),
+                                },
+                                {
+                                  label: "Reject Payout",
+                                  icon: "❌",
+                                  tone: "danger",
+                                  onClick: () => openActionModal(e, "processor-reject"),
+                                },
+                              ]}
+                            />
                           </td>
                         </tr>
                           ))}
@@ -897,7 +893,6 @@ export default function DashboardWorkspace() {
                               <td className="py-3 px-3 text-right font-semibold text-white">${e.amount.toFixed(2)}</td>
                               <td className="py-3 px-3 text-center">
                                 <TableRowActions
-                                  compact
                                   onView={() => openActionModal(e, "view")}
                                   onEdit={() => openEditModal(e)}
                                   onDelete={() => triggerDeleteConfirm(e)}

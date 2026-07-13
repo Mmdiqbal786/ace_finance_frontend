@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   // const [seeding, setSeeding] = useState(false);
@@ -60,7 +61,9 @@ export default function LoginPage() {
   // }
 
   return (
-    <div className="flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center p-4 sm:min-h-[calc(100dvh-4rem)]" style={{
+    <div
+      className="login-page flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center p-4 sm:min-h-[calc(100dvh-4rem)]"
+      style={{
       background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
       fontFamily: "'Inter', sans-serif",
     }}>
@@ -110,18 +113,12 @@ export default function LoginPage() {
               <input
                 id="login-email"
                 type="email"
+                className="login-input w-full box-border rounded-[10px] border border-white/12 bg-white/[0.06] px-4 py-3 text-[0.95rem] text-white outline-none transition-colors focus:border-indigo-500"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                autoComplete="email"
                 placeholder="you@acefinance.com"
                 required
-                style={{
-                  width: '100%', padding: '0.75rem 1rem', boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '10px', color: '#fff', fontSize: '0.95rem', outline: 'none',
-                  transition: 'border-color 0.2s',
-                }}
-                onFocus={e => e.target.style.borderColor = '#6366f1'}
-                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
               />
             </div>
 
@@ -129,22 +126,38 @@ export default function LoginPage() {
               <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '0.4rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 Password
               </label>
-              <input
-                id="login-password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                style={{
-                  width: '100%', padding: '0.75rem 1rem', boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '10px', color: '#fff', fontSize: '0.95rem', outline: 'none',
-                  transition: 'border-color 0.2s',
-                }}
-                onFocus={e => e.target.style.borderColor = '#6366f1'}
-                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
-              />
+              <div className="relative">
+                <input
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  className="login-input w-full box-border rounded-[10px] border border-white/12 bg-white/[0.06] py-3 pl-4 pr-11 text-[0.95rem] text-white outline-none transition-colors focus:border-indigo-500"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border-0 bg-white/10 p-0 text-white/75 hover:bg-white/15 hover:text-white cursor-pointer"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                      <path d="M1 1l22 22" />
+                      <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             {error && (
