@@ -450,13 +450,13 @@ export default function DashboardWorkspace() {
                 {sectionMeta.titleAccent && (
                   <>
                     {" "}
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-800 via-sky-700 to-sky-500">
+                    <span className="af-title-accent">
                       {sectionMeta.titleAccent}
                     </span>
                   </>
                 )}
               </h1>
-              <p className="mt-1.5 text-xs sm:text-sm text-slate-500 leading-relaxed">
+              <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
                 {sectionMeta.subtitle}
               </p>
             </div>
@@ -477,7 +477,7 @@ export default function DashboardWorkspace() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                className="lg:hidden inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-400 bg-white px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 <span>☰</span>
                 <span>Menu</span>
@@ -507,11 +507,11 @@ export default function DashboardWorkspace() {
 
       {loading ? (
         <div className="portal-card flex flex-col items-center justify-center rounded-2xl py-20">
-          <svg className="animate-spin h-8 w-8 text-sky-600 mb-3" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-8 w-8 text-[var(--af-accent)] mb-3" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
-          <span className="text-slate-500 text-sm">Loading expense database...</span>
+          <span className="text-slate-700 text-sm">Loading expense database...</span>
         </div>
       ) : (
         <>
@@ -521,17 +521,17 @@ export default function DashboardWorkspace() {
 
           {activeSection === "approver" && (
             <div className="portal-card rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6 pb-4 border-b border-slate-200">
-                <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6 pb-4 border-b border-slate-400">
+                <span className="text-sm text-slate-700 font-medium">
                   Showing {approverTable.totalCount} expenses awaiting your sign-off
                 </span>
               </div>
 
               {pendingApproverList.length === 0 ? (
-                <div className="text-center py-16 text-slate-500">
+                <div className="text-center py-16 text-slate-700">
                   <span className="text-3xl block mb-2">🎉</span>
                   <p className="text-sm font-semibold">Inbox is clear!</p>
-                  <p className="text-xs mt-1 text-slate-500">No public expense requests are currently pending review.</p>
+                  <p className="text-xs mt-1 text-slate-700">No public expense requests are currently pending review.</p>
                 </div>
               ) : (
                 <>
@@ -552,15 +552,15 @@ export default function DashboardWorkspace() {
                   </div>
 
                   {approverTable.totalCount === 0 ? (
-                    <div className="text-center py-12 text-slate-500">
+                    <div className="text-center py-12 text-slate-700">
                       <p className="text-sm font-semibold">No results match filters</p>
                       <p className="text-xs mt-1">Try resetting search or selecting another category.</p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                    <div className="af-table-wrap">
+                      <table className="af-table min-w-full">
                         <thead>
-                          <tr className="text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                          <tr>
                             <th className="py-3 px-4">Request ID</th>
                             <th className="py-3 px-4">Requester</th>
                             <th className="py-3 px-4">Category</th>
@@ -570,13 +570,13 @@ export default function DashboardWorkspace() {
                             <th className="py-3 px-4 text-center">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200 text-slate-600">
+                        <tbody>
                           {approverTable.paginated.map((e) => (
                         <tr key={e.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-3.5 px-4 font-mono text-xs text-sky-700 font-bold">{e.id}</td>
+                          <td className="py-3.5 px-4 font-mono text-sm text-[var(--af-accent)] font-bold">{e.id}</td>
                           <td className="py-3.5 px-4">
                             <div className="font-semibold text-slate-900">{e.requesterName}</div>
-                            <div className="text-xs text-slate-500">{e.requesterEmail}</div>
+                            <div className="text-xs text-slate-700">{e.requesterEmail}</div>
                           </td>
                           <td className="py-3.5 px-4">
                             <span className="inline-flex items-center gap-1">
@@ -584,10 +584,10 @@ export default function DashboardWorkspace() {
                               <span className="font-medium">{e.category}</span>
                             </span>
                           </td>
-                          <td className="py-3.5 px-4 text-slate-500 text-xs">
+                          <td className="py-3.5 px-4 text-slate-600 text-xs">
                             {new Date(e.submittedAt).toLocaleDateString()}
                           </td>
-                          <td className="py-3.5 px-4 max-w-xs truncate text-xs text-slate-500" title={e.description}>
+                          <td className="py-3.5 px-4 max-w-xs truncate text-xs text-slate-700" title={e.description}>
                             {e.description}
                           </td>
                           <td className="py-3.5 px-4 text-right font-bold text-slate-900">${e.amount.toFixed(2)}</td>
@@ -635,17 +635,17 @@ export default function DashboardWorkspace() {
           {/* TAB 2: PROCESSOR VIEW (USER 2) */}
           {activeSection === "processor" && (
             <div className="portal-card rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6 pb-4 border-b border-slate-200">
-                <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6 pb-4 border-b border-slate-400">
+                <span className="text-sm text-slate-700 font-medium">
                   Showing {processorTable.totalCount} approved expenses awaiting payment release
                 </span>
               </div>
 
               {approvedApproverList.length === 0 ? (
-                <div className="text-center py-16 text-slate-500">
+                <div className="text-center py-16 text-slate-700">
                   <span className="text-3xl block mb-2">🎈</span>
                   <p className="text-sm font-semibold">All payouts cleared!</p>
-                  <p className="text-xs mt-1 text-slate-500">No approved requests are currently waiting to be processed.</p>
+                  <p className="text-xs mt-1 text-slate-700">No approved requests are currently waiting to be processed.</p>
                 </div>
               ) : (
                 <>
@@ -666,15 +666,15 @@ export default function DashboardWorkspace() {
                   </div>
 
                   {processorTable.totalCount === 0 ? (
-                    <div className="text-center py-12 text-slate-500">
+                    <div className="text-center py-12 text-slate-700">
                       <p className="text-sm font-semibold">No results match filters</p>
                       <p className="text-xs mt-1">Try resetting search or selecting another category.</p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                    <div className="af-table-wrap">
+                      <table className="af-table min-w-full">
                         <thead>
-                          <tr className="text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                          <tr>
                             <th className="py-3 px-4">Request ID</th>
                             <th className="py-3 px-4">Requester</th>
                             <th className="py-3 px-4">Category</th>
@@ -683,13 +683,13 @@ export default function DashboardWorkspace() {
                             <th className="py-3 px-4 text-center">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200 text-slate-600">
+                        <tbody>
                           {processorTable.paginated.map((e) => (
                         <tr key={e.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-3.5 px-4 font-mono text-xs text-sky-700 font-bold">{e.id}</td>
+                          <td className="py-3.5 px-4 font-mono text-sm text-[var(--af-accent)] font-bold">{e.id}</td>
                           <td className="py-3.5 px-4">
                             <div className="font-semibold text-slate-900">{e.requesterName}</div>
-                            <div className="text-xs text-slate-500">{e.requesterEmail}</div>
+                            <div className="text-xs text-slate-700">{e.requesterEmail}</div>
                           </td>
                           <td className="py-3.5 px-4">
                             <span className="inline-flex items-center gap-1">
@@ -697,7 +697,7 @@ export default function DashboardWorkspace() {
                               <span className="font-medium">{e.category}</span>
                             </span>
                           </td>
-                          <td className="py-3.5 px-4 max-w-xs truncate text-xs text-sky-700 italic" title={e.approverNotes}>
+                          <td className="py-3.5 px-4 max-w-xs truncate text-xs text-[var(--af-accent)] italic" title={e.approverNotes}>
                             "{e.approverNotes || "No notes written."}"
                           </td>
                           <td className="py-3.5 px-4 text-right font-bold text-slate-900">${e.amount.toFixed(2)}</td>
@@ -766,8 +766,8 @@ export default function DashboardWorkspace() {
                                 <span>{CATEGORY_ICONS[category] || "📦"}</span>
                                 <span className="text-slate-600">{category}</span>
                               </span>
-                              <span className="text-slate-500 font-bold">
-                                ${amount.toFixed(2)} <span className="text-slate-500">({percent.toFixed(1)}%)</span>
+                              <span className="text-slate-700 font-bold">
+                                ${amount.toFixed(2)} <span className="text-slate-700">({percent.toFixed(1)}%)</span>
                               </span>
                             </div>
                             <div className="h-2 w-full rounded-full bg-slate-50 overflow-hidden">
@@ -780,7 +780,7 @@ export default function DashboardWorkspace() {
                         );
                       })}
                       {Object.keys(stats.byCategory).length === 0 && (
-                        <p className="text-xs text-slate-500 py-6 text-center">No categories recorded yet.</p>
+                        <p className="text-xs text-slate-700 py-6 text-center">No categories recorded yet.</p>
                       )}
                     </div>
                   </div>
@@ -799,14 +799,14 @@ export default function DashboardWorkspace() {
                                 <span className="absolute left-3 top-3 -ml-px h-full w-0.5 bg-slate-100" aria-hidden="true" />
                               ) : null}
                               <div className="relative flex space-x-2 items-start">
-                                <div className="h-6 w-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-[10px]">
+                                <div className="h-6 w-6 rounded-full bg-slate-50 border border-slate-400 flex items-center justify-center text-xs">
                                   {log.action.includes("Submitted") ? "📥" : log.action.includes("Approved") ? "✅" : log.action.includes("Rejected") ? "❌" : "💸"}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-[11px] font-bold text-slate-800">
+                                  <div className="text-sm font-bold text-slate-800">
                                     {log.action}
                                   </div>
-                                  <div className="text-[9px] text-slate-500 font-mono mt-0.5">
+                                  <div className="text-xs text-slate-700 font-mono mt-0.5">
                                     {log.expenseId.substring(0, 14)}... • {log.user}
                                   </div>
                                 </div>
@@ -815,7 +815,7 @@ export default function DashboardWorkspace() {
                           </li>
                         ))}
                         {stats.recentActivity.length === 0 && (
-                          <p className="text-xs text-slate-500 py-6 text-center">No logged logs.</p>
+                          <p className="text-xs text-slate-700 py-6 text-center">No logged logs.</p>
                         )}
                       </ul>
                     </div>
@@ -857,16 +857,16 @@ export default function DashboardWorkspace() {
                 </div>
 
                 {trackerTable.totalCount === 0 ? (
-                  <div className="text-center py-12 text-slate-500">
+                  <div className="text-center py-12 text-slate-700">
                     <p className="text-sm font-semibold">No results match filters</p>
                     <p className="text-xs mt-1">Try resetting search string or selecting another status filter.</p>
                   </div>
                 ) : (
                   <>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                    <div className="af-table-wrap">
+                      <table className="af-table min-w-full">
                         <thead>
-                          <tr className="text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                          <tr>
                             <th className="py-2.5 px-3">ID</th>
                             <th className="py-2.5 px-3">Requester</th>
                             <th className="py-2.5 px-3">Category</th>
@@ -876,14 +876,14 @@ export default function DashboardWorkspace() {
                             <th className="py-2.5 px-3 text-center">Action</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200 text-slate-600">
+                        <tbody>
                           {trackerTable.paginated.map((e) => {
                           return (
                             <tr key={e.id} className="hover:bg-slate-50 transition-colors">
-                              <td className="py-3 px-3 font-mono text-xs text-sky-700 font-bold">{e.id}</td>
+                              <td className="py-3 px-3 font-mono text-sm text-[var(--af-accent)] font-bold">{e.id}</td>
                               <td className="py-3 px-3">
                                 <div className="font-semibold text-slate-900 text-xs">{e.requesterName}</div>
-                                <div className="text-[10px] text-slate-500">{e.requesterEmail}</div>
+                                <div className="text-xs text-slate-700">{e.requesterEmail}</div>
                               </td>
                               <td className="py-3 px-3 text-xs">
                                 <span className="flex items-center gap-1">
@@ -891,11 +891,11 @@ export default function DashboardWorkspace() {
                                   <span>{e.category}</span>
                                 </span>
                               </td>
-                              <td className="py-3 px-3 text-xs text-slate-500">
+                              <td className="py-3 px-3 text-xs text-slate-700">
                                 {new Date(e.submittedAt).toLocaleDateString()}
                               </td>
                               <td className="py-3 px-3">
-                                <StatusBadge status={e.status} className="text-[10px] py-0.5" />
+                                <StatusBadge status={e.status} className="text-xs py-0.5" />
                               </td>
                               <td className="py-3 px-3 text-right font-semibold text-slate-900">${e.amount.toFixed(2)}</td>
                               <td className="py-3 px-3 text-center">
@@ -940,7 +940,7 @@ export default function DashboardWorkspace() {
               {actionType === "process" && <span className="text-emerald-600">💸 Mark as Processed (Paid)</span>}
               {actionType === "processor-reject" && <span className="text-rose-600">❌ Reject Disbursement Payout</span>}
               {actionType === "view" && <span className="text-slate-600">📄 Expense Details & Audit</span>}
-              {actionType === "edit" && <span className="text-sky-700">✏️ Edit Expense Request</span>}
+              {actionType === "edit" && <span className="text-[var(--af-accent)]">✏️ Edit Expense Request</span>}
               {actionType === "delete" && <span className="text-rose-500">⚠️ Confirm Deletion</span>}
             </>
           )
@@ -950,33 +950,33 @@ export default function DashboardWorkspace() {
           <>
             {/* Summary details (hide on edit/delete) */}
             {actionType !== "edit" && actionType !== "delete" && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-2 mb-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-400 text-xs space-y-2 mb-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Request ID:</span>
-                  <span className="font-mono text-sky-700 font-bold">{selectedExpense.id}</span>
+                  <span className="text-slate-700">Request ID:</span>
+                  <span className="font-mono text-[var(--af-accent)] font-bold">{selectedExpense.id}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Requester:</span>
+                  <span className="text-slate-700">Requester:</span>
                   <span className="font-semibold text-slate-800">{selectedExpense.requesterName} ({selectedExpense.requesterEmail})</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Amount:</span>
+                  <span className="text-slate-700">Amount:</span>
                   <span className="font-extrabold text-slate-900 text-sm">${selectedExpense.amount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Category:</span>
+                  <span className="text-slate-700">Category:</span>
                   <span>{CATEGORY_ICONS[selectedExpense.category]} {selectedExpense.category}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Description:</span>
+                  <span className="text-slate-700 block">Description:</span>
                   <p className="text-slate-600 italic mt-0.5">"{selectedExpense.description}"</p>
                 </div>
                 
                 {/* Show Manager Notes if on Payout processing step */}
                 {selectedExpense.approverNotes && (
-                  <div className="pt-2 mt-2 border-t border-slate-200">
-                    <span className="text-sky-700 font-bold block">Approver's Notes (User 1):</span>
-                    <p className="text-slate-600 bg-slate-50 p-2 rounded border border-slate-200 mt-1 italic">
+                  <div className="pt-2 mt-2 border-t border-slate-400">
+                    <span className="text-[var(--af-accent)] font-bold block">Approver's Notes (User 1):</span>
+                    <p className="text-slate-600 bg-slate-50 p-2 rounded border border-slate-400 mt-1 italic">
                       "{selectedExpense.approverNotes}"
                     </p>
                   </div>
@@ -986,7 +986,7 @@ export default function DashboardWorkspace() {
                 {selectedExpense.processorNotes && (
                   <div className="pt-2 mt-1">
                     <span className="text-emerald-600 font-bold block">Processor's Notes (User 2):</span>
-                    <p className="text-slate-600 bg-slate-50 p-2 rounded border border-slate-200 mt-1 italic">
+                    <p className="text-slate-600 bg-slate-50 p-2 rounded border border-slate-400 mt-1 italic">
                       "{selectedExpense.processorNotes}"
                     </p>
                   </div>
@@ -999,26 +999,26 @@ export default function DashboardWorkspace() {
               <form onSubmit={handleActionSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    <label className="af-label !mb-1">
                       Full Name
                     </label>
                     <input
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-sky-600 focus:outline-none"
+                      className="af-input af-input-sm"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    <label className="af-label !mb-1">
                       Email Address
                     </label>
                     <input
                       type="email"
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
-                      className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-sky-600 focus:outline-none"
+                      className="af-input af-input-sm"
                       required
                     />
                   </div>
@@ -1026,7 +1026,7 @@ export default function DashboardWorkspace() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    <label className="af-label !mb-1">
                       Amount (USD)
                     </label>
                     <input
@@ -1035,32 +1035,32 @@ export default function DashboardWorkspace() {
                       onChange={(e) => setEditAmount(e.target.value)}
                       step="0.01"
                       min="0.01"
-                      className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-sky-600 focus:outline-none"
+                      className="af-input af-input-sm"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    <label className="af-label !mb-1">
                       Expense Date
                     </label>
                     <input
                       type="date"
                       value={editDate}
                       onChange={(e) => setEditDate(e.target.value)}
-                      className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-sky-600 focus:outline-none"
+                      className="af-input af-input-sm"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  <label className="af-label !mb-1">
                     Category
                   </label>
                   <select
                     value={editCategory}
                     onChange={(e) => setEditCategory(e.target.value)}
-                    className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-sky-600 focus:outline-none cursor-pointer"
+                    className="af-select af-select-sm cursor-pointer"
                   >
                     <option value="Travel">Travel & Lodging</option>
                     <option value="Meals">Meals & Entertainment</option>
@@ -1071,14 +1071,14 @@ export default function DashboardWorkspace() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  <label className="af-label !mb-1">
                     Purpose / Description
                   </label>
                   <textarea
                     rows={3}
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
-                    className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-sky-600 focus:outline-none resize-none"
+                    className="af-textarea text-xs resize-none"
                     required
                   />
                 </div>
@@ -1106,28 +1106,28 @@ export default function DashboardWorkspace() {
                   <span className="text-2xl mt-0.5">⚠️</span>
                   <div>
                     <h4 className="text-sm font-bold text-rose-450">Warning: Permanent Deletion</h4>
-                    <p className="text-xs text-slate-600 mt-1">
+                    <p className="text-xs text-slate-700 mt-1">
                       Are you sure you want to delete this expense request? This operation cannot be undone and will permanently remove the record from the database.
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-2">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-400 text-xs space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500 font-medium">Request ID:</span>
-                    <span className="font-mono text-sky-700 font-bold">{selectedExpense.id}</span>
+                    <span className="text-slate-700 font-medium">Request ID:</span>
+                    <span className="font-mono text-[var(--af-accent)] font-bold">{selectedExpense.id}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500 font-medium">Requester:</span>
+                    <span className="text-slate-700 font-medium">Requester:</span>
                     <span className="font-semibold text-slate-800">{selectedExpense.requesterName} ({selectedExpense.requesterEmail})</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500 font-medium">Amount:</span>
+                    <span className="text-slate-700 font-medium">Amount:</span>
                     <span className="font-extrabold text-slate-900 text-sm">${selectedExpense.amount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-start">
-                    <span className="text-slate-500 font-medium">Purpose:</span>
-                    <span className="text-slate-500 max-w-[280px] text-right italic truncate" title={selectedExpense.description}>
+                    <span className="text-slate-700 font-medium">Purpose:</span>
+                    <span className="text-slate-700 max-w-[280px] text-right italic truncate" title={selectedExpense.description}>
                       "{selectedExpense.description}"
                     </span>
                   </div>
@@ -1155,7 +1155,7 @@ export default function DashboardWorkspace() {
               // Simple approval/rejection comments form
               <form onSubmit={handleActionSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="notes" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  <label htmlFor="notes" className="af-label">
                     {actionType.includes("reject") ? "Reason for Rejection" : "Add Review / Payout Notes (Optional)"}
                   </label>
                   <textarea
@@ -1168,7 +1168,7 @@ export default function DashboardWorkspace() {
                         ? "State the reason why this expense request is being rejected..."
                         : "Enter transaction details, wire references, or general comments..."
                     }
-                    className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-600 focus:outline-none transition-colors resize-none"
+                    className="af-textarea text-xs resize-none"
                     required={actionType.includes("reject")}
                   />
                 </div>
@@ -1197,7 +1197,7 @@ export default function DashboardWorkspace() {
             ) : (
               // Timeline/Workflow logs display inside details
               <div className="space-y-4">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Workflow Timeline History</h4>
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Workflow Timeline History</h4>
                 <TimelineView history={selectedExpense.history} />
                 <div className="flex justify-end pt-2">
                   <button
@@ -1238,10 +1238,10 @@ export default function DashboardWorkspace() {
 
           {/* Users Table */}
           {usersLoading ? (
-            <div className="text-center py-12 text-slate-500">Loading users...</div>
+            <div className="text-center py-12 text-slate-700">Loading users...</div>
           ) : (
             <div className="portal-card rounded-xl overflow-hidden">
-              <div className="p-4 border-b border-slate-200">
+              <div className="p-4 border-b border-slate-400">
                 <TableToolbar
                   search={usersTable.search}
                   onSearchChange={usersTable.setSearch}
@@ -1264,32 +1264,32 @@ export default function DashboardWorkspace() {
               </div>
 
               {usersTable.totalCount === 0 ? (
-                <div className="text-center py-12 text-slate-500">
+                <div className="text-center py-12 text-slate-700">
                   <p className="text-sm font-semibold">No users match filters</p>
                   <p className="text-xs mt-1">Try resetting search or changing role/status filters.</p>
                 </div>
               ) : (
                 <>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-white border-b border-slate-200">
+                  <div className="af-table-wrap">
+                    <table className="af-table">
+                      <thead>
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                          <th className="px-4 py-3 text-left">Name</th>
+                          <th className="px-4 py-3 text-left">Email</th>
+                          <th className="px-4 py-3 text-left">Role</th>
+                          <th className="px-4 py-3 text-left">Status</th>
+                          <th className="px-4 py-3 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200">
+                      <tbody>
                         {usersTable.paginated.map((u) => (
                     <tr key={u._id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 font-medium text-slate-900">{u.name}</td>
-                      <td className="px-4 py-3 text-slate-500">{u.email}</td>
+                      <td className="px-4 py-3 text-slate-600">{u.email}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-bold ${
                           u.role === "ADMIN" ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200" :
-                          u.role === "APPROVER" ? "bg-sky-50 text-sky-700 ring-1 ring-sky-200" :
+                          u.role === "APPROVER" ? "bg-sky-50 text-[var(--af-accent)] ring-1 ring-sky-200" :
                           "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
                         }`}>
                           {u.role === "ADMIN" ? "👑" : u.role === "APPROVER" ? "✅" : "💳"} {u.role}
@@ -1297,7 +1297,7 @@ export default function DashboardWorkspace() {
                       </td>
                       <td className="px-4 py-3">
                         <button onClick={() => handleToggleActive(u)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors ${
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm font-semibold transition-colors ${
                             u.isActive ? "bg-emerald-50 text-emerald-700 hover:bg-rose-50 hover:text-rose-700" : "bg-rose-50 text-rose-700 hover:bg-emerald-50 hover:text-emerald-700"
                           }`}>
                           {u.isActive ? "● Active" : "○ Inactive"}
@@ -1336,11 +1336,11 @@ export default function DashboardWorkspace() {
           {/* Delete User Confirmation Modal */}
           {deleteUserId && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+              <div className="bg-white border border-slate-400 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
                 <div className="text-center mb-4">
                   <div className="text-3xl mb-2">🗑️</div>
                   <h3 className="text-lg font-bold text-slate-900">Delete User?</h3>
-                  <p className="text-sm text-slate-500 mt-1">This action is permanent and cannot be undone.</p>
+                  <p className="text-sm text-slate-700 mt-1">This action is permanent and cannot be undone.</p>
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button onClick={() => setDeleteUserId(null)}
@@ -1364,43 +1364,43 @@ export default function DashboardWorkspace() {
           >
             <form onSubmit={handleCreateUser} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-slate-500 mb-1 uppercase tracking-wider">Full Name</label>
+                <label className="af-label">Full Name</label>
                 <input
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}
                   required
                   placeholder="Jane Smith"
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-sky-600 outline-none transition-colors"
+                  className="af-input"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1 uppercase tracking-wider">Email Address</label>
+                <label className="af-label">Email Address</label>
                 <input
                   type="email"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
                   required
                   placeholder="jane@aceolution.com"
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-sky-600 outline-none transition-colors"
+                  className="af-input"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1 uppercase tracking-wider">Password</label>
+                <label className="af-label">Password</label>
                 <input
                   type="password"
                   value={newUserPassword}
                   onChange={(e) => setNewUserPassword(e.target.value)}
                   required
                   placeholder="Min 8 characters"
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-sky-600 outline-none transition-colors"
+                  className="af-input"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1 uppercase tracking-wider">Role</label>
+                <label className="af-label">Role</label>
                 <select
                   value={newUserRole}
                   onChange={(e) => setNewUserRole(e.target.value as "ADMIN" | "APPROVER" | "PROCESSOR")}
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-sky-600 outline-none transition-colors"
+                  className="af-select"
                 >
                   <option value="APPROVER">APPROVER — Reviews & approves expenses</option>
                   <option value="PROCESSOR">PROCESSOR — Processes approved expenses</option>
@@ -1434,19 +1434,19 @@ export default function DashboardWorkspace() {
             {selectedUser && (
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between gap-4">
-                  <span className="text-slate-500">Name</span>
+                  <span className="text-slate-700">Name</span>
                   <span className="font-semibold text-slate-900 text-right">{selectedUser.name}</span>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <span className="text-slate-500">Email</span>
+                  <span className="text-slate-700">Email</span>
                   <span className="text-slate-600 text-right break-all">{selectedUser.email}</span>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <span className="text-slate-500">Role</span>
-                  <span className="font-semibold text-sky-700">{selectedUser.role}</span>
+                  <span className="text-slate-700">Role</span>
+                  <span className="font-semibold text-[var(--af-accent)]">{selectedUser.role}</span>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <span className="text-slate-500">Status</span>
+                  <span className="text-slate-700">Status</span>
                   <span className={selectedUser.isActive ? "text-emerald-600" : "text-rose-600"}>
                     {selectedUser.isActive ? "Active" : "Inactive"}
                   </span>
@@ -1473,28 +1473,28 @@ export default function DashboardWorkspace() {
             {selectedUser && (
               <form onSubmit={handleUpdateUser} className="space-y-4">
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1 uppercase tracking-wider">Full Name</label>
+                  <label className="af-label">Full Name</label>
                   <input
                     value={editUserName}
                     onChange={(e) => setEditUserName(e.target.value)}
                     required
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-sky-600 outline-none transition-colors"
+                    className="af-input"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1 uppercase tracking-wider">Email</label>
+                  <label className="af-label">Email</label>
                   <input
                     value={selectedUser.email}
                     disabled
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-500 cursor-not-allowed"
+                    className="af-input cursor-not-allowed opacity-70"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1 uppercase tracking-wider">Role</label>
+                  <label className="af-label">Role</label>
                   <select
                     value={editUserRole}
                     onChange={(e) => setEditUserRole(e.target.value as "ADMIN" | "APPROVER" | "PROCESSOR")}
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-sky-600 outline-none transition-colors"
+                    className="af-select"
                   >
                     <option value="APPROVER">APPROVER</option>
                     <option value="PROCESSOR">PROCESSOR</option>
@@ -1502,24 +1502,24 @@ export default function DashboardWorkspace() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1 uppercase tracking-wider">Status</label>
+                  <label className="af-label">Status</label>
                   <select
                     value={editUserActive ? "ACTIVE" : "INACTIVE"}
                     onChange={(e) => setEditUserActive(e.target.value === "ACTIVE")}
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-sky-600 outline-none transition-colors"
+                    className="af-select"
                   >
                     <option value="ACTIVE">Active</option>
                     <option value="INACTIVE">Inactive</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1 uppercase tracking-wider">New Password (optional)</label>
+                  <label className="af-label">New Password (optional)</label>
                   <input
                     type="password"
                     value={editUserPassword}
                     onChange={(e) => setEditUserPassword(e.target.value)}
                     placeholder="Leave blank to keep current password"
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-sky-600 outline-none transition-colors"
+                    className="af-input"
                   />
                 </div>
                 <div className="flex gap-3 justify-end pt-2">

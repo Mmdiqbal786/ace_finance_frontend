@@ -31,7 +31,7 @@ export default function TableToolbar({
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={searchPlaceholder}
-        className="min-w-0 flex-1 sm:min-w-[200px] rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-600 focus:outline-none transition-colors"
+        className="af-input af-input-sm min-w-0 flex-1 sm:min-w-[200px]"
       />
 
       {filters.map((filter) => (
@@ -39,7 +39,7 @@ export default function TableToolbar({
           key={filter.id}
           value={filter.value}
           onChange={(e) => filter.onChange(e.target.value)}
-          className="rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-900 focus:border-sky-600 focus:outline-none transition-colors cursor-pointer"
+          className="af-select af-select-sm w-auto cursor-pointer"
         >
           {filter.options.map((option) => (
             <option key={option.value} value={option.value}>

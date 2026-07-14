@@ -6,14 +6,14 @@
   --af-navy-soft: #2a4d78;
   --af-navy-muted: #355a8a;
   --af-navy-active: #1a3252;
-  --af-bg: #f8fafc;
+  --af-bg: #e8edf4;
   --af-surface: #ffffff;
-  --af-border: #e2e8f0;
-  --af-border-strong: #cbd5e1;
-  --af-text: #203c62;
-  --af-text-secondary: #475569;
-  --af-muted: #64748b;
-  --af-subtle: #94a3b8;
+  --af-border: #94a3b8;
+  --af-border-strong: #64748b;
+  --af-text: #0f172a;
+  --af-text-secondary: #1e293b;
+  --af-muted: #334155;
+  --af-subtle: #475569;
   --af-info-bg: #e0f2fe;
   --af-info-border: #bae6fd;
   --af-info-text: #0369a1;
@@ -22,7 +22,9 @@
   --af-warn-text: #9a3412;
   --af-success: #059669;
   --af-danger: #e11d48;
-  --af-accent: #2d9cdb;
+  --af-accent: #1850a8;
+  --af-accent-soft: #1e6bc4;
+  --af-accent-muted: #dbeafe;
   --background: var(--af-bg);
   --foreground: var(--af-text);
 }
@@ -30,19 +32,22 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-af-sans);
+  --font-mono: var(--font-af-mono);
 }
 
 body {
   background: var(--af-bg);
   color: var(--af-text);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-af-sans), "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f8fafc;
+  scrollbar-color: #94a3b8 #e8edf4;
 }
 
 *::-webkit-scrollbar {
@@ -51,13 +56,13 @@ body {
 }
 
 *::-webkit-scrollbar-track {
-  background: #f8fafc;
+  background: #e8edf4;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #94a3b8;
   border-radius: 9999px;
-  border: 2px solid #f8fafc;
+  border: 2px solid #e8edf4;
 }
 
 *::-webkit-scrollbar-thumb:hover {
@@ -149,7 +154,7 @@ body {
 .portal-grid {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(32, 60, 98, 0.06) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(32, 60, 98, 0.1) 1px, transparent 1px);
   background-size: 22px 22px;
   mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
 }
@@ -158,8 +163,8 @@ body {
   position: relative;
   overflow: hidden;
   background: var(--af-surface);
-  border: 1px solid var(--af-border);
-  box-shadow: 0 1px 3px rgba(32, 60, 98, 0.06), 0 8px 24px rgba(32, 60, 98, 0.04);
+  border: 1px solid #94a3b8;
+  box-shadow: 0 1px 3px rgba(32, 60, 98, 0.08), 0 8px 24px rgba(32, 60, 98, 0.06);
 }
 
 .portal-card::before {
@@ -169,11 +174,11 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--af-navy), #0369a1, #38bdf8);
+  background: linear-gradient(90deg, var(--af-navy), var(--af-accent), #70bcfc);
 }
 
 .portal-card--track::before {
-  background: linear-gradient(90deg, var(--af-navy), #0284c7, #7dd3fc);
+  background: linear-gradient(90deg, var(--af-navy), var(--af-accent), #70bcfc);
 }
 
 @keyframes portal-float {
@@ -189,22 +194,24 @@ body {
 /* ——— Sidebar (Aceolution dark navy) ——— */
 .af-sidebar {
   background: var(--af-navy) !important;
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .af-sidebar-nav-active {
-  background: var(--af-navy-active);
+  background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
-  border-color: rgba(45, 156, 219, 0.25);
+  border-color: rgba(255, 255, 255, 0.22);
+  font-weight: 650;
 }
 
 .af-sidebar-nav-idle {
-  color: #94a3b8;
+  color: #e2e8f0;
   border-color: transparent;
+  font-weight: 550;
 }
 
 .af-sidebar-nav-idle:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
@@ -219,4 +226,138 @@ body {
 .af-btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ——— Forms & tables (high contrast for readability) ——— */
+.af-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1e293b;
+}
+
+.af-input,
+.af-select,
+.af-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0.75rem;
+  border: 1.5px solid #64748b;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.45;
+  padding: 0.8rem 1rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.af-input-sm,
+.af-select-sm {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.75rem;
+}
+
+.af-input::placeholder,
+.af-textarea::placeholder {
+  color: #475569;
+  font-weight: 400;
+}
+
+.af-input:focus,
+.af-select:focus,
+.af-textarea:focus {
+  border-color: var(--af-navy);
+  box-shadow: 0 0 0 3px rgba(32, 60, 98, 0.18);
+}
+
+.af-table-wrap {
+  overflow-x: auto;
+  border: 1.5px solid #64748b;
+  border-radius: 0.75rem;
+  background: #ffffff;
+}
+
+.af-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.af-table thead tr {
+  background: #cbd5e1;
+  color: #0f172a;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1.5px solid #64748b;
+}
+
+.af-table th {
+  padding: 0.85rem 1rem;
+  white-space: nowrap;
+}
+
+.af-table tbody {
+  color: #0f172a;
+}
+
+.af-table tbody tr {
+  border-bottom: 1px solid #94a3b8;
+  background: #ffffff;
+}
+
+.af-table tbody tr:nth-child(even) {
+  background: #f1f5f9;
+}
+
+.af-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.af-table tbody tr:hover {
+  background: #e2e8f0;
+}
+
+.af-table td {
+  padding: 0.95rem 1rem;
+  vertical-align: middle;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.af-table .af-id,
+.af-table .font-mono {
+  font-family: var(--font-af-mono), ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: var(--af-accent);
+  font-weight: 700;
+}
+
+.af-muted {
+  color: #334155;
+}
+
+/* Logo “Finance” blue — highlight text / IDs / accents */
+.af-highlight {
+  color: var(--af-accent);
+}
+
+.af-highlight-soft {
+  color: var(--af-accent-soft);
+}
+
+.af-title-accent {
+  color: transparent;
+  background-image: linear-gradient(90deg, #0f172a 0%, var(--af-accent) 55%, var(--af-accent-soft) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }

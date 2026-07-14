@@ -36,7 +36,7 @@ function FullPageLoader({ message }: { message: string }) {
         <span className="inline-flex h-14 w-14 items-center justify-center">
           <img src="/Ace_logo_small_light.png" alt="Aceolution" width={44} height={44} className="object-contain" />
         </span>
-        <LoginSpinner className="h-10 w-10 text-sky-600" />
+        <LoginSpinner className="h-10 w-10 text-[var(--af-accent)]" />
         <div>
           <p className="text-base font-semibold text-slate-900">{message}</p>
           <p className="mt-1 text-sm text-slate-500">Please wait a moment...</p>
@@ -135,7 +135,7 @@ export default function LoginPage() {
 
         <div className="portal-card rounded-[20px] p-8">
           <h1 className="text-2xl font-bold text-slate-900">
-            Sign <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-800 via-sky-700 to-sky-500">In</span>
+            Sign <span className="af-title-accent">In</span>
           </h1>
           <p className="mt-2 mb-7 text-sm text-slate-500">
             Enter your credentials to access the dashboard
@@ -143,13 +143,13 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="flex flex-col gap-4" suppressHydrationWarning>
             <div>
-              <label htmlFor="login-email" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label htmlFor="login-email" className="mb-2 block af-label">
                 Email Address
               </label>
               <input
                 id="login-email"
                 type="email"
-                className="login-input w-full box-border rounded-[10px] border border-slate-200 bg-white px-4 py-3 text-[0.95rem] text-slate-900 outline-none transition-colors focus:border-sky-600"
+                className="login-input af-input"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="email"
@@ -160,14 +160,14 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="login-password" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <label htmlFor="login-password" className="mb-2 block af-label">
                 Password
               </label>
               <div className="relative">
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
-                  className="login-input w-full box-border rounded-[10px] border border-slate-200 bg-white py-3 pl-4 pr-11 text-[0.95rem] text-slate-900 outline-none transition-colors focus:border-sky-600"
+                  className="login-input af-input !pr-11"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   autoComplete="current-password"
@@ -251,7 +251,7 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-xs text-slate-500">
           Public expense form available at{' '}
-          <a href="/" className="text-sky-700 no-underline hover:text-sky-800">the homepage</a>
+          <a href="/" className="text-[var(--af-accent)] no-underline hover:text-[var(--af-accent-soft)]">the homepage</a>
         </p>
       </div>
     </div>

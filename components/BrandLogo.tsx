@@ -37,7 +37,7 @@ export default function BrandLogo({
         className="h-9 w-auto max-w-[min(55vw,230px)] object-contain object-left sm:h-10"
       />
       {showWordmark && (
-        <span className="hidden truncate text-base font-bold tracking-tight text-sky-600 sm:inline sm:text-lg">
+        <span className="hidden truncate text-base font-bold tracking-tight text-[var(--af-accent)] sm:inline sm:text-lg">
           Finance
         </span>
       )}
@@ -54,7 +54,7 @@ export default function BrandLogo({
       />
       {showWordmark && (
         <span className="truncate text-base sm:text-lg font-bold tracking-tight text-slate-900">
-          Aceolution <span className="text-sky-600">Finance</span>
+          Aceolution <span className="text-[var(--af-accent)]">Finance</span>
         </span>
       )}
     </span>

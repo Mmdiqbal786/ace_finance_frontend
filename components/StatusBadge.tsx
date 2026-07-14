@@ -16,7 +16,7 @@ export default function StatusBadge({ status, className = "" }: StatusBadgeProps
       break;
     case "APPROVED_APPROVER":
       label = "Approved - Awaiting Processing";
-      badgeStyle = "bg-sky-50 text-sky-700 ring-sky-200";
+      badgeStyle = "bg-sky-50 text-[var(--af-accent)] ring-sky-200";
       break;
     case "PROCESSED":
       label = "Disbursed & Paid";

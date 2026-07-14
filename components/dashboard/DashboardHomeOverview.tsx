@@ -99,7 +99,7 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
             ))}
           </div>
 
-          <div className="flex gap-4 mt-5 text-[10px] text-slate-500">
+          <div className="flex gap-4 mt-5 text-xs text-slate-500">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-sky-600" /> Requested
             </span>
@@ -164,7 +164,7 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-slate-900 truncate">{log.action}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5 truncate">
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">
                     {log.requesterName} · {new Date(log.timestamp).toLocaleDateString()}
                   </p>
                 </div>

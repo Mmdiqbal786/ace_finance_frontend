@@ -244,7 +244,7 @@ export default function PublicPortal() {
       {/* Hero Header */}
       <div className="text-center md:text-left mb-10">
         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-          Public Expense <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-800 via-sky-700 to-sky-500">Portal</span>
+          Public Expense <span className="af-title-accent">Portal</span>
         </h1>
         <p className="mt-3 max-w-2xl text-lg text-slate-500">
           Submit reimbursement requests directly to management and track your payments in real-time.
@@ -255,7 +255,7 @@ export default function PublicPortal() {
         {/* Left Column: Form */}
         <div className="portal-card lg:col-span-7 rounded-2xl p-6 sm:p-8">
           <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-sky-700 text-sm">📝</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-[var(--af-accent)] text-sm">📝</span>
             New Expense Request
           </h2>
 
@@ -269,7 +269,7 @@ export default function PublicPortal() {
               >
                 ✕
               </button>
-              <div className="flex items-center gap-3 mb-2 text-sky-700 font-bold">
+              <div className="flex items-center gap-3 mb-2 text-[var(--af-accent)] font-bold">
                 <span className="text-xl">🎉</span> Request Submitted Successfully!
               </div>
               <p className="text-sm text-slate-600 mb-3">
@@ -278,14 +278,14 @@ export default function PublicPortal() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 font-mono text-sm">
                 <div>
                   <span className="text-slate-500">Request ID:</span>{" "}
-                  <span className="text-sky-700 font-semibold">{submitSuccess.id}</span>
+                  <span className="text-[var(--af-accent)] font-semibold">{submitSuccess.id}</span>
                 </div>
                 <button
                   onClick={() => {
                     setSearchQuery(submitSuccess.id);
                     handleSearch(submitSuccess.id);
                   }}
-                  className="text-xs font-semibold text-sky-700 hover:text-sky-800 underline"
+                  className="text-xs font-semibold text-[var(--af-accent)] hover:text-[var(--af-accent-soft)] underline"
                 >
                   Track in right panel
                 </button>
@@ -303,7 +303,7 @@ export default function PublicPortal() {
           <form onSubmit={handleFormSubmit} className="space-y-5" suppressHydrationWarning>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="requesterName" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <label htmlFor="requesterName" className="af-label">
                   Full Name
                 </label>
                 <input
@@ -312,13 +312,13 @@ export default function PublicPortal() {
                   value={requesterName}
                   onChange={(e) => setRequesterName(e.target.value)}
                   placeholder="John Doe"
-                  className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-600 focus:outline-none transition-colors"
+                  className="af-input"
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="requesterEmail" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <label htmlFor="requesterEmail" className="af-label">
                   Email Address
                 </label>
                 <input
@@ -327,7 +327,7 @@ export default function PublicPortal() {
                   value={requesterEmail}
                   onChange={(e) => setRequesterEmail(e.target.value)}
                   placeholder="john.doe@example.com"
-                  className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-600 focus:outline-none transition-colors"
+                  className="af-input"
                   required
                 />
               </div>
@@ -335,7 +335,7 @@ export default function PublicPortal() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="amount" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <label htmlFor="amount" className="af-label">
                   Amount (USD)
                 </label>
                 <div className="relative rounded-xl shadow-sm">
@@ -350,14 +350,14 @@ export default function PublicPortal() {
                     placeholder="0.00"
                     step="0.01"
                     min="0.01"
-                    className="w-full rounded-xl bg-white border border-slate-200 pl-8 pr-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-600 focus:outline-none transition-colors"
+                    className="af-input pl-8"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="date" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <label htmlFor="date" className="af-label">
                   Expense Date
                 </label>
                 <input
@@ -365,14 +365,14 @@ export default function PublicPortal() {
                   id="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-sm text-slate-900 focus:border-sky-600 focus:outline-none transition-colors"
+                  className="af-input"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              <label className="af-label">
                 Category
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -383,8 +383,8 @@ export default function PublicPortal() {
                     onClick={() => setCategory(cat.id)}
                     className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
                       category === cat.id
-                        ? "bg-gradient-to-br from-sky-50 to-sky-100/80 border-sky-400 text-sky-800 shadow-sm shadow-sky-500/10"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900"
+                        ? "bg-gradient-to-br from-sky-50 to-sky-100/80 border-sky-400 text-[var(--af-accent)] shadow-sm shadow-sky-500/10"
+                        : "bg-white border-slate-500 text-slate-700 hover:border-[var(--af-navy)] hover:text-[var(--af-navy)]"
                     }`}
                   >
                     <span className="text-xl mb-1">{cat.icon}</span>
@@ -395,7 +395,7 @@ export default function PublicPortal() {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              <label htmlFor="description" className="af-label">
                 Purpose / Description
               </label>
               <textarea
@@ -404,7 +404,7 @@ export default function PublicPortal() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Please state the business purpose for this expense request..."
-                className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-600 focus:outline-none transition-colors resize-none"
+                className="af-textarea resize-none"
                 required
               />
             </div>
@@ -438,7 +438,7 @@ export default function PublicPortal() {
         <div className="lg:col-span-5 space-y-6">
           <div className="portal-card portal-card--track rounded-2xl p-6 sm:p-8">
             <h2 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-sky-700 text-sm">🔍</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-[var(--af-accent)] text-sm">🔍</span>
               Track Status
             </h2>
             <p className="text-xs text-slate-500 mb-6">
@@ -452,7 +452,7 @@ export default function PublicPortal() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Request ID or Email"
-                className="flex-1 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-600 focus:outline-none transition-colors"
+                className="af-input flex-1"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSearch();
                 }}
@@ -478,7 +478,7 @@ export default function PublicPortal() {
             {/* Recent submissions, or last successful search as fallback */}
             {(recentRequests.length > 0 || lastSearch) && (
               <div className="mt-4 pt-3 border-t border-slate-200">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-2">
                   {recentRequests.length > 0 ? "Your Recent Requests" : "Last Tracked"}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -490,7 +490,7 @@ export default function PublicPortal() {
                           setSearchQuery(rId);
                           handleSearch(rId);
                         }}
-                        className="text-xs bg-slate-50 hover:bg-slate-50 border border-slate-200 text-slate-600 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
+                        className="text-xs bg-slate-100 hover:bg-slate-200 border border-slate-400 text-slate-800 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
                       >
                         {rId.substring(0, 14)}...
                       </button>
@@ -501,7 +501,7 @@ export default function PublicPortal() {
                         setSearchQuery(lastSearch);
                         handleSearch(lastSearch);
                       }}
-                      className="text-xs bg-slate-50 hover:bg-slate-50 border border-slate-200 text-slate-600 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
+                      className="text-xs bg-slate-100 hover:bg-slate-200 border border-slate-400 text-slate-800 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
                     >
                       {lastSearch.startsWith("EXP-")
                         ? `${lastSearch.substring(0, 14)}...`
@@ -540,7 +540,7 @@ export default function PublicPortal() {
               {/* Multiple results matching email switcher */}
               {searchResults.length > 1 && (
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 max-h-48 overflow-y-auto">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block px-1.5 py-0.5">
+                  <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider block px-1.5 py-0.5">
                     Found {searchResults.length} Requests
                   </span>
                   {searchResults.map((item, idx) => (
@@ -553,17 +553,17 @@ export default function PublicPortal() {
                       }}
                       className={`w-full text-left rounded-lg p-2 text-xs font-medium transition-colors flex items-center justify-between ${
                         idx === 0
-                          ? "bg-sky-50 text-sky-800 border border-sky-200"
+                          ? "bg-sky-50 text-[var(--af-accent)] border border-sky-200"
                           : "text-slate-500 hover:bg-white border border-transparent"
                       }`}
                     >
                       <div>
-                        <div className="font-mono text-[10px]">{item.id}</div>
+                        <div className="font-mono text-xs">{item.id}</div>
                         <div className="mt-0.5 truncate max-w-44 text-slate-600 font-bold">{item.description}</div>
                       </div>
                       <div className="text-right">
                         <div>${item.amount.toFixed(2)}</div>
-                        <div className="text-[9px] text-slate-500">{new Date(item.date).toLocaleDateString()}</div>
+                        <div className="text-xs text-slate-500">{new Date(item.date).toLocaleDateString()}</div>
                       </div>
                     </button>
                   ))}
@@ -573,16 +573,16 @@ export default function PublicPortal() {
               {/* Expense Information */}
               <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm">
                 <div>
-                  <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider">Purpose</span>
+                  <span className="text-slate-500 block text-xs uppercase font-bold tracking-wider">Purpose</span>
                   <p className="text-slate-800 mt-0.5 text-xs italic">"{searchResults[0].description}"</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider">Requester</span>
+                    <span className="text-slate-500 block text-xs uppercase font-bold tracking-wider">Requester</span>
                     <p className="text-slate-600 text-xs mt-0.5">{searchResults[0].requesterName}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider">Date Logged</span>
+                    <span className="text-slate-500 block text-xs uppercase font-bold tracking-wider">Date Logged</span>
                     <p className="text-slate-600 text-xs mt-0.5">{new Date(searchResults[0].date).toLocaleDateString()}</p>
                   </div>
                 </div>

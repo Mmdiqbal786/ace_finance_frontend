@@ -64,7 +64,7 @@ export default function DashboardSectionStats({
           value={String(pendingProcessorCount)}
           subtext="Approved, awaiting disbursement"
           emoji="💸"
-          valueColor="text-sky-600"
+          valueColor="text-[var(--af-accent)]"
         />
         <StatCard
           title="Payout Amount"

@@ -15,7 +15,7 @@ export default function NotFound() {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-20 bg-slate-50">
+    <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-20 bg-[var(--af-bg)]">
       <div className="h-16 w-16 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-3xl mb-6 shadow-sm">
         🔍
       </div>

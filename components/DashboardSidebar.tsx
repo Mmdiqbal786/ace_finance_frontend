@@ -51,7 +51,7 @@ function NavItem({
     <Link
       href={href}
       onClick={onNavigate}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer border ${
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[0.9375rem] font-semibold transition-all cursor-pointer border ${
         active ? activeStyles : "af-sidebar-nav-idle"
       }`}
     >
@@ -62,7 +62,7 @@ function NavItem({
       </span>
       {badge > 0 && (
         <span
-          className={`shrink-0 min-w-[1.25rem] px-1.5 py-0.5 rounded-full bg-rose-500 text-[10px] text-white font-bold leading-none text-center ${
+          className={`shrink-0 min-w-[1.25rem] px-1.5 py-0.5 rounded-full bg-rose-500 text-xs text-white font-bold leading-none text-center ${
             pulse ? "animate-pulse" : ""
           }`}
         >
@@ -104,20 +104,20 @@ export default function DashboardSidebar({
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="relative border-b border-white/10 px-4 py-4 pr-12">
+        <div className="relative border-b border-white/20 px-4 py-4 pr-12">
           <button
             type="button"
             onClick={onMobileClose}
-            className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-colors cursor-pointer lg:hidden"
+            className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10 hover:text-white transition-colors cursor-pointer lg:hidden"
             aria-label="Close menu"
           >
             ✕
           </button>
-          <p className="text-sm font-semibold text-white truncate">{user?.name || "Dashboard"}</p>
+          <p className="text-base font-bold text-white truncate">{user?.name || "Dashboard"}</p>
           {user?.email && (
-            <p className="text-xs text-slate-400 truncate mt-0.5">{user.email}</p>
+            <p className="text-sm text-slate-200 truncate mt-1">{user.email}</p>
           )}
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-sky-400/90 truncate mt-1">
+          <p className="mt-1.5 inline-flex rounded-md bg-white/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-sky-200">
             {user?.role}
           </p>
         </div>
@@ -181,7 +181,7 @@ export default function DashboardSidebar({
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/15 px-3 py-2.5 text-sm font-medium text-slate-300 hover:border-red-400/50 hover:bg-red-500/10 hover:text-red-300 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/25 px-3 py-2.5 text-sm font-semibold text-slate-100 hover:border-red-400/50 hover:bg-red-500/10 hover:text-red-200 transition-colors cursor-pointer"
           >
             <span>🚪</span>
             Sign Out
@@ -195,7 +195,7 @@ export default function DashboardSidebar({
         title="Sign Out?"
         maxWidthClass="max-w-md"
       >
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-700">
           Are you sure you want to sign out of your dashboard session?
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

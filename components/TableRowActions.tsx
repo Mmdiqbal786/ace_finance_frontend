@@ -151,7 +151,7 @@ export default function TableRowActions({
           type="button"
           role="menuitem"
           onClick={() => run(onEdit)}
-          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-sky-700 hover:bg-sky-50 transition-colors cursor-pointer"
+          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-[var(--af-accent)] hover:bg-sky-50 transition-colors cursor-pointer"
         >
           <span>✏️</span>
           Edit
@@ -181,7 +181,7 @@ export default function TableRowActions({
           aria-expanded={open}
           aria-haspopup="menu"
           aria-label="Row actions"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-500 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
         >
           <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path d="M10 4a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />

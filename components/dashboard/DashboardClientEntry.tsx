@@ -15,7 +15,7 @@ function DashboardBootScreen() {
         <span className="inline-flex h-14 w-14 items-center justify-center">
           <img src="/Ace_logo_small_light.png" alt="Aceolution" width={44} height={44} className="object-contain" />
         </span>
-        <svg className="h-8 w-8 animate-spin text-sky-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+        <svg className="h-8 w-8 animate-spin text-[var(--af-accent)]" fill="none" viewBox="0 0 24 24" aria-hidden="true">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path
             className="opacity-75"

@@ -8,9 +8,9 @@ import BrandLogo from './BrandLogo';
 import { DASHBOARD_ROUTES } from '../lib/dashboard/routes';
 
 const roleBadgeClass: Record<string, string> = {
-  ADMIN: 'bg-amber-500/15 text-amber-700 border-amber-500/25',
-  APPROVER: 'bg-sky-500/15 text-sky-700 border-sky-500/25',
-  PROCESSOR: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/25',
+  ADMIN: 'bg-amber-100 text-amber-800 border-amber-300',
+  APPROVER: 'bg-sky-100 text-[var(--af-accent)] border-sky-300',
+  PROCESSOR: 'bg-emerald-100 text-emerald-800 border-emerald-300',
 };
 
 const roleIcon: Record<string, string> = {
@@ -90,14 +90,14 @@ export default function Header() {
                 onClick={() => setUserMenuOpen((open) => !open)}
                 aria-expanded={userMenuOpen}
                 aria-haspopup="menu"
-                className="inline-flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 sm:px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer"
+                className="inline-flex h-9 items-center gap-2 rounded-xl border border-slate-400 bg-white px-2 sm:px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 hover:border-slate-500 transition-colors cursor-pointer"
               >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--af-navy)] text-[10px] font-bold text-white">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--af-navy)] text-xs font-bold text-white">
                   {getInitials(user.name)}
                 </span>
                 <span className="hidden sm:block max-w-[120px] truncate">{user.name}</span>
                 <svg
-                  className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                  className={`h-4 w-4 shrink-0 text-slate-600 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -110,13 +110,13 @@ export default function Header() {
               {userMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 bg-white shadow-xl shadow-[var(--af-navy)]/10 overflow-hidden z-50"
+                  className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-400 bg-white shadow-xl shadow-[var(--af-navy)]/10 overflow-hidden z-50"
                 >
-                  <div className="px-4 py-3 border-b border-slate-200">
-                    <p className="text-sm font-semibold text-slate-900 truncate">{user.name}</p>
-                    <p className="text-xs text-slate-500 truncate mt-0.5">{user.email}</p>
+                  <div className="px-4 py-3.5 border-b border-slate-300">
+                    <p className="text-base font-bold text-slate-900 truncate">{user.name}</p>
+                    <p className="text-sm text-slate-700 truncate mt-1">{user.email}</p>
                     <span
-                      className={`inline-flex items-center gap-1.5 mt-2 rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide ${roleBadgeClass[user.role]}`}
+                      className={`inline-flex items-center gap-1.5 mt-2.5 rounded-full border px-2.5 py-1 text-xs font-bold tracking-wide ${roleBadgeClass[user.role]}`}
                     >
                       {roleIcon[user.role]}
                       {user.role}
@@ -131,7 +131,7 @@ export default function Header() {
                         setUserMenuOpen(false);
                         setShowLogoutConfirm(true);
                       }}
-                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
                     >
                       <span>🚪</span>
                       Sign Out
@@ -142,7 +142,7 @@ export default function Header() {
             </div>
           ) : (
             <>
-              <span className="hidden sm:inline-flex items-center rounded-full bg-sky-500/10 px-2.5 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-500/20">
+              <span className="hidden sm:inline-flex items-center rounded-full bg-sky-500/10 px-2.5 py-0.5 text-xs font-medium text-[var(--af-accent)] ring-1 ring-inset ring-sky-500/20">
                 v1.2.0 Stable
               </span>
               <Link
@@ -162,14 +162,14 @@ export default function Header() {
         title="Sign Out?"
         maxWidthClass="max-w-md"
       >
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-700">
           Are you sure you want to sign out of your dashboard session?
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(false)}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-400 px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition-colors cursor-pointer"
           >
             Cancel
           </button>

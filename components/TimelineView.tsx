@@ -38,7 +38,7 @@ export default function TimelineView({
                           : log.action.includes("Rejected")
                           ? "bg-rose-50 text-rose-600 border border-rose-200"
                           : log.action.includes("Approved")
-                          ? "bg-sky-50 text-sky-700 border border-sky-200"
+                          ? "bg-sky-50 text-[var(--af-accent)] border border-sky-200"
                           : "bg-emerald-50 text-emerald-600 border border-emerald-200"
                       }`}
                     >
@@ -55,7 +55,7 @@ export default function TimelineView({
                     <p className="text-sm font-semibold text-slate-900">{log.action}</p>
                     <div className="text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-1 mt-0.5">
                       <span>Logged by {log.user}</span>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-xs text-slate-600">
                         {new Date(log.timestamp).toLocaleString()}
                       </span>
                     </div>
