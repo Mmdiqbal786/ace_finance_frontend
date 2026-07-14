@@ -181,9 +181,9 @@ export default function TableRowActions({
           aria-expanded={open}
           aria-haspopup="menu"
           aria-label="Row actions"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-500 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-500 bg-white p-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
         >
-          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path d="M10 4a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
           </svg>
         </button>

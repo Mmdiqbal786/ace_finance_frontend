@@ -25,21 +25,23 @@ export default function TableToolbar({
   children,
 }: TableToolbarProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center sm:flex-wrap">
-      <input
-        type="text"
-        value={search}
-        onChange={(e) => onSearchChange(e.target.value)}
-        placeholder={searchPlaceholder}
-        className="af-input af-input-sm min-w-0 flex-1 sm:min-w-[200px]"
-      />
+    <div className="af-toolbar flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+      <div className="af-toolbar-search-wrap min-w-0 w-full sm:flex-1">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="af-input af-input-sm af-toolbar-search"
+        />
+      </div>
 
       {filters.map((filter) => (
         <select
           key={filter.id}
           value={filter.value}
           onChange={(e) => filter.onChange(e.target.value)}
-          className="af-select af-select-sm w-auto cursor-pointer"
+          className="af-select af-select-sm af-toolbar-filter cursor-pointer"
         >
           {filter.options.map((option) => (
             <option key={option.value} value={option.value}>
