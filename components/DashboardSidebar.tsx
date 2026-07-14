@@ -44,15 +44,15 @@ function NavItem({
 }: NavItemProps) {
   const activeStyles =
     accent === "amber"
-      ? "bg-amber-600/15 text-amber-300 border-amber-500/20"
-      : "bg-indigo-600/15 text-indigo-300 border-indigo-500/20";
+      ? "bg-amber-500/20 text-amber-200 border-amber-400/25"
+      : "af-sidebar-nav-active";
 
   return (
     <Link
       href={href}
       onClick={onNavigate}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer border ${
-        active ? activeStyles : "text-zinc-400 hover:bg-zinc-900 hover:text-white border-transparent"
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[0.9375rem] font-semibold transition-all cursor-pointer border ${
+        active ? activeStyles : "af-sidebar-nav-idle"
       }`}
     >
       <span className="text-base shrink-0">{icon}</span>
@@ -62,7 +62,7 @@ function NavItem({
       </span>
       {badge > 0 && (
         <span
-          className={`shrink-0 min-w-[1.25rem] px-1.5 py-0.5 rounded-full bg-rose-500 text-[10px] text-white font-bold leading-none text-center ${
+          className={`shrink-0 min-w-[1.25rem] px-1.5 py-0.5 rounded-full bg-rose-500 text-xs text-white font-bold leading-none text-center ${
             pulse ? "animate-pulse" : ""
           }`}
         >
@@ -93,31 +93,33 @@ export default function DashboardSidebar({
         <button
           type="button"
           aria-label="Close menu"
-          className="fixed inset-0 z-40 bg-zinc-950/70 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
           onClick={onMobileClose}
         />
       )}
 
       <aside
         suppressHydrationWarning
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 transition-transform duration-200 lg:relative lg:z-auto lg:h-full lg:translate-x-0 ${
+        className={`af-sidebar fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r transition-transform duration-200 lg:relative lg:z-auto lg:h-full lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="relative border-b border-zinc-800 px-4 py-4 pr-12">
+        <div className="relative border-b border-white/20 px-4 py-4 pr-12">
           <button
             type="button"
             onClick={onMobileClose}
-            className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer lg:hidden"
+            className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10 hover:text-white transition-colors cursor-pointer lg:hidden"
             aria-label="Close menu"
           >
             ✕
           </button>
-          <p className="text-sm font-semibold text-white truncate">{user?.name || "Dashboard"}</p>
+          <p className="text-base font-bold text-white truncate">{user?.name || "Dashboard"}</p>
           {user?.email && (
-            <p className="text-xs text-zinc-500 truncate mt-0.5">{user.email}</p>
+            <p className="text-sm text-slate-200 truncate mt-1">{user.email}</p>
           )}
-          <p className="text-xs text-zinc-500 truncate mt-0.5">{user?.role}</p>
+          <p className="mt-1.5 inline-flex rounded-md bg-white/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-sky-200">
+            {user?.role}
+          </p>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
@@ -175,11 +177,11 @@ export default function DashboardSidebar({
           />
         </nav>
 
-        <div className="border-t border-zinc-800 p-3">
+        <div className="border-t border-white/10 p-3">
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-3 py-2.5 text-sm font-medium text-zinc-400 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/25 px-3 py-2.5 text-sm font-semibold text-slate-100 hover:border-red-400/50 hover:bg-red-500/10 hover:text-red-200 transition-colors cursor-pointer"
           >
             <span>🚪</span>
             Sign Out
@@ -193,14 +195,14 @@ export default function DashboardSidebar({
         title="Sign Out?"
         maxWidthClass="max-w-md"
       >
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-slate-700">
           Are you sure you want to sign out of your dashboard session?
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(false)}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-700 px-4 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
           >
             Cancel
           </button>

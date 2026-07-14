@@ -20,12 +20,12 @@ interface TableRowActionsProps {
 }
 
 const toneClass: Record<NonNullable<TableExtraAction["tone"]>, string> = {
-  default: "text-zinc-300 hover:bg-zinc-800",
-  success: "text-emerald-400 hover:bg-emerald-500/10",
-  danger: "text-rose-400 hover:bg-rose-500/10",
+  default: "text-slate-800 hover:bg-slate-100",
+  success: "text-emerald-700 hover:bg-emerald-50",
+  danger: "text-rose-700 hover:bg-rose-50",
 };
 
-const MENU_MIN_WIDTH = 168;
+const MENU_MIN_WIDTH = 176;
 
 export default function TableRowActions({
   onView,
@@ -119,7 +119,7 @@ export default function TableRowActions({
         ref={menuRef}
         role="menu"
         style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 9999 }}
-        className="min-w-[10.5rem] rounded-xl border border-zinc-800 bg-zinc-950 p-1 shadow-xl shadow-black/50"
+        className="min-w-[11rem] rounded-xl border border-slate-500 bg-white p-1.5 shadow-xl shadow-slate-900/15"
       >
         {extraActions.map((action) => (
           <button
@@ -127,33 +127,33 @@ export default function TableRowActions({
             type="button"
             role="menuitem"
             onClick={() => run(action.onClick)}
-            className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors cursor-pointer ${
+            className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors cursor-pointer ${
               toneClass[action.tone || "default"]
             }`}
           >
-            {action.icon && <span>{action.icon}</span>}
+            {action.icon && <span className="w-5 text-center text-base leading-none">{action.icon}</span>}
             {action.label}
           </button>
         ))}
 
-        {extraActions.length > 0 && <div className="my-1 border-t border-zinc-800" />}
+        {extraActions.length > 0 && <div className="my-1.5 border-t border-slate-300" />}
 
         <button
           type="button"
           role="menuitem"
           onClick={() => run(onView)}
-          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
+          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
         >
-          <span>👁️</span>
+          <span className="w-5 text-center text-base leading-none">👁️</span>
           View
         </button>
         <button
           type="button"
           role="menuitem"
           onClick={() => run(onEdit)}
-          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-indigo-300 hover:bg-indigo-500/10 transition-colors cursor-pointer"
+          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--af-accent)] hover:bg-sky-50 transition-colors cursor-pointer"
         >
-          <span>✏️</span>
+          <span className="w-5 text-center text-base leading-none">✏️</span>
           Edit
         </button>
         {showDelete && (
@@ -161,9 +161,9 @@ export default function TableRowActions({
             type="button"
             role="menuitem"
             onClick={() => run(onDelete)}
-            className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+            className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
           >
-            <span>🗑️</span>
+            <span className="w-5 text-center text-base leading-none">🗑️</span>
             Delete
           </button>
         )}
@@ -181,9 +181,9 @@ export default function TableRowActions({
           aria-expanded={open}
           aria-haspopup="menu"
           aria-label="Row actions"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-500 bg-white p-2 text-slate-800 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
         >
-          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path d="M10 4a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
           </svg>
         </button>

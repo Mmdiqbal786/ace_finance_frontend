@@ -7,28 +7,28 @@ interface StatusBadgeProps {
 
 export default function StatusBadge({ status, className = "" }: StatusBadgeProps) {
   let label = "Unknown";
-  let badgeStyle = "bg-zinc-400/10 text-zinc-400 ring-zinc-400/20";
+  let badgeStyle = "bg-slate-100 text-slate-600 ring-slate-200";
 
   switch (status) {
     case "PENDING_APPROVER":
       label = "Awaiting Manager Approval";
-      badgeStyle = "bg-amber-400/10 text-amber-400 ring-amber-400/20";
+      badgeStyle = "bg-amber-50 text-amber-700 ring-amber-200";
       break;
     case "APPROVED_APPROVER":
       label = "Approved - Awaiting Processing";
-      badgeStyle = "bg-sky-400/10 text-sky-400 ring-sky-400/20";
+      badgeStyle = "bg-sky-50 text-[var(--af-accent)] ring-sky-200";
       break;
     case "PROCESSED":
       label = "Disbursed & Paid";
-      badgeStyle = "bg-emerald-400/10 text-emerald-400 ring-emerald-400/20";
+      badgeStyle = "bg-emerald-50 text-emerald-700 ring-emerald-200";
       break;
     case "REJECTED_APPROVER":
       label = "Rejected by Manager";
-      badgeStyle = "bg-rose-400/10 text-rose-400 ring-rose-400/20";
+      badgeStyle = "bg-rose-50 text-rose-700 ring-rose-200";
       break;
     case "REJECTED_PROCESSOR":
       label = "Rejected by Finance";
-      badgeStyle = "bg-rose-400/10 text-rose-400 ring-rose-400/20";
+      badgeStyle = "bg-rose-50 text-rose-700 ring-rose-200";
       break;
     default:
       label = status;

@@ -39,6 +39,27 @@ interface Expense {
   history: HistoryLog[];
 }
 
+type ExpenseFormFields = "requesterName" | "requesterEmail" | "amount" | "date" | "category" | "description";
+type FieldErrors = Partial<Record<ExpenseFormFields, string>>;
+
+const NAME_PATTERN = /^[A-Za-z][A-Za-z .'-]{1,79}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
+const MAX_AMOUNT = 100_000;
+const MIN_DESCRIPTION = 1;
+const MAX_DESCRIPTION = 500;
+
+function daysAgoIso(days: number): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - days);
+  return d.toISOString().split("T")[0];
+}
+
+function todayIso(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
 export default function PublicPortal() {
   const [mounted, setMounted] = useState(false);
 
@@ -49,6 +70,8 @@ export default function PublicPortal() {
   const [category, setCategory] = useState("Software");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<ExpenseFormFields, boolean>>>({});
 
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState<Expense | null>(null);
@@ -64,6 +87,121 @@ export default function PublicPortal() {
   const [recentRequests, setRecentRequests] = useState<string[]>([]);
   const [lastSearch, setLastSearch] = useState("");
 
+  const clearFieldError = (field: ExpenseFormFields) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const markTouched = (field: ExpenseFormFields) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const validateField = (field: ExpenseFormFields, values?: {
+    requesterName?: string;
+    requesterEmail?: string;
+    amount?: string;
+    date?: string;
+    category?: string;
+    description?: string;
+  }): string => {
+    const v = {
+      requesterName,
+      requesterEmail,
+      amount,
+      date,
+      category,
+      description,
+      ...values,
+    };
+
+    switch (field) {
+      case "requesterName": {
+        const name = v.requesterName.trim();
+        if (!name) return "Name is required.";
+        if (name.length < 2) return "Name must be at least 2 characters.";
+        if (name.length > 80) return "Name must be 80 characters or fewer.";
+        if (!NAME_PATTERN.test(name)) return "Use letters only (spaces, hyphens, and apostrophes allowed).";
+        return "";
+      }
+      case "requesterEmail": {
+        const email = v.requesterEmail.trim().toLowerCase();
+        if (!email) return "Email address is required.";
+        if (email.length > 120) return "Email must be 120 characters or fewer.";
+        if (!EMAIL_PATTERN.test(email)) return "Enter a valid email like name@company.com.";
+        if (email.endsWith("@example.com") || email.endsWith("@test.com")) {
+          return "Please use a real work email address.";
+        }
+        return "";
+      }
+      case "amount": {
+        const raw = v.amount.trim();
+        if (!raw) return "Amount is required.";
+        if (!AMOUNT_PATTERN.test(raw)) return "Use a valid amount with up to 2 decimal places.";
+        const parsed = Number(raw);
+        if (!Number.isFinite(parsed) || parsed <= 0) return "Amount must be greater than $0.00.";
+        if (parsed < 1) return "Minimum expense amount is $1.00.";
+        if (parsed > MAX_AMOUNT) return `Amount cannot exceed $${MAX_AMOUNT.toLocaleString()}.`;
+        return "";
+      }
+      case "date": {
+        if (!v.date) return "Expense date is required.";
+        const today = todayIso();
+        const oldest = daysAgoIso(365);
+        if (v.date > today) return "Expense date cannot be in the future.";
+        if (v.date < oldest) return "Expense date cannot be older than 1 year.";
+        return "";
+      }
+      case "category": {
+        if (!CATEGORIES.some((c) => c.id === v.category)) return "Please select a valid category.";
+        return "";
+      }
+      case "description": {
+        const text = v.description.trim();
+        if (!text) return "Purpose / description is required.";
+        if (text.length < MIN_DESCRIPTION) {
+          return "Purpose / description is required.";
+        }
+        if (text.length > MAX_DESCRIPTION) {
+          return `Description must be ${MAX_DESCRIPTION} characters or fewer.`;
+        }
+        return "";
+      }
+      default:
+        return "";
+    }
+  };
+
+  const validateForm = (): FieldErrors => {
+    const fields: ExpenseFormFields[] = [
+      "requesterName",
+      "requesterEmail",
+      "amount",
+      "date",
+      "category",
+      "description",
+    ];
+    const errors: FieldErrors = {};
+    for (const field of fields) {
+      const message = validateField(field);
+      if (message) errors[field] = message;
+    }
+    return errors;
+  };
+
+  const onFieldBlur = (field: ExpenseFormFields) => {
+    markTouched(field);
+    const message = validateField(field);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (message) next[field] = message;
+      else delete next[field];
+      return next;
+    });
+  };
   const persistRecentRequests = (ids: string[]) => {
     setRecentRequests(ids);
     if (ids.length > 0) {
@@ -134,10 +272,34 @@ export default function PublicPortal() {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!requesterName || !requesterEmail || !amount || !description || !date) {
-      setSubmitError("Please fill out all fields.");
+
+    const errors = validateForm();
+    setFieldErrors(errors);
+    setTouched({
+      requesterName: true,
+      requesterEmail: true,
+      amount: true,
+      date: true,
+      category: true,
+      description: true,
+    });
+
+    const errorCount = Object.keys(errors).length;
+    if (errorCount > 0) {
+      setSubmitError(
+        `Please fix ${errorCount} field${errorCount > 1 ? "s" : ""} highlighted below before submitting.`
+      );
+      window.setTimeout(() => {
+        document.querySelector<HTMLElement>(".af-input.is-invalid, .af-textarea.is-invalid")?.focus();
+      }, 0);
       return;
     }
+
+    const trimmedName = requesterName.trim();
+    const trimmedEmail = requesterEmail.trim().toLowerCase();
+    const trimmedDescription = description.trim();
+    const parsedAmount = Number(amount);
+
     setSubmitError("");
     setSubmitting(true);
     setSubmitSuccess(null);
@@ -147,11 +309,11 @@ export default function PublicPortal() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          requesterName,
-          requesterEmail,
-          amount: parseFloat(amount),
+          requesterName: trimmedName,
+          requesterEmail: trimmedEmail,
+          amount: parsedAmount,
           category,
-          description,
+          description: trimmedDescription,
           date,
         }),
       });
@@ -170,6 +332,9 @@ export default function PublicPortal() {
       setAmount("");
       setDescription("");
       setCategory("Software");
+      setFieldErrors({});
+      setTouched({});
+      setSubmitError("");
     } catch (err: any) {
       setSubmitError(err.message || "An error occurred during submission.");
     } finally {
@@ -243,10 +408,10 @@ export default function PublicPortal() {
       <div className="relative z-10 mx-auto max-w-7xl flex flex-1 flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
       {/* Hero Header */}
       <div className="text-center md:text-left mb-10">
-        <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-          Public Expense <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400">Portal</span>
+        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+          Public Expense <span className="af-title-accent">Portal</span>
         </h1>
-        <p className="mt-3 max-w-2xl text-lg text-zinc-400">
+        <p className="mt-3 max-w-2xl text-lg text-slate-500">
           Submit reimbursement requests directly to management and track your payments in real-time.
         </p>
       </div>
@@ -254,38 +419,38 @@ export default function PublicPortal() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Form */}
         <div className="portal-card lg:col-span-7 rounded-2xl p-6 sm:p-8">
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-400 text-sm">📝</span>
+          <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-[var(--af-accent)] text-sm">📝</span>
             New Expense Request
           </h2>
 
           {submitSuccess && (
-            <div className="relative mb-6 rounded-xl bg-indigo-500/10 border border-indigo-500/30 p-5 pr-12 text-zinc-100">
+            <div className="relative mb-6 rounded-xl bg-sky-50 border border-sky-200 p-5 pr-12 text-slate-900">
               <button
                 type="button"
                 onClick={() => setSubmitSuccess(null)}
-                className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-indigo-500/10 hover:text-white transition-colors cursor-pointer"
+                className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-sky-100 hover:text-slate-900 transition-colors cursor-pointer"
                 aria-label="Dismiss success message"
               >
                 ✕
               </button>
-              <div className="flex items-center gap-3 mb-2 text-indigo-400 font-bold">
+              <div className="flex items-center gap-3 mb-2 text-[var(--af-accent)] font-bold">
                 <span className="text-xl">🎉</span> Request Submitted Successfully!
               </div>
-              <p className="text-sm text-zinc-300 mb-3">
+              <p className="text-sm text-slate-600 mb-3">
                 Your request has been logged and forwarded to User 1 (Approver) for review. Use the ID below to track updates.
               </p>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-zinc-950 p-3 rounded-lg border border-zinc-800 font-mono text-sm">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 font-mono text-sm">
                 <div>
-                  <span className="text-zinc-500">Request ID:</span>{" "}
-                  <span className="text-indigo-400 font-semibold">{submitSuccess.id}</span>
+                  <span className="text-slate-500">Request ID:</span>{" "}
+                  <span className="text-[var(--af-accent)] font-semibold">{submitSuccess.id}</span>
                 </div>
                 <button
                   onClick={() => {
                     setSearchQuery(submitSuccess.id);
                     handleSearch(submitSuccess.id);
                   }}
-                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 underline"
+                  className="text-xs font-semibold text-[var(--af-accent)] hover:text-[var(--af-accent-soft)] underline"
                 >
                   Track in right panel
                 </button>
@@ -294,97 +459,158 @@ export default function PublicPortal() {
           )}
 
           {submitError && (
-            <div className="mb-6 rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 text-xs font-medium text-rose-400">
+            <div className="mb-6 rounded-xl bg-rose-50 border border-rose-300 p-4 text-sm font-semibold text-rose-800">
               ⚠️ {submitError}
+              {Object.keys(fieldErrors).length > 0 && (
+                <ul className="mt-2 space-y-1 text-xs font-medium list-disc pl-5">
+                  {Object.values(fieldErrors).map((msg) => (
+                    <li key={msg}>{msg}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 
           {mounted ? (
-          <form onSubmit={handleFormSubmit} className="space-y-5" suppressHydrationWarning>
+          <form onSubmit={handleFormSubmit} noValidate className="space-y-5" suppressHydrationWarning>
+            <p className="text-xs font-medium text-slate-600 -mt-1">
+              Fields marked with <span className="af-required">*</span> are required
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="requesterName" className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                  Full Name
+                <label htmlFor="requesterName" className="af-label">
+                  Name <span className="af-required" aria-hidden="true">*</span>
                 </label>
                 <input
                   type="text"
                   id="requesterName"
                   value={requesterName}
-                  onChange={(e) => setRequesterName(e.target.value)}
-                  placeholder="John Doe"
-                  className="w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-indigo-500 focus:outline-none transition-colors"
-                  required
+                  onChange={(e) => {
+                    setRequesterName(e.target.value);
+                    clearFieldError("requesterName");
+                    if (submitError) setSubmitError("");
+                  }}
+                  onBlur={() => onFieldBlur("requesterName")}
+                  placeholder="John"
+                  autoComplete="name"
+                  maxLength={80}
+                  aria-invalid={Boolean(fieldErrors.requesterName)}
+                  aria-describedby={fieldErrors.requesterName ? "requesterName-error" : undefined}
+                  className={`af-input${fieldErrors.requesterName ? " is-invalid" : ""}`}
                 />
+                {fieldErrors.requesterName ? (
+                  <p id="requesterName-error" className="af-field-error">{fieldErrors.requesterName}</p>
+                ) : (
+                  <p className="af-field-hint">Enter your name</p>
+                )}
               </div>
 
               <div>
-                <label htmlFor="requesterEmail" className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                  Email Address
+                <label htmlFor="requesterEmail" className="af-label">
+                  Email Address <span className="af-required" aria-hidden="true">*</span>
                 </label>
                 <input
                   type="email"
                   id="requesterEmail"
                   value={requesterEmail}
-                  onChange={(e) => setRequesterEmail(e.target.value)}
-                  placeholder="john.doe@example.com"
-                  className="w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-indigo-500 focus:outline-none transition-colors"
-                  required
+                  onChange={(e) => {
+                    setRequesterEmail(e.target.value);
+                    clearFieldError("requesterEmail");
+                    if (submitError) setSubmitError("");
+                  }}
+                  onBlur={() => onFieldBlur("requesterEmail")}
+                  placeholder="john.doe@company.com"
+                  autoComplete="email"
+                  maxLength={120}
+                  aria-invalid={Boolean(fieldErrors.requesterEmail)}
+                  aria-describedby={fieldErrors.requesterEmail ? "requesterEmail-error" : undefined}
+                  className={`af-input${fieldErrors.requesterEmail ? " is-invalid" : ""}`}
                 />
+                {fieldErrors.requesterEmail ? (
+                  <p id="requesterEmail-error" className="af-field-error">{fieldErrors.requesterEmail}</p>
+                ) : (
+                  <p className="af-field-hint">Work email preferred for updates</p>
+                )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="amount" className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                  Amount (USD)
+                <label htmlFor="amount" className="af-label">
+                  Amount (USD) <span className="af-required" aria-hidden="true">*</span>
                 </label>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <span className="text-zinc-500 sm:text-sm">$</span>
-                  </div>
-                  <input
-                    type="number"
-                    id="amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0.01"
-                    className="w-full rounded-xl bg-zinc-950 border border-zinc-800 pl-8 pr-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-indigo-500 focus:outline-none transition-colors"
-                    required
-                  />
-                </div>
+                <input
+                  type="number"
+                  id="amount"
+                  value={amount}
+                  onChange={(e) => {
+                    setAmount(e.target.value);
+                    clearFieldError("amount");
+                    if (submitError) setSubmitError("");
+                  }}
+                  onBlur={() => onFieldBlur("amount")}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="1"
+                  max={MAX_AMOUNT}
+                  inputMode="decimal"
+                  aria-invalid={Boolean(fieldErrors.amount)}
+                  aria-describedby={fieldErrors.amount ? "amount-error" : "amount-hint"}
+                  className={`af-input${fieldErrors.amount ? " is-invalid" : ""}`}
+                />
+                {fieldErrors.amount ? (
+                  <p id="amount-error" className="af-field-error">{fieldErrors.amount}</p>
+                ) : (
+                  <p id="amount-hint" className="af-field-hint">Min $1.00 · Max ${MAX_AMOUNT.toLocaleString()} · 2 decimals</p>
+                )}
               </div>
 
               <div>
-                <label htmlFor="date" className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                  Expense Date
+                <label htmlFor="date" className="af-label">
+                  Expense Date <span className="af-required" aria-hidden="true">*</span>
                 </label>
                 <input
                   type="date"
                   id="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
-                  required
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                    clearFieldError("date");
+                    if (submitError) setSubmitError("");
+                  }}
+                  onBlur={() => onFieldBlur("date")}
+                  max={todayIso()}
+                  min={daysAgoIso(365)}
+                  aria-invalid={Boolean(fieldErrors.date)}
+                  aria-describedby={fieldErrors.date ? "date-error" : "date-hint"}
+                  className={`af-input${fieldErrors.date ? " is-invalid" : ""}`}
                 />
+                {fieldErrors.date ? (
+                  <p id="date-error" className="af-field-error">{fieldErrors.date}</p>
+                ) : (
+                  <p id="date-hint" className="af-field-hint">Must be within the last 12 months</p>
+                )}
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                Category
+              <label className="af-label">
+                Category <span className="af-required" aria-hidden="true">*</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
                     type="button"
-                    onClick={() => setCategory(cat.id)}
+                    onClick={() => {
+                      setCategory(cat.id);
+                      clearFieldError("category");
+                      if (submitError) setSubmitError("");
+                    }}
                     className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
                       category === cat.id
-                        ? "bg-gradient-to-br from-indigo-600/20 to-violet-600/10 border-indigo-400/60 text-indigo-300 shadow-lg shadow-indigo-500/10"
-                        : "bg-zinc-950/80 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-white"
+                        ? "bg-gradient-to-br from-sky-50 to-sky-100/80 border-sky-400 text-[var(--af-accent)] shadow-sm shadow-sky-500/10"
+                        : "bg-white border-slate-500 text-slate-700 hover:border-[var(--af-navy)] hover:text-[var(--af-navy)]"
                     }`}
                   >
                     <span className="text-xl mb-1">{cat.icon}</span>
@@ -392,27 +618,49 @@ export default function PublicPortal() {
                   </button>
                 ))}
               </div>
+              {fieldErrors.category && (
+                <p className="af-field-error">{fieldErrors.category}</p>
+              )}
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                Purpose / Description
+              <label htmlFor="description" className="af-label">
+                Purpose / Description <span className="af-required" aria-hidden="true">*</span>
               </label>
               <textarea
                 id="description"
                 rows={4}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  clearFieldError("description");
+                  if (submitError) setSubmitError("");
+                }}
+                onBlur={() => onFieldBlur("description")}
                 placeholder="Please state the business purpose for this expense request..."
-                className="w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-indigo-500 focus:outline-none transition-colors resize-none"
-                required
+                maxLength={MAX_DESCRIPTION}
+                aria-invalid={Boolean(fieldErrors.description)}
+                aria-describedby={fieldErrors.description ? "description-error" : "description-hint"}
+                className={`af-textarea resize-none${fieldErrors.description ? " is-invalid" : ""}`}
               />
+              <div className="mt-1 flex items-start justify-between gap-3">
+                {fieldErrors.description ? (
+                  <p id="description-error" className="af-field-error !mt-0">{fieldErrors.description}</p>
+                ) : (
+                  <p id="description-hint" className="af-field-hint !mt-0">
+                    At least {MIN_DESCRIPTION} character, up to {MAX_DESCRIPTION}
+                  </p>
+                )}
+                <span className={`text-xs font-semibold shrink-0 ${description.trim().length < MIN_DESCRIPTION ? "text-slate-500" : "text-slate-700"}`}>
+                  {description.trim().length}/{MAX_DESCRIPTION}
+                </span>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 hover:from-indigo-500 hover:to-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-[var(--af-navy)] to-[var(--af-navy-soft)] text-sm font-semibold text-white shadow-lg shadow-[var(--af-navy)]/15 hover:from-[var(--af-navy-soft)] hover:to-[var(--af-navy-muted)] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {submitting ? (
                 <span className="flex items-center gap-2">
@@ -428,7 +676,7 @@ export default function PublicPortal() {
             </button>
           </form>
           ) : (
-            <div className="flex min-h-[420px] items-center justify-center text-sm text-zinc-500">
+            <div className="flex min-h-[420px] items-center justify-center text-sm text-slate-500">
               Loading form...
             </div>
           )}
@@ -437,11 +685,11 @@ export default function PublicPortal() {
         {/* Right Column: Status Tracker */}
         <div className="lg:col-span-5 space-y-6">
           <div className="portal-card portal-card--track rounded-2xl p-6 sm:p-8">
-            <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-violet-500/10 text-violet-400 text-sm">🔍</span>
+            <h2 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-[var(--af-accent)] text-sm">🔍</span>
               Track Status
             </h2>
-            <p className="text-xs text-zinc-400 mb-6">
+            <p className="text-xs text-slate-500 mb-6">
               Enter your unique Request ID (e.g. EXP-17...) or your email to track approvals.
             </p>
 
@@ -452,7 +700,7 @@ export default function PublicPortal() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Request ID or Email"
-                className="flex-1 rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none transition-colors"
+                className="af-input flex-1"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSearch();
                 }}
@@ -460,13 +708,13 @@ export default function PublicPortal() {
               <button
                 onClick={() => handleSearch()}
                 disabled={searching}
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-600/20 transition-all cursor-pointer disabled:opacity-50"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--af-navy)] hover:bg-[var(--af-navy-soft)] px-5 text-sm font-semibold text-white shadow-lg shadow-[var(--af-navy)]/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 {searching ? "Searching..." : "Track"}
               </button>
             </div>
             ) : (
-              <div className="h-10 rounded-xl bg-zinc-950 border border-zinc-800 animate-pulse" />
+              <div className="h-10 rounded-xl bg-white border border-slate-200 animate-pulse" />
             )}
 
             {searchError && (
@@ -477,8 +725,8 @@ export default function PublicPortal() {
 
             {/* Recent submissions, or last successful search as fallback */}
             {(recentRequests.length > 0 || lastSearch) && (
-              <div className="mt-4 pt-3 border-t border-zinc-800/60">
-                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider block mb-2">
+              <div className="mt-4 pt-3 border-t border-slate-200">
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-2">
                   {recentRequests.length > 0 ? "Your Recent Requests" : "Last Tracked"}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -490,7 +738,7 @@ export default function PublicPortal() {
                           setSearchQuery(rId);
                           handleSearch(rId);
                         }}
-                        className="text-xs bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
+                        className="text-xs bg-slate-100 hover:bg-slate-200 border border-slate-400 text-slate-800 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
                       >
                         {rId.substring(0, 14)}...
                       </button>
@@ -501,7 +749,7 @@ export default function PublicPortal() {
                         setSearchQuery(lastSearch);
                         handleSearch(lastSearch);
                       }}
-                      className="text-xs bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
+                      className="text-xs bg-slate-100 hover:bg-slate-200 border border-slate-400 text-slate-800 font-mono py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
                     >
                       {lastSearch.startsWith("EXP-")
                         ? `${lastSearch.substring(0, 14)}...`
@@ -519,18 +767,18 @@ export default function PublicPortal() {
               <button
                 type="button"
                 onClick={() => setSearchResults([])}
-                className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
+                className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
                 aria-label="Close tracking details"
               >
                 ✕
               </button>
-              <div className="flex justify-between items-start border-b border-zinc-800 pb-4 pr-2">
+              <div className="flex justify-between items-start border-b border-slate-200 pb-4 pr-2">
                 <div>
-                  <h3 className="text-sm font-semibold text-zinc-500 font-mono">{searchResults[0].id}</h3>
-                  <p className="text-lg font-bold text-white mt-0.5">{searchResults[0].category}</p>
+                  <h3 className="text-sm font-semibold text-slate-500 font-mono">{searchResults[0].id}</h3>
+                  <p className="text-lg font-bold text-slate-900 mt-0.5">{searchResults[0].category}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-xl font-extrabold text-white">${searchResults[0].amount.toFixed(2)}</div>
+                  <div className="text-xl font-extrabold text-slate-900">${searchResults[0].amount.toFixed(2)}</div>
                   <div className="mt-1">
                     <StatusBadge status={searchResults[0].status} />
                   </div>
@@ -539,8 +787,8 @@ export default function PublicPortal() {
 
               {/* Multiple results matching email switcher */}
               {searchResults.length > 1 && (
-                <div className="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800 space-y-1 max-h-48 overflow-y-auto">
-                  <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider block px-1.5 py-0.5">
+                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 max-h-48 overflow-y-auto">
+                  <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider block px-1.5 py-0.5">
                     Found {searchResults.length} Requests
                   </span>
                   {searchResults.map((item, idx) => (
@@ -553,17 +801,17 @@ export default function PublicPortal() {
                       }}
                       className={`w-full text-left rounded-lg p-2 text-xs font-medium transition-colors flex items-center justify-between ${
                         idx === 0
-                          ? "bg-indigo-600/15 text-indigo-300 border border-indigo-500/20"
-                          : "text-zinc-400 hover:bg-zinc-900 border border-transparent"
+                          ? "bg-sky-50 text-[var(--af-accent)] border border-sky-200"
+                          : "text-slate-500 hover:bg-white border border-transparent"
                       }`}
                     >
                       <div>
-                        <div className="font-mono text-[10px]">{item.id}</div>
-                        <div className="mt-0.5 truncate max-w-44 text-zinc-300 font-bold">{item.description}</div>
+                        <div className="font-mono text-xs">{item.id}</div>
+                        <div className="mt-0.5 truncate max-w-44 text-slate-600 font-bold">{item.description}</div>
                       </div>
                       <div className="text-right">
                         <div>${item.amount.toFixed(2)}</div>
-                        <div className="text-[9px] text-zinc-500">{new Date(item.date).toLocaleDateString()}</div>
+                        <div className="text-xs text-slate-500">{new Date(item.date).toLocaleDateString()}</div>
                       </div>
                     </button>
                   ))}
@@ -571,26 +819,26 @@ export default function PublicPortal() {
               )}
 
               {/* Expense Information */}
-              <div className="space-y-3 bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-sm">
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm">
                 <div>
-                  <span className="text-zinc-500 block text-[10px] uppercase font-bold tracking-wider">Purpose</span>
-                  <p className="text-zinc-200 mt-0.5 text-xs italic">"{searchResults[0].description}"</p>
+                  <span className="text-slate-500 block text-xs uppercase font-bold tracking-wider">Purpose</span>
+                  <p className="text-slate-800 mt-0.5 text-xs italic">"{searchResults[0].description}"</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-zinc-500 block text-[10px] uppercase font-bold tracking-wider">Requester</span>
-                    <p className="text-zinc-300 text-xs mt-0.5">{searchResults[0].requesterName}</p>
+                    <span className="text-slate-500 block text-xs uppercase font-bold tracking-wider">Requester</span>
+                    <p className="text-slate-600 text-xs mt-0.5">{searchResults[0].requesterName}</p>
                   </div>
                   <div>
-                    <span className="text-zinc-500 block text-[10px] uppercase font-bold tracking-wider">Date Logged</span>
-                    <p className="text-zinc-300 text-xs mt-0.5">{new Date(searchResults[0].date).toLocaleDateString()}</p>
+                    <span className="text-slate-500 block text-xs uppercase font-bold tracking-wider">Date Logged</span>
+                    <p className="text-slate-600 text-xs mt-0.5">{new Date(searchResults[0].date).toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
 
               {/* Timeline Graphic */}
               <div>
-                <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                   <span>⏱️</span> Workflow History & Logs
                 </h4>
                 

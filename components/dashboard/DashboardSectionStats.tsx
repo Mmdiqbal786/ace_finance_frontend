@@ -64,7 +64,7 @@ export default function DashboardSectionStats({
           value={String(pendingProcessorCount)}
           subtext="Approved, awaiting disbursement"
           emoji="💸"
-          valueColor="text-sky-400"
+          valueColor="text-[var(--af-accent)]"
         />
         <StatCard
           title="Payout Amount"
@@ -77,7 +77,7 @@ export default function DashboardSectionStats({
           value={`$${stats.totalProcessedAmount.toFixed(2)}`}
           subtext={`${stats.processed} expenses processed`}
           emoji="💳"
-          valueColor="text-emerald-400"
+          valueColor="text-emerald-600"
         />
       </div>
     );
@@ -100,14 +100,14 @@ export default function DashboardSectionStats({
           value={String(activeUsers)}
           subtext={`${users.length - activeUsers} inactive`}
           emoji="✅"
-          valueColor="text-emerald-400"
+          valueColor="text-emerald-600"
         />
         <StatCard
           title="Administrators"
           value={String(adminCount)}
           subtext="Full-access accounts"
           emoji="👑"
-          valueColor="text-amber-400"
+          valueColor="text-amber-600"
         />
       </div>
     );
@@ -133,7 +133,7 @@ export default function DashboardSectionStats({
           value={`$${stats.totalProcessedAmount.toFixed(2)}`}
           subtext={`${stats.processed} paid out`}
           emoji="💳"
-          valueColor="text-emerald-400"
+          valueColor="text-emerald-600"
         />
         <StatCard
           title="Rejection Rate"

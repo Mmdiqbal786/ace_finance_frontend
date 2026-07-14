@@ -16,23 +16,23 @@ export default function DashboardBreadcrumb({ section }: DashboardBreadcrumbProp
 
   return (
     <nav aria-label="Breadcrumb" className="mb-3 sm:mb-4">
-      <ol className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
+      <ol className="flex flex-wrap items-center gap-1.5 text-sm text-slate-600">
         <li>
           {isHome ? (
-            <span className="text-zinc-300 font-medium">Dashboard</span>
+            <span className="text-slate-900 font-semibold">Dashboard</span>
           ) : (
-            <Link href={DASHBOARD_ROUTES.home} className="hover:text-zinc-300 transition-colors">
+            <Link href={DASHBOARD_ROUTES.home} className="font-medium text-slate-700 hover:text-[var(--af-navy)] transition-colors">
               Dashboard
             </Link>
           )}
         </li>
         {!isHome && (
           <>
-            <li aria-hidden="true" className="text-zinc-600">
+            <li aria-hidden="true" className="text-slate-500">
               /
             </li>
             <li>
-              <span className="text-zinc-300 font-medium">{currentLabel}</span>
+              <span className="text-slate-900 font-semibold">{currentLabel}</span>
             </li>
           </>
         )}
