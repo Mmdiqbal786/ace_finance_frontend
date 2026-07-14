@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  /* Aceolution brand navy (matches product sidebar, not charcoal slate) */
-  --af-navy: #0b1f3a;
-  --af-navy-soft: #122a4a;
-  --af-navy-muted: #1a3a5c;
-  --af-navy-active: #163456;
+  /* Aceolution brand navy — used everywhere (sidebar, buttons, accents) */
+  --af-navy: #203c62;
+  --af-navy-soft: #2a4d78;
+  --af-navy-muted: #355a8a;
+  --af-navy-active: #1a3252;
   --af-bg: #f8fafc;
   --af-surface: #ffffff;
   --af-border: #e2e8f0;
   --af-border-strong: #cbd5e1;
-  --af-text: #0b1f3a;
+  --af-text: #203c62;
   --af-text-secondary: #475569;
   --af-muted: #64748b;
   --af-subtle: #94a3b8;
@@ -77,8 +77,8 @@ body {
 .login-page .login-input:-webkit-autofill:hover,
 .login-page .login-input:-webkit-autofill:focus,
 .login-page .login-input:-webkit-autofill:active {
-  -webkit-text-fill-color: #0f172a !important;
-  caret-color: #0f172a;
+  -webkit-text-fill-color: var(--af-navy) !important;
+  caret-color: var(--af-navy);
   border-color: #e2e8f0 !important;
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
   box-shadow: 0 0 0 1000px #ffffff inset !important;
@@ -120,7 +120,7 @@ body {
 .portal-orb--violet {
   width: 28rem;
   height: 28rem;
-  background: #0f172a;
+  background: var(--af-navy);
   top: -10rem;
   left: -8rem;
   opacity: 0.08;
@@ -149,7 +149,7 @@ body {
 .portal-grid {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(32, 60, 98, 0.06) 1px, transparent 1px);
   background-size: 22px 22px;
   mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
 }
@@ -159,7 +159,7 @@ body {
   overflow: hidden;
   background: var(--af-surface);
   border: 1px solid var(--af-border);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px rgba(32, 60, 98, 0.06), 0 8px 24px rgba(32, 60, 98, 0.04);
 }
 
 .portal-card::before {
@@ -169,11 +169,11 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #0f172a, #0369a1, #38bdf8);
+  background: linear-gradient(90deg, var(--af-navy), #0369a1, #38bdf8);
 }
 
 .portal-card--track::before {
-  background: linear-gradient(90deg, #0f172a, #0284c7, #7dd3fc);
+  background: linear-gradient(90deg, var(--af-navy), #0284c7, #7dd3fc);
 }
 
 @keyframes portal-float {
