@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { getUser, logout, AuthUser, isAuthenticated } from '../lib/auth';
 import { usePathname } from 'next/navigation';
 import Modal from './Modal';
+import BrandLogo from './BrandLogo';
 import { DASHBOARD_ROUTES } from '../lib/dashboard/routes';
 
 const roleBadgeClass: Record<string, string> = {
-  ADMIN: 'bg-amber-500/15 text-amber-300 border-amber-500/25',
-  APPROVER: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/25',
-  PROCESSOR: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
+  ADMIN: 'bg-amber-500/15 text-amber-700 border-amber-500/25',
+  APPROVER: 'bg-sky-500/15 text-sky-700 border-sky-500/25',
+  PROCESSOR: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/25',
 };
 
 const roleIcon: Record<string, string> = {
@@ -70,25 +71,18 @@ export default function Header() {
   const logoHref = user ? DASHBOARD_ROUTES.home : '/';
 
   return (
-    <header className={`sticky top-0 z-50 shrink-0 w-full border-b border-zinc-800 bg-zinc-950 ${isDashboard ? "" : "bg-zinc-950/80 backdrop-blur-md"}`}>
+    <header className={`sticky top-0 z-50 shrink-0 w-full border-b border-slate-200 bg-white ${isDashboard ? "" : "bg-white/90 backdrop-blur-md"}`}>
       <div
         suppressHydrationWarning
         className="flex min-h-14 w-full items-center justify-between gap-2 px-4 py-2 sm:min-h-16 sm:gap-3 sm:px-6 lg:px-8"
       >
         <div suppressHydrationWarning className="flex min-w-0 items-center">
-          <Link href={logoHref} className="flex min-w-0 items-center gap-2 group sm:gap-2.5">
-            <div suppressHydrationWarning className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-indigo-500/20 transition-transform group-hover:scale-105">
-              <span className="text-xs sm:text-sm font-bold text-white tracking-wider">AF</span>
-            </div>
-            <span className="truncate text-base sm:text-lg font-bold tracking-tight text-white transition-colors group-hover:text-indigo-400">
-              Ace<span className="text-indigo-500">Finance</span>
-            </span>
-          </Link>
+          <BrandLogo href={logoHref} full showWordmark />
         </div>
 
         <div suppressHydrationWarning className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           {!mounted ? (
-            <div suppressHydrationWarning className="h-9 w-32 rounded-lg bg-zinc-800/50 animate-pulse" />
+            <div suppressHydrationWarning className="h-9 w-32 rounded-lg bg-slate-100 animate-pulse" />
           ) : mounted && isDashboard && user ? (
             <div ref={userMenuRef} className="relative">
               <button
@@ -96,14 +90,14 @@ export default function Header() {
                 onClick={() => setUserMenuOpen((open) => !open)}
                 aria-expanded={userMenuOpen}
                 aria-haspopup="menu"
-                className="inline-flex h-9 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/80 px-2 sm:px-3 text-sm font-medium text-zinc-200 hover:bg-zinc-800 hover:border-zinc-600 transition-colors cursor-pointer"
+                className="inline-flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 sm:px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer"
               >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-[10px] font-bold text-white">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--af-navy)] text-[10px] font-bold text-white">
                   {getInitials(user.name)}
                 </span>
                 <span className="hidden sm:block max-w-[120px] truncate">{user.name}</span>
                 <svg
-                  className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                  className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -116,11 +110,11 @@ export default function Header() {
               {userMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-2 w-64 rounded-xl border border-zinc-800 bg-zinc-950 shadow-xl shadow-black/40 overflow-hidden z-50"
+                  className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 bg-white shadow-xl shadow-[var(--af-navy)]/10 overflow-hidden z-50"
                 >
-                  <div className="px-4 py-3 border-b border-zinc-800">
-                    <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-                    <p className="text-xs text-zinc-500 truncate mt-0.5">{user.email}</p>
+                  <div className="px-4 py-3 border-b border-slate-200">
+                    <p className="text-sm font-semibold text-slate-900 truncate">{user.name}</p>
+                    <p className="text-xs text-slate-500 truncate mt-0.5">{user.email}</p>
                     <span
                       className={`inline-flex items-center gap-1.5 mt-2 rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide ${roleBadgeClass[user.role]}`}
                     >
@@ -137,7 +131,7 @@ export default function Header() {
                         setUserMenuOpen(false);
                         setShowLogoutConfirm(true);
                       }}
-                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
                     >
                       <span>🚪</span>
                       Sign Out
@@ -148,12 +142,12 @@ export default function Header() {
             </div>
           ) : (
             <>
-              <span className="hidden sm:inline-flex items-center rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-500/20">
+              <span className="hidden sm:inline-flex items-center rounded-full bg-sky-500/10 px-2.5 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-500/20">
                 v1.2.0 Stable
               </span>
               <Link
                 href="/login"
-                className="inline-flex h-9 items-center justify-center rounded-lg bg-indigo-600 px-4 text-xs font-semibold text-white shadow hover:bg-indigo-500 transition-colors"
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-xs font-semibold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
               >
                 Dashboard Login
               </Link>
@@ -168,14 +162,14 @@ export default function Header() {
         title="Sign Out?"
         maxWidthClass="max-w-md"
       >
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-slate-500">
           Are you sure you want to sign out of your dashboard session?
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(false)}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-700 px-4 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
           >
             Cancel
           </button>

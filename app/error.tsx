@@ -32,7 +32,7 @@ export default function Error({ error, reset }: ErrorProps) {
         </button>
         <button
           onClick={() => reset()}
-          className="inline-flex h-10 items-center justify-center rounded-xl bg-indigo-600 px-6 text-xs font-bold text-white shadow hover:bg-indigo-500 transition-colors cursor-pointer"
+          className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--af-navy)] px-6 text-xs font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors cursor-pointer"
         >
           Retry Connection
         </button>

@@ -16,8 +16,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AceFinance | Expense Approval & Tracking System",
+  title: "Aceolution Finance | Expense Approval & Tracking System",
   description: "Enterprise expense requests, approvals, and real-time processing dashboard.",
+  icons: {
+    icon: [{ url: "/Ace_logo_small.png", type: "image/png" }],
+    apple: [{ url: "/Ace_logo_small.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({
@@ -28,10 +32,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-dvh flex-col bg-zinc-950 text-zinc-50 font-sans" suppressHydrationWarning>
+      <body className="flex min-h-dvh flex-col bg-slate-50 text-slate-900 font-sans" suppressHydrationWarning>
         <DashboardScrollLock />
         <Header />
         <main className="flex min-h-0 flex-1 flex-col">{children}</main>

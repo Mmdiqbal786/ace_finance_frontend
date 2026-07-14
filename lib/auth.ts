@@ -1,4 +1,4 @@
-// Auth utilities for the AceFinance frontend
+// Auth utilities for the Aceolution Finance frontend
 
 const TOKEN_KEY = 'ace_finance_token';
 const USER_KEY = 'ace_finance_user';
