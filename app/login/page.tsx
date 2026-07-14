@@ -39,7 +39,7 @@ function FullPageLoader({ message }: { message: string }) {
         <LoginSpinner className="h-10 w-10 text-[var(--af-accent)]" />
         <div>
           <p className="text-base font-semibold text-slate-900">{message}</p>
-          <p className="mt-1 text-sm text-slate-500">Please wait a moment...</p>
+          <p className="mt-1 text-sm text-slate-600">Please wait a moment...</p>
         </div>
       </div>
     </div>
@@ -76,6 +76,16 @@ export default function LoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (!password) {
+      setError('Please enter your password.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
@@ -130,21 +140,24 @@ export default function LoginPage() {
           <div className="inline-flex flex-col items-center gap-2">
             <BrandLogo full showWordmark />
           </div>
-          <p className="mt-4 text-sm text-slate-500">Dashboard Login — Staff Only</p>
+          <p className="mt-4 text-sm font-semibold text-slate-700">Dashboard Login — Staff Only</p>
         </div>
 
-        <div className="portal-card rounded-[20px] p-8">
-          <h1 className="text-2xl font-bold text-slate-900">
+        <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-8 shadow-lg">
+          <h1 className="text-2xl font-extrabold text-slate-900">
             Sign <span className="af-title-accent">In</span>
           </h1>
-          <p className="mt-2 mb-7 text-sm text-slate-500">
+          <p className="mt-2 mb-7 text-sm font-medium text-slate-700">
             Enter your credentials to access the dashboard
           </p>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-4" suppressHydrationWarning>
+          <form onSubmit={handleLogin} noValidate className="flex flex-col gap-4" suppressHydrationWarning>
+            <p className="text-xs font-medium text-slate-600 -mt-1 mb-1">
+              Fields marked with <span className="af-required">*</span> are required
+            </p>
             <div>
               <label htmlFor="login-email" className="mb-2 block af-label">
-                Email Address
+                Email Address <span className="af-required" aria-hidden="true">*</span>
               </label>
               <input
                 id="login-email"
@@ -154,30 +167,28 @@ export default function LoginPage() {
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="email"
                 placeholder="you@aceolution.com"
-                required
                 disabled={loading}
               />
             </div>
 
             <div>
               <label htmlFor="login-password" className="mb-2 block af-label">
-                Password
+                Password <span className="af-required" aria-hidden="true">*</span>
               </label>
               <div className="relative">
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
-                  className="login-input af-input !pr-11"
+                className="login-input af-input login-input--password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  required
                   disabled={loading}
                 />
                 <button
                   type="button"
-                  className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border-0 bg-slate-100 p-0 text-slate-500 hover:bg-slate-200 hover:text-slate-800 cursor-pointer"
+                  className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border border-slate-400 bg-slate-100 p-0 text-slate-700 hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
                   onClick={() => setShowPassword((value) => !value)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
@@ -199,7 +210,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
                 ⚠️ {error}
               </div>
             )}
@@ -208,7 +219,7 @@ export default function LoginPage() {
               id="login-submit"
               type="submit"
               disabled={loading}
-              className="w-full rounded-[10px] bg-[var(--af-navy)] py-3.5 text-[0.95rem] font-semibold text-white shadow-lg shadow-[var(--af-navy)]/15 transition-all hover:bg-[var(--af-navy-soft)] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+              className="w-full rounded-[10px] bg-[var(--af-navy)] py-3.5 text-[0.95rem] font-bold text-white shadow-lg shadow-[var(--af-navy)]/15 transition-all hover:bg-[var(--af-navy-soft)] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               Sign In →
             </button>
@@ -249,9 +260,9 @@ export default function LoginPage() {
           */}
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-500">
+        <p className="mt-6 text-center text-sm font-medium text-slate-700">
           Public expense form available at{' '}
-          <a href="/" className="text-[var(--af-accent)] no-underline hover:text-[var(--af-accent-soft)]">the homepage</a>
+          <a href="/" className="font-semibold text-[var(--af-accent)] no-underline hover:text-[var(--af-accent-soft)] underline">the homepage</a>
         </p>
       </div>
     </div>
