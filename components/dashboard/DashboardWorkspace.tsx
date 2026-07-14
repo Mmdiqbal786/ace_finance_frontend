@@ -1240,8 +1240,8 @@ export default function DashboardWorkspace() {
           {usersLoading ? (
             <div className="text-center py-12 text-slate-700">Loading users...</div>
           ) : (
-            <div className="portal-card rounded-xl overflow-hidden">
-              <div className="p-4 border-b border-slate-400">
+            <div className="portal-card rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 min-w-0">
+              <div className="mb-4">
                 <TableToolbar
                   search={usersTable.search}
                   onSearchChange={usersTable.setSearch}
@@ -1271,63 +1271,68 @@ export default function DashboardWorkspace() {
               ) : (
                 <>
                   <div className="af-table-wrap">
-                    <table className="af-table">
+                    <table className="af-table min-w-full">
                       <thead>
                         <tr>
-                          <th className="px-4 py-3 text-left">Name</th>
-                          <th className="px-4 py-3 text-left">Email</th>
-                          <th className="px-4 py-3 text-left">Role</th>
-                          <th className="px-4 py-3 text-left">Status</th>
-                          <th className="px-4 py-3 text-right">Actions</th>
+                          <th className="py-3 px-4">Name</th>
+                          <th className="py-3 px-4">Email</th>
+                          <th className="py-3 px-4">Role</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4 text-center">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {usersTable.paginated.map((u) => (
-                    <tr key={u._id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-slate-900">{u.name}</td>
-                      <td className="px-4 py-3 text-slate-600">{u.email}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-bold ${
-                          u.role === "ADMIN" ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200" :
-                          u.role === "APPROVER" ? "bg-sky-50 text-[var(--af-accent)] ring-1 ring-sky-200" :
-                          "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                        }`}>
-                          {u.role === "ADMIN" ? "👑" : u.role === "APPROVER" ? "✅" : "💳"} {u.role}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => handleToggleActive(u)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm font-semibold transition-colors ${
-                            u.isActive ? "bg-emerald-50 text-emerald-700 hover:bg-rose-50 hover:text-rose-700" : "bg-rose-50 text-rose-700 hover:bg-emerald-50 hover:text-emerald-700"
-                          }`}>
-                          {u.isActive ? "● Active" : "○ Inactive"}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <TableRowActions
-                          align="end"
-                          onView={() => openUserView(u)}
-                          onEdit={() => openUserEdit(u)}
-                          onDelete={() => setDeleteUserId(u._id)}
-                          showDelete={u.email !== currentUser?.email}
-                        />
-                      </td>
-                        </tr>
+                          <tr key={u._id} className="hover:bg-slate-50 transition-colors">
+                            <td className="py-3.5 px-4 font-semibold text-slate-900">{u.name}</td>
+                            <td className="py-3.5 px-4 text-slate-700">{u.email}</td>
+                            <td className="py-3.5 px-4">
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm font-bold ring-1 ${
+                                  u.role === "ADMIN"
+                                    ? "bg-amber-50 text-amber-800 ring-amber-300"
+                                    : u.role === "APPROVER"
+                                      ? "bg-sky-50 text-[var(--af-accent)] ring-sky-300"
+                                      : "bg-emerald-50 text-emerald-800 ring-emerald-300"
+                                }`}
+                              >
+                                {u.role === "ADMIN" ? "👑" : u.role === "APPROVER" ? "✅" : "💳"} {u.role}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <button
+                                onClick={() => handleToggleActive(u)}
+                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm font-semibold transition-colors cursor-pointer ${
+                                  u.isActive
+                                    ? "bg-emerald-50 text-emerald-700 hover:bg-rose-50 hover:text-rose-700"
+                                    : "bg-rose-50 text-rose-700 hover:bg-emerald-50 hover:text-emerald-700"
+                                }`}
+                              >
+                                {u.isActive ? "● Active" : "○ Inactive"}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <TableRowActions
+                                onView={() => openUserView(u)}
+                                onEdit={() => openUserEdit(u)}
+                                onDelete={() => setDeleteUserId(u._id)}
+                                showDelete={u.email !== currentUser?.email}
+                              />
+                            </td>
+                          </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
 
-                  <div className="px-4 pb-4">
-                    <TablePagination
-                      page={usersTable.page}
-                      totalPages={usersTable.totalPages}
-                      pageSize={usersTable.pageSize}
-                      totalCount={usersTable.totalCount}
-                      onPageChange={usersTable.setPage}
-                      onPageSizeChange={usersTable.setPageSize}
-                    />
-                  </div>
+                  <TablePagination
+                    page={usersTable.page}
+                    totalPages={usersTable.totalPages}
+                    pageSize={usersTable.pageSize}
+                    totalCount={usersTable.totalCount}
+                    onPageChange={usersTable.setPage}
+                    onPageSizeChange={usersTable.setPageSize}
+                  />
                 </>
               )}
             </div>
