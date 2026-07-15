@@ -182,6 +182,14 @@ export default function DashboardSidebar({
                 accent="amber"
                 onNavigate={onMobileClose}
               />
+              <NavItem
+                icon="🌍"
+                label="Countries"
+                href={DASHBOARD_ROUTES.countries}
+                active={isSectionActive(pathname, "countries")}
+                accent="amber"
+                onNavigate={onMobileClose}
+              />
             </>
           )}
 

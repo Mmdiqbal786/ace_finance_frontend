@@ -43,6 +43,12 @@ export const SECTION_META: Record<DashboardSection, SectionMeta> = {
     subtitle: "Manage projects assignees pick when submitting expenses",
     breadcrumb: "Projects",
   },
+  countries: {
+    title: "Country",
+    titleAccent: "Management",
+    subtitle: "Manage countries and their currency codes",
+    breadcrumb: "Countries",
+  },
   analytics: {
     title: "Analytics",
     titleAccent: "& Tracker",

@@ -16,6 +16,7 @@ import { readApiError } from "../../lib/apiError";
 import { toast } from "../../lib/toast";
 import {
   CategoryItem,
+  CountryItem,
   Expense,
   ExpenseActionType,
   ProjectItem,
@@ -27,6 +28,7 @@ type ActionNotesField = "notes";
 const emptyEditValues = (): ExpenseRequestValues => ({
   requesterName: "",
   requesterEmail: "",
+  country: "",
   amount: "",
   date: "",
   project: "",
@@ -41,6 +43,7 @@ interface ExpenseActionModalProps {
   onCompleted: () => void;
   activeCategories: CategoryItem[];
   activeProjects: ProjectItem[];
+  activeCountries: CountryItem[];
 }
 
 export default function ExpenseActionModal({
@@ -50,6 +53,7 @@ export default function ExpenseActionModal({
   onCompleted,
   activeCategories,
   activeProjects,
+  activeCountries,
 }: ExpenseActionModalProps) {
   const [actionNotes, setActionNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -68,7 +72,8 @@ export default function ExpenseActionModal({
       setEditValues({
         requesterName: expense.requesterName,
         requesterEmail: expense.requesterEmail,
-        amount: String(expense.amount),
+        country: expense.country || "",
+        amount: String(expense.originalAmount ?? expense.amount),
         date: expense.date,
         project: expense.project || "",
         category: expense.category,
@@ -100,6 +105,7 @@ export default function ExpenseActionModal({
         validatorsForExpenseRequest(editValues, {
           categories: activeCategories,
           projects: activeProjects,
+          countries: activeCountries,
         })
       );
       if (!ok) {
@@ -115,7 +121,8 @@ export default function ExpenseActionModal({
           body: JSON.stringify({
             requesterName: editValues.requesterName.trim(),
             requesterEmail: editValues.requesterEmail.trim().toLowerCase(),
-            amount: parseFloat(editValues.amount),
+            originalAmount: parseFloat(editValues.amount),
+            country: editValues.country,
             category: editValues.category,
             project: editValues.project,
             description: editValues.description.trim(),
@@ -249,11 +256,29 @@ export default function ExpenseActionModal({
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-700">Amount:</span>
+                <span className="text-slate-700">Amount (USD):</span>
                 <span className="font-extrabold text-slate-900 text-sm">
                   ${expense.amount.toFixed(2)}
                 </span>
               </div>
+              {(expense.originalAmount != null || expense.currency) && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Local amount:</span>
+                  <span className="font-semibold text-slate-800 text-sm">
+                    {expense.originalAmount ?? "—"} {expense.currency || ""}
+                    {expense.country ? ` (${expense.country})` : ""}
+                  </span>
+                </div>
+              )}
+              {expense.exchangeRate != null && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">FX rate:</span>
+                  <span className="text-slate-700 text-xs">
+                    1 {expense.currency} = {expense.exchangeRate} USD
+                    {expense.exchangeRateDate ? ` · ${expense.exchangeRateDate}` : ""}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-slate-700">Category:</span>
                 <span>{expense.category}</span>
@@ -302,6 +327,7 @@ export default function ExpenseActionModal({
                 fieldClass={editForm.fieldClass}
                 categories={activeCategories}
                 projects={activeProjects}
+                countries={activeCountries}
                 compact
                 allowInactiveSelected
                 descriptionRows={3}

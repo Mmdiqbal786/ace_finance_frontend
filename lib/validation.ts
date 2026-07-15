@@ -3,6 +3,7 @@ export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export const AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
 export const CATALOG_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 &_().,-]{0,59}$/;
 export const PROJECT_CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,19}$/;
+export const CURRENCY_CODE_PATTERN = /^[A-Za-z]{3}$/;
 
 export const MAX_AMOUNT = 100_000;
 export const MIN_DESCRIPTION = 1;
@@ -121,6 +122,15 @@ export function validateProjectCode(value: string): string {
   if (code.length > 20) return "Code must be 20 characters or fewer.";
   if (!PROJECT_CODE_PATTERN.test(code)) {
     return "Code may only use letters, numbers, hyphens, and underscores.";
+  }
+  return "";
+}
+
+export function validateCurrencyCode(value: string): string {
+  const currency = value.trim().toUpperCase();
+  if (!currency) return "Currency is required.";
+  if (!CURRENCY_CODE_PATTERN.test(currency)) {
+    return "Use a 3-letter currency code like USD, INR, or AED.";
   }
   return "";
 }

@@ -12,7 +12,7 @@ import { useFormValidation } from "../hooks/useFormValidation";
 import { API_URL } from "../lib/api";
 import { getUser, isAuthenticated } from "../lib/auth";
 import { getDefaultDashboardRoute } from "../lib/dashboard/routes";
-import { CategoryItem, ProjectItem } from "../lib/dashboard/types";
+import { CategoryItem, ProjectItem, CountryItem } from "../lib/dashboard/types";
 import { todayIso } from "../lib/validation";
 
 interface HistoryLog {
@@ -27,6 +27,11 @@ interface Expense {
   requesterName: string;
   requesterEmail: string;
   amount: number;
+  originalAmount?: number;
+  country?: string;
+  currency?: string;
+  exchangeRate?: number;
+  exchangeRateDate?: string;
   category: string;
   project: string;
   description: string;
@@ -43,6 +48,7 @@ interface Expense {
 const emptyFormValues = (date = ""): ExpenseRequestValues => ({
   requesterName: "",
   requesterEmail: "",
+  country: "",
   amount: "",
   date,
   project: "",
@@ -57,6 +63,7 @@ export default function PublicPortal() {
   const form = useFormValidation<ExpenseRequestField>();
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [countries, setCountries] = useState<CountryItem[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState("");
 
@@ -136,30 +143,32 @@ export default function PublicPortal() {
       setCatalogLoading(true);
       setCatalogError("");
       try {
-        const [catRes, projRes] = await Promise.all([
+        const [catRes, projRes, countryRes] = await Promise.all([
           fetch(`${API_URL}/categories/active`),
           fetch(`${API_URL}/projects/active`),
+          fetch(`${API_URL}/countries/active`),
         ]);
-        if (!catRes.ok || !projRes.ok) {
-          throw new Error("Failed to load projects and categories.");
+        if (!catRes.ok || !projRes.ok || !countryRes.ok) {
+          throw new Error("Failed to load form options.");
         }
         const catData = (await catRes.json()) as CategoryItem[];
         const projData = (await projRes.json()) as ProjectItem[];
+        const countryData = (await countryRes.json()) as CountryItem[];
         setCategories(catData);
         setProjects(projData);
+        setCountries(countryData);
         setValues((prev) => ({
           ...prev,
           category: catData.length === 1 ? catData[0].name : prev.category,
           project: projData.length === 1 ? projData[0].name : prev.project,
+          country: countryData.length === 1 ? countryData[0].name : prev.country,
         }));
-        if (catData.length === 0 || projData.length === 0) {
-          setCatalogError(
-            catData.length === 0 && projData.length === 0
-              ? "No projects or categories configured — contact admin."
-              : catData.length === 0
-                ? "No categories configured — contact admin."
-                : "No projects configured — contact admin."
-          );
+        if (catData.length === 0 || projData.length === 0 || countryData.length === 0) {
+          const missing: string[] = [];
+          if (catData.length === 0) missing.push("categories");
+          if (projData.length === 0) missing.push("projects");
+          if (countryData.length === 0) missing.push("countries");
+          setCatalogError(`No ${missing.join(", ")} configured — contact admin.`);
         }
       } catch (err: any) {
         setCatalogError(err.message || "Failed to load form options.");
@@ -190,7 +199,7 @@ export default function PublicPortal() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validators = validatorsForExpenseRequest(values, { categories, projects });
+    const validators = validatorsForExpenseRequest(values, { categories, projects, countries });
     const ok = form.validateAll(validators);
     if (!ok) {
       const errorCount = (Object.keys(validators) as ExpenseRequestField[]).filter(
@@ -214,7 +223,8 @@ export default function PublicPortal() {
         body: JSON.stringify({
           requesterName: values.requesterName.trim(),
           requesterEmail: values.requesterEmail.trim().toLowerCase(),
-          amount: Number(values.amount),
+          originalAmount: Number(values.amount),
+          country: values.country,
           category: values.category,
           project: values.project,
           description: values.description.trim(),
@@ -224,7 +234,11 @@ export default function PublicPortal() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to submit request.");
+        throw new Error(
+          Array.isArray(errorData.message)
+            ? errorData.message.join(", ")
+            : errorData.message || "Failed to submit request."
+        );
       }
 
       const result = (await response.json()) as Expense;
@@ -236,6 +250,7 @@ export default function PublicPortal() {
         ...emptyFormValues(todayIso()),
         category: categories.length === 1 ? categories[0].name : "",
         project: projects.length === 1 ? projects[0].name : "",
+        country: countries.length === 1 ? countries[0].name : "",
       });
       form.clearAll();
       setSubmitError("");
@@ -377,6 +392,7 @@ export default function PublicPortal() {
               fieldClass={form.fieldClass}
               categories={categories}
               projects={projects}
+              countries={countries}
               catalogLoading={catalogLoading}
             />
 
@@ -388,7 +404,14 @@ export default function PublicPortal() {
 
             <button
               type="submit"
-              disabled={submitting || catalogLoading || !!catalogError || categories.length === 0 || projects.length === 0}
+              disabled={
+                submitting ||
+                catalogLoading ||
+                !!catalogError ||
+                categories.length === 0 ||
+                projects.length === 0 ||
+                countries.length === 0
+              }
               className="w-full flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-[var(--af-navy)] to-[var(--af-navy-soft)] text-sm font-semibold text-white shadow-lg shadow-[var(--af-navy)]/15 hover:from-[var(--af-navy-soft)] hover:to-[var(--af-navy-muted)] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {submitting ? (
@@ -510,7 +533,13 @@ export default function PublicPortal() {
                   )}
                 </div>
                 <div className="text-right">
-                  <div className="text-xl font-extrabold text-slate-900">${searchResults[0].amount.toFixed(2)}</div>
+                  <div className="text-xl font-extrabold text-slate-900">${searchResults[0].amount.toFixed(2)} USD</div>
+                  {searchResults[0].originalAmount != null && searchResults[0].currency && (
+                    <div className="text-xs text-slate-600 mt-0.5">
+                      {searchResults[0].originalAmount} {searchResults[0].currency}
+                      {searchResults[0].country ? ` · ${searchResults[0].country}` : ""}
+                    </div>
+                  )}
                   <div className="mt-1">
                     <StatusBadge status={searchResults[0].status} />
                   </div>

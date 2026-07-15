@@ -10,6 +10,11 @@ export interface Expense {
   requesterName: string;
   requesterEmail: string;
   amount: number;
+  originalAmount?: number;
+  country?: string;
+  currency?: string;
+  exchangeRate?: number;
+  exchangeRateDate?: string;
   category: string;
   project: string;
   description: string;
@@ -34,6 +39,13 @@ export interface ProjectItem {
   _id: string;
   name: string;
   code?: string;
+  isActive: boolean;
+}
+
+export interface CountryItem {
+  _id: string;
+  name: string;
+  currency: string;
   isActive: boolean;
 }
 
@@ -71,4 +83,5 @@ export type DashboardSection =
   | "user-management"
   | "categories"
   | "projects"
+  | "countries"
   | "analytics";

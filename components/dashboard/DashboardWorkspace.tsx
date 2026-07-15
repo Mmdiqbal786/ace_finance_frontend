@@ -15,6 +15,7 @@ import {
   ExpenseActionType,
   CategoryItem,
   ProjectItem,
+  CountryItem,
 } from "../../lib/dashboard/types";
 import {
   canAccessSection,
@@ -25,6 +26,7 @@ import DashboardHomeOverview from "./DashboardHomeOverview";
 import DashboardSectionStats from "./DashboardSectionStats";
 import CategoriesPanel from "./CategoriesPanel";
 import ProjectsPanel from "./ProjectsPanel";
+import CountriesPanel from "./CountriesPanel";
 import UsersPanel from "./UsersPanel";
 import ExpenseActionModal from "./ExpenseActionModal";
 import ExpenseQueuePanel from "./ExpenseQueuePanel";
@@ -46,6 +48,7 @@ export default function DashboardWorkspace() {
 
   const [activeCategories, setActiveCategories] = useState<CategoryItem[]>([]);
   const [activeProjects, setActiveProjects] = useState<ProjectItem[]>([]);
+  const [activeCountries, setActiveCountries] = useState<CountryItem[]>([]);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -94,12 +97,14 @@ export default function DashboardWorkspace() {
 
   const fetchActiveCatalogs = async () => {
     try {
-      const [catRes, projRes] = await Promise.all([
+      const [catRes, projRes, countryRes] = await Promise.all([
         fetch(`${API_URL}/categories/active`),
         fetch(`${API_URL}/projects/active`),
+        fetch(`${API_URL}/countries/active`),
       ]);
       if (catRes.ok) setActiveCategories(await catRes.json());
       if (projRes.ok) setActiveProjects(await projRes.json());
+      if (countryRes.ok) setActiveCountries(await countryRes.json());
     } catch {}
   };
 
@@ -178,7 +183,7 @@ export default function DashboardWorkspace() {
           )}
 
           {activeSection !== "home" &&
-            !["categories", "projects", "user-management"].includes(activeSection) &&
+            !["categories", "projects", "countries", "user-management"].includes(activeSection) &&
             stats && (
               <DashboardSectionStats
                 section={activeSection}
@@ -301,6 +306,7 @@ export default function DashboardWorkspace() {
             onCompleted={fetchData}
             activeCategories={activeCategories}
             activeProjects={activeProjects}
+            activeCountries={activeCountries}
           />
 
           {activeSection === "user-management" && currentUser?.role === "ADMIN" && (
@@ -313,6 +319,10 @@ export default function DashboardWorkspace() {
 
           {activeSection === "projects" && currentUser?.role === "ADMIN" && (
             <ProjectsPanel onCatalogChanged={fetchActiveCatalogs} />
+          )}
+
+          {activeSection === "countries" && currentUser?.role === "ADMIN" && (
+            <CountriesPanel />
           )}
         </div>
       </div>

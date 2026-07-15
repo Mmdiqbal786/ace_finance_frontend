@@ -25,7 +25,7 @@ export interface CatalogItemBase {
 }
 
 export interface CatalogSecondaryField {
-  key: "label" | "code";
+  key: "label" | "code" | "currency";
   createLabel: string;
   editLabel: string;
   placeholder?: string;
@@ -42,7 +42,7 @@ export interface CatalogSecondaryField {
 }
 
 export interface CatalogAdminConfig {
-  endpoint: "categories" | "projects";
+  endpoint: "categories" | "projects" | "countries";
   singular: string;
   plural: string;
   totalStatTitle: string;
@@ -251,7 +251,11 @@ export default function CatalogAdminPanel({
 
   const activeCount = items.filter((c) => c.isActive).length;
   const secondaryHeader =
-    config.secondary.key === "label" ? "Label" : "Code";
+    config.secondary.key === "label"
+      ? "Label"
+      : config.secondary.key === "currency"
+        ? "Currency"
+        : "Code";
 
   return (
     <div className="mt-2">

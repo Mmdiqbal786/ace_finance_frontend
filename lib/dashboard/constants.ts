@@ -68,7 +68,13 @@ export function filterTrackerTable(e: Expense, search: string, filters: Record<s
 }
 
 export function filterCatalogTable(
-  item: { name: string; label?: string; code?: string; isActive: boolean },
+  item: {
+    name: string;
+    label?: string;
+    code?: string;
+    currency?: string;
+    isActive: boolean;
+  },
   search: string,
   filters: Record<string, string>
 ) {
@@ -77,7 +83,8 @@ export function filterCatalogTable(
     !search.trim() ||
     item.name.toLowerCase().includes(q) ||
     (item.label || "").toLowerCase().includes(q) ||
-    (item.code || "").toLowerCase().includes(q);
+    (item.code || "").toLowerCase().includes(q) ||
+    (item.currency || "").toLowerCase().includes(q);
   const matchesStatus =
     filters.status === "ALL" ||
     (filters.status === "ACTIVE" && item.isActive) ||

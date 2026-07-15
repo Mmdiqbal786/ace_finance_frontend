@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import FormField, { RequiredFieldsNote } from "../FormField";
 import {
   MAX_AMOUNT,
@@ -15,10 +15,12 @@ import {
   validatePersonName,
   validateRequiredSelect,
 } from "../../lib/validation";
+import { API_URL } from "../../lib/api";
 
 export type ExpenseRequestField =
   | "requesterName"
   | "requesterEmail"
+  | "country"
   | "amount"
   | "date"
   | "project"
@@ -30,11 +32,13 @@ export interface ExpenseCatalogOption {
   name: string;
   label?: string;
   code?: string;
+  currency?: string;
 }
 
 export interface ExpenseRequestValues {
   requesterName: string;
   requesterEmail: string;
+  country: string;
   amount: string;
   date: string;
   project: string;
@@ -51,6 +55,7 @@ interface ExpenseRequestFieldsProps {
   fieldClass: (base: string, field: ExpenseRequestField) => string;
   categories: ExpenseCatalogOption[];
   projects: ExpenseCatalogOption[];
+  countries: ExpenseCatalogOption[];
   catalogLoading?: boolean;
   compact?: boolean;
   allowInactiveSelected?: boolean;
@@ -60,11 +65,26 @@ interface ExpenseRequestFieldsProps {
 
 export function validatorsForExpenseRequest(
   values: ExpenseRequestValues,
-  catalogs: { categories: ExpenseCatalogOption[]; projects: ExpenseCatalogOption[] }
+  catalogs: {
+    categories: ExpenseCatalogOption[];
+    projects: ExpenseCatalogOption[];
+    countries: ExpenseCatalogOption[];
+  }
 ): Record<ExpenseRequestField, () => string> {
   return {
     requesterName: () => validatePersonName(values.requesterName, "Name"),
     requesterEmail: () => validateEmail(values.requesterEmail),
+    country: () => {
+      const base = validateRequiredSelect(values.country, "country");
+      if (base) return base;
+      if (
+        catalogs.countries.length > 0 &&
+        !catalogs.countries.some((c) => c.name === values.country)
+      ) {
+        return "Please select a valid country.";
+      }
+      return "";
+    },
     amount: () => validateAmount(values.amount),
     date: () => validateExpenseDate(values.date),
     project: () => {
@@ -102,6 +122,7 @@ export default function ExpenseRequestFields({
   fieldClass,
   categories,
   projects,
+  countries,
   catalogLoading = false,
   compact = false,
   allowInactiveSelected = false,
@@ -115,6 +136,64 @@ export default function ExpenseRequestFields({
   const textareaCls = compact
     ? "af-textarea text-xs resize-none"
     : "af-textarea resize-none";
+
+  const selectedCountry = countries.find((c) => c.name === values.country);
+  const currency = (selectedCountry?.currency || "USD").toUpperCase();
+
+  const [usdPreview, setUsdPreview] = useState<{
+    amountUsd: number;
+    exchangeRate: number;
+    rateDate: string;
+  } | null>(null);
+  const [fxLoading, setFxLoading] = useState(false);
+  const [fxError, setFxError] = useState("");
+
+  useEffect(() => {
+    if (!values.country || !values.amount.trim() || !selectedCountry?.currency) {
+      setUsdPreview(null);
+      setFxError("");
+      return;
+    }
+    const parsed = Number(values.amount);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setUsdPreview(null);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setFxLoading(true);
+      setFxError("");
+      try {
+        const res = await fetch(
+          `${API_URL}/fx/convert?currency=${encodeURIComponent(currency)}&amount=${encodeURIComponent(String(parsed))}`
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || "Could not convert to USD.");
+        }
+        if (!cancelled) {
+          setUsdPreview({
+            amountUsd: data.amountUsd,
+            exchangeRate: data.exchangeRate,
+            rateDate: data.rateDate,
+          });
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setUsdPreview(null);
+          setFxError(err.message || "FX conversion unavailable.");
+        }
+      } finally {
+        if (!cancelled) setFxLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [values.country, values.amount, currency, selectedCountry?.currency]);
 
   const set =
     (field: ExpenseRequestField) =>
@@ -177,24 +256,32 @@ export default function ExpenseRequestFields({
       </div>
 
       <div className={`grid grid-cols-1 ${compact ? "sm:grid-cols-2 gap-3" : "sm:grid-cols-2 gap-4"}`}>
-        <FormField
-          label="Amount (USD)"
-          htmlFor="amount"
-          required
-          error={errors.amount}
-          hint={`Min $1.00 · Max $${MAX_AMOUNT.toLocaleString()}${compact ? "" : " · 2 decimals"}`}
-        >
-          <input
-            type="text"
-            inputMode="decimal"
-            id="amount"
-            value={values.amount}
-            onChange={set("amount")}
-            onBlur={() => onBlurField("amount", validateAmount(values.amount))}
-            placeholder={compact ? undefined : "0.00"}
-            className={fieldClass(inputCls, "amount")}
-            aria-invalid={Boolean(errors.amount)}
-          />
+        <FormField label="Country" htmlFor="country" required error={errors.country}>
+          <select
+            id="country"
+            value={values.country}
+            onChange={set("country")}
+            onBlur={() =>
+              onBlurField("country", validateRequiredSelect(values.country, "country"))
+            }
+            className={fieldClass(selectCls, "country")}
+            disabled={catalogLoading || (!allowInactiveSelected && countries.length === 0)}
+            aria-invalid={Boolean(errors.country)}
+          >
+            <option value="" disabled>
+              {catalogLoading ? "Loading countries..." : "Select a country"}
+            </option>
+            {allowInactiveSelected &&
+              values.country &&
+              !countries.some((c) => c.name === values.country) && (
+                <option value={values.country}>{values.country} (inactive)</option>
+              )}
+            {countries.map((c) => (
+              <option key={c._id} value={c.name}>
+                {c.name} ({(c.currency || "").toUpperCase()})
+              </option>
+            ))}
+          </select>
         </FormField>
 
         <FormField label="Expense Date" htmlFor="date" required error={errors.date}>
@@ -208,6 +295,62 @@ export default function ExpenseRequestFields({
             min={daysAgoIso(365)}
             className={fieldClass(inputCls, "date")}
             aria-invalid={Boolean(errors.date)}
+          />
+        </FormField>
+      </div>
+
+      <div className={`grid grid-cols-1 ${compact ? "sm:grid-cols-2 gap-3" : "sm:grid-cols-2 gap-4"}`}>
+        <FormField
+          label={`Amount (${currency})`}
+          htmlFor="amount"
+          required
+          error={errors.amount}
+          hint={
+            compact
+              ? `Local currency · USD max $${MAX_AMOUNT.toLocaleString()}`
+              : `Enter amount in ${currency}. Converted USD must be $1–$${MAX_AMOUNT.toLocaleString()}.`
+          }
+        >
+          <input
+            type="text"
+            inputMode="decimal"
+            id="amount"
+            value={values.amount}
+            onChange={set("amount")}
+            onBlur={() => onBlurField("amount", validateAmount(values.amount))}
+            placeholder={compact ? undefined : "0.00"}
+            className={fieldClass(inputCls, "amount")}
+            aria-invalid={Boolean(errors.amount)}
+            disabled={!values.country}
+          />
+        </FormField>
+
+        <FormField
+          label="USD Equivalent"
+          htmlFor="amountUsd"
+          hint={
+            fxError
+              ? undefined
+              : usdPreview
+                ? `Rate: 1 ${currency} = ${usdPreview.exchangeRate} USD · ${usdPreview.rateDate}`
+                : "Filled automatically from today's exchange rate"
+          }
+          error={fxError || undefined}
+        >
+          <input
+            type="text"
+            id="amountUsd"
+            readOnly
+            disabled
+            value={
+              fxLoading
+                ? "Converting…"
+                : usdPreview
+                  ? `$${Number(usdPreview.amountUsd).toFixed(2)}`
+                  : ""
+            }
+            placeholder="—"
+            className={`${inputCls} bg-slate-50 text-slate-700 cursor-not-allowed`}
           />
         </FormField>
       </div>
