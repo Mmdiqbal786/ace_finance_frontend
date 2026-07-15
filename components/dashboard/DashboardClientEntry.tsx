@@ -5,12 +5,6 @@ import dynamic from "next/dynamic";
 function DashboardBootScreen() {
   return (
     <div className="portal-page relative flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden">
-      <div className="portal-bg" aria-hidden="true">
-        <div className="portal-orb portal-orb--violet" />
-        <div className="portal-orb portal-orb--indigo" />
-        <div className="portal-orb portal-orb--cyan" />
-        <div className="portal-grid" />
-      </div>
       <div className="relative z-10 flex flex-col items-center gap-4 text-center">
         <span className="inline-flex h-14 w-14 items-center justify-center">
           <img src="/Ace_logo_small_light.png" alt="Aceolution" width={44} height={44} className="object-contain" />

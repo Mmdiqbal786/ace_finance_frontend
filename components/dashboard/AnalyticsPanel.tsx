@@ -128,42 +128,43 @@ export default function AnalyticsPanel({
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-1.5">
               <span>⏱️</span> Audit Activity Log
             </h3>
-            <div className="flow-root max-h-64 overflow-y-auto pr-1">
-              <ul role="list" className="-mb-8">
-                {stats.recentActivity.map((log, logIdx) => (
-                  <li key={logIdx}>
-                    <div className="relative pb-6">
-                      {logIdx !== stats.recentActivity.length - 1 ? (
-                        <span
-                          className="absolute left-3 top-3 -ml-px h-full w-0.5 bg-slate-100"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <div className="relative flex space-x-2 items-start">
-                        <div className="h-6 w-6 rounded-full bg-slate-50 border border-slate-400 flex items-center justify-center text-xs">
-                          {log.action.includes("Submitted")
-                            ? "📥"
-                            : log.action.includes("Approved")
-                              ? "✅"
-                              : log.action.includes("Rejected")
-                                ? "❌"
-                                : "💸"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-slate-800">{log.action}</div>
-                          <div className="text-xs text-slate-700 font-mono mt-0.5">
-                            {log.expenseId.substring(0, 14)}... • {log.user}
+            {stats.recentActivity.length === 0 ? (
+              <p className="text-xs text-slate-700 py-6 text-center">No activity logged yet.</p>
+            ) : (
+              <div className="flow-root max-h-64 overflow-y-auto pr-1">
+                <ul role="list" className="-mb-8">
+                  {stats.recentActivity.map((log, logIdx) => (
+                    <li key={logIdx}>
+                      <div className="relative pb-6">
+                        {logIdx !== stats.recentActivity.length - 1 ? (
+                          <span
+                            className="absolute left-3 top-3 -ml-px h-full w-0.5 bg-slate-100"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <div className="relative flex space-x-2 items-start">
+                          <div className="h-6 w-6 rounded-full bg-slate-50 border border-slate-400 flex items-center justify-center text-xs">
+                            {log.action.includes("Submitted")
+                              ? "📥"
+                              : log.action.includes("Approved")
+                                ? "✅"
+                                : log.action.includes("Rejected")
+                                  ? "❌"
+                                  : "💸"}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-slate-800">{log.action}</div>
+                            <div className="text-xs text-slate-700 font-mono mt-0.5">
+                              {log.expenseId.substring(0, 14)}... • {log.user}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-                {stats.recentActivity.length === 0 && (
-                  <p className="text-xs text-slate-700 py-6 text-center">No logged logs.</p>
-                )}
-              </ul>
-            </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       )}

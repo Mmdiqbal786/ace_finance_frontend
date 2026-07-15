@@ -139,13 +139,6 @@ export default function DashboardWorkspace() {
       />
 
       <div className="portal-page relative min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="portal-bg" aria-hidden="true">
-          <div className="portal-orb portal-orb--violet" />
-          <div className="portal-orb portal-orb--indigo" />
-          <div className="portal-orb portal-orb--cyan" />
-          <div className="portal-grid" />
-        </div>
-
         <div className="relative z-10 mx-auto w-full max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
           <DashboardBreadcrumb section={activeSection} />
 

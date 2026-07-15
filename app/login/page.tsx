@@ -29,12 +29,6 @@ function FullPageLoader({ message }: { message: string }) {
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="portal-bg" aria-hidden="true">
-        <div className="portal-orb portal-orb--violet" />
-        <div className="portal-orb portal-orb--indigo" />
-        <div className="portal-orb portal-orb--cyan" />
-        <div className="portal-grid" />
-      </div>
       <div className="relative z-10 flex flex-col items-center gap-5 text-center">
         <span className="inline-flex h-14 w-14 items-center justify-center">
           <img src="/Ace_logo_small_light.png" alt="Aceolution" width={44} height={44} className="object-contain" />
@@ -120,13 +114,6 @@ export default function LoginPage() {
 
       {mounted && !redirecting && (
     <div className="portal-page login-page relative flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center overflow-hidden p-4 sm:min-h-[calc(100dvh-4rem)]">
-      <div className="portal-bg" aria-hidden="true">
-        <div className="portal-orb portal-orb--violet" />
-        <div className="portal-orb portal-orb--indigo" />
-        <div className="portal-orb portal-orb--cyan" />
-        <div className="portal-grid" />
-      </div>
-
       <div className="relative z-10 w-full max-w-[420px]">
         <div className="mb-8 text-center">
           <div className="inline-flex flex-col items-center gap-2">
