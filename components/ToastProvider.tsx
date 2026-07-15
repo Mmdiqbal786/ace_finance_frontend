@@ -47,6 +47,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         className="pointer-events-none fixed inset-x-0 top-3 z-[200] flex flex-col items-end gap-2 px-3 sm:top-4 sm:right-4 sm:left-auto sm:w-auto sm:max-w-sm"
         aria-live="polite"
         aria-relevant="additions"
+        suppressHydrationWarning
       >
         {toasts.map((item) => (
           <ToastCard key={item.id} toast={item} onDone={() => dismiss(item.id)} />

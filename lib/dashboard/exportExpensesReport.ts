@@ -1,0 +1,272 @@
+import { getPaidAmount, getRemainingAmount } from "./payment";
+import { Expense } from "./types";
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function formatMoney(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(Number(value))) return "";
+  return Number(value).toFixed(2);
+}
+
+function formatDate(value?: string): string {
+  if (!value) return "";
+  const d = new Date(value.length === 10 ? `${value}T00:00:00` : value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString();
+}
+
+function formatDateTime(value?: string): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString();
+}
+
+function statusLabel(status: string): string {
+  switch (status) {
+    case "PENDING_APPROVER":
+      return "Pending Approver";
+    case "APPROVED_APPROVER":
+      return "Pending Processing";
+    case "PARTIALLY_PAID":
+      return "Partially Paid";
+    case "PROCESSED":
+      return "Processed & Paid";
+    case "REJECTED_APPROVER":
+      return "Rejected by Approver";
+    case "REJECTED_PROCESSOR":
+      return "Rejected by Processor";
+    default:
+      return status;
+  }
+}
+
+type ColDef = {
+  header: string;
+  width: number;
+  align?: "Left" | "Right" | "Center";
+  get: (e: Expense) => string;
+};
+
+const COLUMNS: ColDef[] = [
+  { header: "Request ID", width: 180, get: (e) => e.id },
+  { header: "Requester Name", width: 130, get: (e) => e.requesterName },
+  { header: "Requester Email", width: 170, get: (e) => e.requesterEmail },
+  { header: "Country", width: 110, get: (e) => e.country || "" },
+  { header: "Currency", width: 75, align: "Center", get: (e) => (e.currency || "").toUpperCase() },
+  {
+    header: "Local Amount",
+    width: 100,
+    align: "Right",
+    get: (e) => formatMoney(e.originalAmount),
+  },
+  {
+    header: "Amount (USD)",
+    width: 100,
+    align: "Right",
+    get: (e) => formatMoney(e.amount),
+  },
+  {
+    header: "Total Paid (USD)",
+    width: 110,
+    align: "Right",
+    get: (e) => formatMoney(getPaidAmount(e)),
+  },
+  {
+    header: "Remaining (USD)",
+    width: 110,
+    align: "Right",
+    get: (e) => formatMoney(getRemainingAmount(e)),
+  },
+  { header: "Category", width: 100, get: (e) => e.category },
+  { header: "Project", width: 100, get: (e) => e.project || "" },
+  { header: "Description", width: 220, get: (e) => e.description || "" },
+  { header: "Expense Date", width: 105, get: (e) => formatDate(e.date) },
+  { header: "Due Date", width: 105, get: (e) => formatDate(e.dueDate) },
+  { header: "Status", width: 130, get: (e) => statusLabel(e.status) },
+  { header: "Date Submitted", width: 150, get: (e) => formatDateTime(e.submittedAt) },
+  { header: "Manager Notes", width: 180, get: (e) => e.approverNotes || "" },
+  { header: "Finance Notes", width: 180, get: (e) => e.processorNotes || "" },
+];
+
+function styleForCell(align: "Left" | "Right" | "Center", zebra: boolean): string {
+  if (align === "Right") return zebra ? "CellRightAlt" : "CellRight";
+  if (align === "Center") return zebra ? "CellCenterAlt" : "CellCenter";
+  return zebra ? "CellLeftAlt" : "CellLeft";
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Excel SpreadsheetML export — reliable column widths, 11pt font, borders, padded rows.
+ */
+export function exportExpensesReport(rows: Expense[]) {
+  const stamp = new Date().toISOString().split("T")[0];
+
+  const columnXml = COLUMNS.map(
+    (col) => `<Column ss:AutoFitWidth="0" ss:Width="${col.width}"/>`
+  ).join("");
+
+  const headerCells = COLUMNS.map(
+    (col) =>
+      `<Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(col.header)}</Data></Cell>`
+  ).join("");
+
+  const dataRows = rows
+    .map((expense, rowIndex) => {
+      const zebra = rowIndex % 2 === 1;
+      const cells = COLUMNS.map((col) => {
+        const styleId = styleForCell(col.align || "Left", zebra);
+        return `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${escapeXml(
+          col.get(expense)
+        )}</Data></Cell>`;
+      }).join("");
+      return `<Row ss:Height="24">${cells}</Row>`;
+    })
+    .join("");
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Title>Aceolution Finance Expense Report</Title>
+  <Author>Aceolution Finance</Author>
+ </DocumentProperties>
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+  </Style>
+  <Style ss:ID="Header">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#1850A8"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#1850A8"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#1850A8"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#1850A8"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#203C62" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="CellLeft">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+   <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="CellLeftAlt">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+   <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="CellRight">
+   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+   <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="CellRightAlt">
+   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+   <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="CellCenter">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+   <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="CellCenterAlt">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+   <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Expense Report">
+  <Table ss:ExpandedColumnCount="${COLUMNS.length}" ss:ExpandedRowCount="${
+    rows.length + 1
+  }" x:FullColumns="1" x:FullRows="1" ss:DefaultRowHeight="22">
+   ${columnXml}
+   <Row ss:Height="28">${headerCells}</Row>
+   ${dataRows}
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <Selected/>
+   <FreezePanes/>
+   <FrozenNoSplit/>
+   <SplitHorizontal>1</SplitHorizontal>
+   <TopRowBottomPane>1</TopRowBottomPane>
+   <ActivePane>2</ActivePane>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+    </Pane>
+    <Pane>
+     <Number>2</Number>
+     <ActiveRow>0</ActiveRow>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+ </Worksheet>
+</Workbook>`;
+
+  const blob = new Blob([xml], {
+    type: "application/vnd.ms-excel;charset=utf-8;",
+  });
+  downloadBlob(blob, `AceolutionFinance_Report_${stamp}.xls`);
+}

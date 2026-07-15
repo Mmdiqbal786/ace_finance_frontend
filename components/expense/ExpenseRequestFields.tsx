@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import FormField, { RequiredFieldsNote } from "../FormField";
 import {
-  MAX_AMOUNT,
   MAX_DESCRIPTION,
   MIN_DESCRIPTION,
   daysAgoIso,
+  daysFromNowIso,
   todayIso,
   validateAmount,
   validateDescription,
+  validateDueDate,
   validateEmail,
   validateExpenseDate,
   validatePersonName,
   validateRequiredSelect,
 } from "../../lib/validation";
-import { API_URL } from "../../lib/api";
 
 export type ExpenseRequestField =
   | "requesterName"
@@ -23,6 +23,7 @@ export type ExpenseRequestField =
   | "country"
   | "amount"
   | "date"
+  | "dueDate"
   | "project"
   | "category"
   | "description";
@@ -41,6 +42,7 @@ export interface ExpenseRequestValues {
   country: string;
   amount: string;
   date: string;
+  dueDate: string;
   project: string;
   category: string;
   description: string;
@@ -87,6 +89,7 @@ export function validatorsForExpenseRequest(
     },
     amount: () => validateAmount(values.amount),
     date: () => validateExpenseDate(values.date),
+    dueDate: () => validateDueDate(values.dueDate, values.date),
     project: () => {
       const base = validateRequiredSelect(values.project, "project");
       if (base) return base;
@@ -139,61 +142,6 @@ export default function ExpenseRequestFields({
 
   const selectedCountry = countries.find((c) => c.name === values.country);
   const currency = (selectedCountry?.currency || "USD").toUpperCase();
-
-  const [usdPreview, setUsdPreview] = useState<{
-    amountUsd: number;
-    exchangeRate: number;
-    rateDate: string;
-  } | null>(null);
-  const [fxLoading, setFxLoading] = useState(false);
-  const [fxError, setFxError] = useState("");
-
-  useEffect(() => {
-    if (!values.country || !values.amount.trim() || !selectedCountry?.currency) {
-      setUsdPreview(null);
-      setFxError("");
-      return;
-    }
-    const parsed = Number(values.amount);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      setUsdPreview(null);
-      return;
-    }
-
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      setFxLoading(true);
-      setFxError("");
-      try {
-        const res = await fetch(
-          `${API_URL}/fx/convert?currency=${encodeURIComponent(currency)}&amount=${encodeURIComponent(String(parsed))}`
-        );
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          throw new Error(data.message || "Could not convert to USD.");
-        }
-        if (!cancelled) {
-          setUsdPreview({
-            amountUsd: data.amountUsd,
-            exchangeRate: data.exchangeRate,
-            rateDate: data.rateDate,
-          });
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setUsdPreview(null);
-          setFxError(err.message || "FX conversion unavailable.");
-        }
-      } finally {
-        if (!cancelled) setFxLoading(false);
-      }
-    }, 350);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [values.country, values.amount, currency, selectedCountry?.currency]);
 
   const set =
     (field: ExpenseRequestField) =>
@@ -284,78 +232,6 @@ export default function ExpenseRequestFields({
           </select>
         </FormField>
 
-        <FormField label="Expense Date" htmlFor="date" required error={errors.date}>
-          <input
-            type="date"
-            id="date"
-            value={values.date}
-            onChange={set("date")}
-            onBlur={() => onBlurField("date", validateExpenseDate(values.date))}
-            max={todayIso()}
-            min={daysAgoIso(365)}
-            className={fieldClass(inputCls, "date")}
-            aria-invalid={Boolean(errors.date)}
-          />
-        </FormField>
-      </div>
-
-      <div className={`grid grid-cols-1 ${compact ? "sm:grid-cols-2 gap-3" : "sm:grid-cols-2 gap-4"}`}>
-        <FormField
-          label={`Amount (${currency})`}
-          htmlFor="amount"
-          required
-          error={errors.amount}
-          hint={
-            compact
-              ? `Local currency · USD max $${MAX_AMOUNT.toLocaleString()}`
-              : `Enter amount in ${currency}. Converted USD must be $1–$${MAX_AMOUNT.toLocaleString()}.`
-          }
-        >
-          <input
-            type="text"
-            inputMode="decimal"
-            id="amount"
-            value={values.amount}
-            onChange={set("amount")}
-            onBlur={() => onBlurField("amount", validateAmount(values.amount))}
-            placeholder={compact ? undefined : "0.00"}
-            className={fieldClass(inputCls, "amount")}
-            aria-invalid={Boolean(errors.amount)}
-            disabled={!values.country}
-          />
-        </FormField>
-
-        <FormField
-          label="USD Equivalent"
-          htmlFor="amountUsd"
-          hint={
-            fxError
-              ? undefined
-              : usdPreview
-                ? `Rate: 1 ${currency} = ${usdPreview.exchangeRate} USD · ${usdPreview.rateDate}`
-                : "Filled automatically from today's exchange rate"
-          }
-          error={fxError || undefined}
-        >
-          <input
-            type="text"
-            id="amountUsd"
-            readOnly
-            disabled
-            value={
-              fxLoading
-                ? "Converting…"
-                : usdPreview
-                  ? `$${Number(usdPreview.amountUsd).toFixed(2)}`
-                  : ""
-            }
-            placeholder="—"
-            className={`${inputCls} bg-slate-50 text-slate-700 cursor-not-allowed`}
-          />
-        </FormField>
-      </div>
-
-      <div className={`grid grid-cols-1 ${compact ? "gap-3" : "sm:grid-cols-2 gap-4"}`}>
         <FormField label="Project" htmlFor="project" required error={errors.project}>
           <select
             id="project"
@@ -383,7 +259,9 @@ export default function ExpenseRequestFields({
             ))}
           </select>
         </FormField>
+      </div>
 
+      <div className={`grid grid-cols-1 ${compact ? "sm:grid-cols-2 gap-3" : "sm:grid-cols-2 gap-4"}`}>
         <FormField label="Category" htmlFor="category" required error={errors.category}>
           <select
             id="category"
@@ -410,6 +288,65 @@ export default function ExpenseRequestFields({
               </option>
             ))}
           </select>
+        </FormField>
+
+        <FormField
+          label={`Amount (${currency})`}
+          htmlFor="amount"
+          required
+          error={errors.amount}
+          hint={compact ? undefined : `Enter amount in ${currency}`}
+        >
+          <input
+            type="text"
+            inputMode="decimal"
+            id="amount"
+            value={values.amount}
+            onChange={set("amount")}
+            onBlur={() => onBlurField("amount", validateAmount(values.amount))}
+            placeholder={compact ? undefined : "0.00"}
+            className={fieldClass(inputCls, "amount")}
+            aria-invalid={Boolean(errors.amount)}
+            disabled={!values.country}
+          />
+        </FormField>
+      </div>
+
+      <div className={`grid grid-cols-1 ${compact ? "sm:grid-cols-2 gap-3" : "sm:grid-cols-2 gap-4"}`}>
+        <FormField label="Expense Date" htmlFor="date" required error={errors.date}>
+          <input
+            type="date"
+            id="date"
+            value={values.date}
+            onChange={set("date")}
+            onBlur={() => onBlurField("date", validateExpenseDate(values.date))}
+            max={todayIso()}
+            min={daysAgoIso(365)}
+            className={fieldClass(inputCls, "date")}
+            aria-invalid={Boolean(errors.date)}
+          />
+        </FormField>
+
+        <FormField
+          label="Due Date"
+          htmlFor="dueDate"
+          required
+          error={errors.dueDate}
+          hint={compact ? undefined : "When payment is due"}
+        >
+          <input
+            type="date"
+            id="dueDate"
+            value={values.dueDate}
+            onChange={set("dueDate")}
+            onBlur={() =>
+              onBlurField("dueDate", validateDueDate(values.dueDate, values.date))
+            }
+            min={values.date || daysAgoIso(365)}
+            max={daysFromNowIso(365 * 2)}
+            className={fieldClass(inputCls, "dueDate")}
+            aria-invalid={Boolean(errors.dueDate)}
+          />
         </FormField>
       </div>
 

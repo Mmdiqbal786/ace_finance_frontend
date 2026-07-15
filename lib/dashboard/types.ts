@@ -10,6 +10,7 @@ export interface Expense {
   requesterName: string;
   requesterEmail: string;
   amount: number;
+  paidAmount?: number;
   originalAmount?: number;
   country?: string;
   currency?: string;
@@ -19,6 +20,7 @@ export interface Expense {
   project: string;
   description: string;
   date: string;
+  dueDate?: string;
   status: string;
   submittedAt: string;
   approverNotes?: string;
@@ -71,6 +73,7 @@ export type ExpenseActionType =
   | "approve"
   | "reject"
   | "process"
+  | "partial-pay"
   | "processor-reject"
   | "view"
   | "edit"

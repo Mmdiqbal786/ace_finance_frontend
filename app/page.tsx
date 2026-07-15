@@ -9,9 +9,8 @@ import ExpenseRequestFields, {
   validatorsForExpenseRequest,
 } from "../components/expense/ExpenseRequestFields";
 import { useFormValidation } from "../hooks/useFormValidation";
+import { useBlockAuthenticatedGuestPages } from "../hooks/useBlockAuthenticatedGuestPages";
 import { API_URL } from "../lib/api";
-import { getUser, isAuthenticated } from "../lib/auth";
-import { getDefaultDashboardRoute } from "../lib/dashboard/routes";
 import { CategoryItem, ProjectItem, CountryItem } from "../lib/dashboard/types";
 import { todayIso } from "../lib/validation";
 
@@ -36,6 +35,7 @@ interface Expense {
   project: string;
   description: string;
   date: string;
+  dueDate?: string;
   status: string;
   submittedAt: string;
   approverNotes?: string;
@@ -51,12 +51,14 @@ const emptyFormValues = (date = ""): ExpenseRequestValues => ({
   country: "",
   amount: "",
   date,
+  dueDate: "",
   project: "",
   category: "",
   description: "",
 });
 
 export default function PublicPortal() {
+  const guestAllowed = useBlockAuthenticatedGuestPages();
   const [mounted, setMounted] = useState(false);
 
   const [values, setValues] = useState<ExpenseRequestValues>(emptyFormValues);
@@ -130,11 +132,7 @@ export default function PublicPortal() {
   };
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      const user = getUser();
-      window.location.href = user ? getDefaultDashboardRoute(user.role) : "/dashboard/";
-      return;
-    }
+    if (!guestAllowed) return;
 
     setMounted(true);
     setValues((prev) => ({ ...prev, date: todayIso() }));
@@ -194,7 +192,15 @@ export default function PublicPortal() {
     } catch {
       localStorage.removeItem("ace_finance_my_requests");
     }
-  }, []);
+  }, [guestAllowed]);
+
+  if (!guestAllowed) {
+    return (
+      <div className="portal-page flex flex-1 items-center justify-center py-20">
+        <p className="text-sm font-medium text-slate-600">Redirecting to dashboard...</p>
+      </div>
+    );
+  }
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,6 +235,7 @@ export default function PublicPortal() {
           project: values.project,
           description: values.description.trim(),
           date: values.date,
+          dueDate: values.dueDate,
         }),
       });
 
@@ -591,9 +598,15 @@ export default function PublicPortal() {
                     <p className="text-slate-600 text-xs mt-0.5">{searchResults[0].requesterName}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-xs uppercase font-bold tracking-wider">Date Logged</span>
+                    <span className="text-slate-500 block text-xs uppercase font-bold tracking-wider">Expense Date</span>
                     <p className="text-slate-600 text-xs mt-0.5">{new Date(searchResults[0].date).toLocaleDateString()}</p>
                   </div>
+                  {searchResults[0].dueDate && (
+                    <div>
+                      <span className="text-slate-500 block text-xs uppercase font-bold tracking-wider">Due Date</span>
+                      <p className="text-slate-600 text-xs mt-0.5">{new Date(searchResults[0].dueDate).toLocaleDateString()}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

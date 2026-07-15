@@ -17,6 +17,13 @@ export function daysAgoIso(days: number): string {
   return d.toISOString().split("T")[0];
 }
 
+export function daysFromNowIso(days: number): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
+
 export function todayIso(): string {
   return new Date().toISOString().split("T")[0];
 }
@@ -60,6 +67,16 @@ export function validateExpenseDate(value: string): string {
   const oldest = daysAgoIso(365);
   if (value > today) return "Expense date cannot be in the future.";
   if (value < oldest) return "Expense date cannot be older than 1 year.";
+  return "";
+}
+
+export function validateDueDate(value: string, expenseDate?: string): string {
+  if (!value) return "Due date is required.";
+  const farthest = daysFromNowIso(365 * 2);
+  if (value > farthest) return "Due date cannot be more than 2 years ahead.";
+  if (expenseDate && value < expenseDate) {
+    return "Due date cannot be before the expense date.";
+  }
   return "";
 }
 
@@ -140,6 +157,18 @@ export function validateRejectionNotes(value: string): string {
   if (!notes) return "Reason for rejection is required.";
   if (notes.length < 5) return "Please provide at least 5 characters explaining the rejection.";
   if (notes.length > 500) return "Notes must be 500 characters or fewer.";
+  return "";
+}
+
+export function validatePartialPaymentAmount(value: string, remaining: number): string {
+  const raw = value.trim();
+  if (!raw) return "Payment amount is required.";
+  if (!AMOUNT_PATTERN.test(raw)) return "Use a valid amount with up to 2 decimal places.";
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return "Payment amount must be greater than $0.00.";
+  if (parsed > remaining) {
+    return `Cannot exceed remaining balance of $${remaining.toFixed(2)}.`;
+  }
   return "";
 }
 

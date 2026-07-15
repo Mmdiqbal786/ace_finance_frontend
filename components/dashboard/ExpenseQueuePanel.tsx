@@ -2,6 +2,7 @@
 
 import React from "react";
 import StatusBadge from "../StatusBadge";
+import DueDateBadge from "../DueDateBadge";
 import TableToolbar from "../TableToolbar";
 import TablePagination from "../TablePagination";
 import TableRowActions, { TableExtraAction } from "../TableRowActions";
@@ -11,6 +12,7 @@ import {
   filterExpenseTable,
   filterTrackerTable,
 } from "../../lib/dashboard/constants";
+import { getPaidAmount, getRemainingAmount } from "../../lib/dashboard/payment";
 import { Expense } from "../../lib/dashboard/types";
 
 export type ExpenseQueueVariant = "approver" | "processor" | "tracker";
@@ -143,6 +145,7 @@ export default function ExpenseQueuePanel({
                           <th className="py-3 px-4">Requester</th>
                           <th className="py-3 px-4">Category</th>
                           <th className="py-3 px-4">Project</th>
+                          <th className="py-3 px-4">Due Date</th>
                           <th className="py-3 px-4">Date Submitted</th>
                           <th className="py-3 px-4">Description</th>
                           <th className="py-3 px-4 text-right">Amount</th>
@@ -155,8 +158,11 @@ export default function ExpenseQueuePanel({
                           <th className="py-3 px-4">Requester</th>
                           <th className="py-3 px-4">Category</th>
                           <th className="py-3 px-4">Project</th>
+                          <th className="py-3 px-4">Due Date</th>
                           <th className="py-3 px-4">Approver&apos;s Notes</th>
                           <th className="py-3 px-4 text-right">Amount</th>
+                          <th className="py-3 px-4 text-right">Total Paid</th>
+                          <th className="py-3 px-4 text-right">Remaining</th>
                           <th className="py-3 px-4">Actions</th>
                         </>
                       )}
@@ -166,6 +172,7 @@ export default function ExpenseQueuePanel({
                           <th className="py-2.5 px-3">Requester</th>
                           <th className="py-2.5 px-3">Category</th>
                           <th className="py-2.5 px-3">Project</th>
+                          <th className="py-2.5 px-3">Due Date</th>
                           <th className="py-2.5 px-3">Submission Date</th>
                           <th className="py-2.5 px-3">Status</th>
                           <th className="py-2.5 px-3 text-right">Amount</th>
@@ -242,6 +249,9 @@ function ExpenseQueueRow({
           <span className="font-medium">{e.category}</span>
         </td>
         <td className={`${cellPad} text-sm text-slate-700`}>{e.project || "—"}</td>
+        <td className={cellPad}>
+          <DueDateBadge dueDate={e.dueDate} />
+        </td>
         <td className={`${cellPad} text-slate-600 text-xs`}>
           {new Date(e.submittedAt).toLocaleDateString()}
         </td>
@@ -268,6 +278,9 @@ function ExpenseQueueRow({
           <span className="font-medium">{e.category}</span>
         </td>
         <td className={`${cellPad} text-sm text-slate-700`}>{e.project || "—"}</td>
+        <td className={cellPad}>
+          <DueDateBadge dueDate={e.dueDate} />
+        </td>
         <td
           className={`${cellPad} max-w-xs truncate text-xs text-[var(--af-accent)] italic`}
           title={e.approverNotes}
@@ -276,6 +289,12 @@ function ExpenseQueueRow({
         </td>
         <td className={`${cellPad} text-right font-bold text-slate-900`}>
           ${e.amount.toFixed(2)}
+        </td>
+        <td className={`${cellPad} text-right font-semibold text-emerald-700`}>
+          ${getPaidAmount(e).toFixed(2)}
+        </td>
+        <td className={`${cellPad} text-right font-semibold text-amber-700`}>
+          ${getRemainingAmount(e).toFixed(2)}
         </td>
         <td className={cellPad}>{actions}</td>
       </tr>
@@ -293,6 +312,9 @@ function ExpenseQueueRow({
         <span>{e.category}</span>
       </td>
       <td className={`${cellPad} text-xs text-slate-700`}>{e.project || "—"}</td>
+      <td className={cellPad}>
+        <DueDateBadge dueDate={e.dueDate} />
+      </td>
       <td className={`${cellPad} text-xs text-slate-700`}>
         {new Date(e.submittedAt).toLocaleDateString()}
       </td>

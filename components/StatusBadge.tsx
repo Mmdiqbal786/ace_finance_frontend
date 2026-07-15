@@ -18,6 +18,10 @@ export default function StatusBadge({ status, className = "" }: StatusBadgeProps
       label = "Approved - Awaiting Processing";
       badgeStyle = "bg-sky-50 text-[var(--af-accent)] ring-sky-200";
       break;
+    case "PARTIALLY_PAID":
+      label = "Partially Paid";
+      badgeStyle = "bg-amber-50 text-amber-700 ring-amber-200";
+      break;
     case "PROCESSED":
       label = "Disbursed & Paid";
       badgeStyle = "bg-emerald-50 text-emerald-700 ring-emerald-200";

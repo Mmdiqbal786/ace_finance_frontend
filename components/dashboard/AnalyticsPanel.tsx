@@ -3,6 +3,7 @@
 import React from "react";
 import { toast } from "../../lib/toast";
 import { CATEGORY_COLORS } from "../../lib/dashboard/constants";
+import { exportExpensesReport } from "../../lib/dashboard/exportExpensesReport";
 import { DashboardStats, Expense } from "../../lib/dashboard/types";
 import ExpenseQueuePanel from "./ExpenseQueuePanel";
 
@@ -21,57 +22,13 @@ interface AnalyticsPanelProps {
   onDelete: (expense: Expense) => void;
 }
 
-function exportExpensesCsv(rows: Expense[]) {
+function handleExport(rows: Expense[]) {
   if (rows.length === 0) {
     toast.info("No data available to export.");
     return;
   }
-
-  const headers = [
-    "Request ID",
-    "Requester Name",
-    "Requester Email",
-    "Amount (USD)",
-    "Category",
-    "Project",
-    "Description",
-    "Date Logged",
-    "Status",
-    "Date Submitted",
-    "Manager Notes",
-    "Finance Notes",
-  ];
-
-  const csvRows = rows.map((e) => [
-    e.id,
-    e.requesterName,
-    e.requesterEmail,
-    e.amount.toFixed(2),
-    e.category,
-    e.project || "",
-    `"${e.description.replace(/"/g, '""')}"`,
-    e.date,
-    e.status,
-    e.submittedAt,
-    e.approverNotes ? `"${e.approverNotes.replace(/"/g, '""')}"` : "",
-    e.processorNotes ? `"${e.processorNotes.replace(/"/g, '""')}"` : "",
-  ]);
-
-  const csvString = [headers.join(","), ...csvRows.map((r) => r.join(","))].join("\n");
-  const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute(
-    "download",
-    `AceolutionFinance_Report_${new Date().toISOString().split("T")[0]}.csv`
-  );
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  exportExpensesReport(rows);
+  toast.success("Report downloaded.");
 }
 
 export default function AnalyticsPanel({
@@ -181,10 +138,10 @@ export default function AnalyticsPanel({
         toolbarExtra={({ filtered }) => (
           <button
             type="button"
-            onClick={() => exportExpensesCsv(filtered)}
+            onClick={() => handleExport(filtered)}
             className="inline-flex items-center justify-center rounded-xl bg-[var(--af-navy)] hover:bg-[var(--af-navy-soft)] px-3.5 py-1.5 text-xs font-bold text-white shadow transition-colors cursor-pointer"
           >
-            📥 Export CSV Report
+            📥 Export Excel Report
           </button>
         )}
       />

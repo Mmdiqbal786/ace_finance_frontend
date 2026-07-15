@@ -121,7 +121,9 @@ export default function DashboardWorkspace() {
   };
 
   const pendingApproverList = expenses.filter((e) => e.status === "PENDING_APPROVER");
-  const approvedApproverList = expenses.filter((e) => e.status === "APPROVED_APPROVER");
+  const approvedApproverList = expenses.filter(
+    (e) => e.status === "APPROVED_APPROVER" || e.status === "PARTIALLY_PAID"
+  );
 
   const categoryFilterOptions = buildCategoryFilterOptions(activeCategories);
   const projectFilterOptions = buildProjectFilterOptions(activeProjects);
@@ -275,6 +277,12 @@ export default function DashboardWorkspace() {
                       icon: "💸",
                       tone: "success",
                       onClick: () => openActionModal(e, "process"),
+                    },
+                    {
+                      label: "Partially Paid",
+                      icon: "🪙",
+                      tone: "success",
+                      onClick: () => openActionModal(e, "partial-pay"),
                     },
                     {
                       label: "Reject Payout",

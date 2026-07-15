@@ -21,6 +21,7 @@ export const STATUS_FILTER_OPTIONS = [
   { value: "ALL", label: "All Statuses" },
   { value: "PENDING_APPROVER", label: "Pending Approver" },
   { value: "APPROVED_APPROVER", label: "Pending processing" },
+  { value: "PARTIALLY_PAID", label: "Partially paid" },
   { value: "PROCESSED", label: "Processed & Paid" },
   { value: "REJECTED_APPROVER", label: "Rejected by Approver" },
   { value: "REJECTED_PROCESSOR", label: "Rejected by Processor" },

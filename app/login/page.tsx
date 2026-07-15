@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { setAuth, isAuthenticated, getUser } from '../../lib/auth';
+import { useState } from 'react';
+import { useBlockAuthenticatedGuestPages } from '../../hooks/useBlockAuthenticatedGuestPages';
+import { setAuth } from '../../lib/auth';
 import { getDefaultDashboardRoute } from '../../lib/dashboard/routes';
 import { API_URL } from '../../lib/api';
 import BrandLogo from '../../components/BrandLogo';
@@ -46,8 +47,7 @@ function FullPageLoader({ message }: { message: string }) {
 type LoginField = "email" | "password";
 
 export default function LoginPage() {
-  const [mounted, setMounted] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
+  const guestAllowed = useBlockAuthenticatedGuestPages();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -55,18 +55,8 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const form = useFormValidation<LoginField>();
 
-  useEffect(() => {
-    if (isAuthenticated()) {
-      setRedirecting(true);
-      const user = getUser();
-      window.location.href = user ? getDefaultDashboardRoute(user.role) : '/dashboard/';
-      return;
-    }
-    setMounted(true);
-  }, []);
-
-  const showFullPageLoader = !mounted || loading || redirecting;
-  const loaderMessage = redirecting
+  const showFullPageLoader = !guestAllowed || loading;
+  const loaderMessage = !guestAllowed
     ? 'Redirecting to dashboard...'
     : loading
       ? 'Signing you in...'
@@ -112,7 +102,7 @@ export default function LoginPage() {
     <>
       {showFullPageLoader && <FullPageLoader message={loaderMessage} />}
 
-      {mounted && !redirecting && (
+      {guestAllowed && (
     <div className="portal-page login-page relative flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center overflow-hidden p-4 sm:min-h-[calc(100dvh-4rem)]">
       <div className="relative z-10 w-full max-w-[420px]">
         <div className="mb-8 text-center">

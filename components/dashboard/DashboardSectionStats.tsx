@@ -2,6 +2,7 @@
 
 import React from "react";
 import StatCard from "../StatCard";
+import { getRemainingAmount, isProcessorQueueStatus } from "../../lib/dashboard/payment";
 import { DashboardSection, DashboardStats, Expense } from "../../lib/dashboard/types";
 
 interface DashboardSectionStatsProps {
@@ -30,8 +31,8 @@ export default function DashboardSectionStats({
     .reduce((sum, e) => sum + e.amount, 0);
 
   const pendingProcessorAmount = expenses
-    .filter((e) => e.status === "APPROVED_APPROVER")
-    .reduce((sum, e) => sum + e.amount, 0);
+    .filter((e) => isProcessorQueueStatus(e.status))
+    .reduce((sum, e) => sum + getRemainingAmount(e), 0);
 
   if (section === "approver") {
     return (

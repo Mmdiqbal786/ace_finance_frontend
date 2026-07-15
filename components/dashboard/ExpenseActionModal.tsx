@@ -21,9 +21,11 @@ import {
   ExpenseActionType,
   ProjectItem,
 } from "../../lib/dashboard/types";
-import { validateRejectionNotes } from "../../lib/validation";
+import { getPaidAmount, getRemainingAmount } from "../../lib/dashboard/payment";
+import { validatePartialPaymentAmount, validateRejectionNotes } from "../../lib/validation";
 
 type ActionNotesField = "notes";
+type PartialPayField = "paymentAmount" | "notes";
 
 const emptyEditValues = (): ExpenseRequestValues => ({
   requesterName: "",
@@ -31,6 +33,7 @@ const emptyEditValues = (): ExpenseRequestValues => ({
   country: "",
   amount: "",
   date: "",
+  dueDate: "",
   project: "",
   category: "",
   description: "",
@@ -56,17 +59,21 @@ export default function ExpenseActionModal({
   activeCountries,
 }: ExpenseActionModalProps) {
   const [actionNotes, setActionNotes] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [editValues, setEditValues] = useState<ExpenseRequestValues>(emptyEditValues);
 
   const editForm = useFormValidation<ExpenseRequestField>();
   const actionNotesForm = useFormValidation<ActionNotesField>();
+  const partialPayForm = useFormValidation<PartialPayField>();
 
   useEffect(() => {
     if (!expense) return;
     setActionNotes("");
+    setPaymentAmount("");
     actionNotesForm.clearAll();
     editForm.clearAll();
+    partialPayForm.clearAll();
 
     if (actionType === "edit") {
       setEditValues({
@@ -75,6 +82,7 @@ export default function ExpenseActionModal({
         country: expense.country || "",
         amount: String(expense.originalAmount ?? expense.amount),
         date: expense.date,
+        dueDate: expense.dueDate || "",
         project: expense.project || "",
         category: expense.category,
         description: expense.description,
@@ -84,8 +92,10 @@ export default function ExpenseActionModal({
 
   const handleClose = () => {
     setActionNotes("");
+    setPaymentAmount("");
     actionNotesForm.clearAll();
     editForm.clearAll();
+    partialPayForm.clearAll();
     onClose();
   };
 
@@ -127,6 +137,7 @@ export default function ExpenseActionModal({
             project: editValues.project,
             description: editValues.description.trim(),
             date: editValues.date,
+            dueDate: editValues.dueDate,
           }),
         });
 
@@ -139,6 +150,48 @@ export default function ExpenseActionModal({
         onCompleted();
       } catch (err: any) {
         toast.error(err.message || "Failed to update expense");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    if (actionType === "partial-pay") {
+      const remaining = getRemainingAmount(expense);
+      const ok = partialPayForm.validateAll({
+        paymentAmount: () => validatePartialPaymentAmount(paymentAmount, remaining),
+        notes: () => "",
+      });
+      if (!ok) {
+        partialPayForm.focusFirstInvalid();
+        return;
+      }
+
+      setSubmitting(true);
+      try {
+        const response = await fetch(`${API_URL}/expenses/${expense.id}/partial-pay`, {
+          method: "PATCH",
+          headers: authHeaders() as HeadersInit,
+          body: JSON.stringify({
+            amount: Number(paymentAmount),
+            notes: actionNotes.trim() || undefined,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(await readApiError(response, "Failed to record partial payment."));
+        }
+
+        const result = (await response.json()) as Expense;
+        handleClose();
+        toast.success(
+          result.status === "PROCESSED"
+            ? "Final payment recorded — expense fully paid."
+            : `Partial payment of $${Number(paymentAmount).toFixed(2)} recorded.`
+        );
+        onCompleted();
+      } catch (err: any) {
+        toast.error(err.message || "Partial payment failed");
       } finally {
         setSubmitting(false);
       }
@@ -187,7 +240,7 @@ export default function ExpenseActionModal({
         actionType.includes("reject")
           ? "Expense rejected."
           : actionType === "process"
-            ? "Expense marked as processed."
+            ? "Expense marked as fully paid."
             : "Expense approved."
       );
       onCompleted();
@@ -229,6 +282,8 @@ export default function ExpenseActionModal({
       <span className="text-rose-600">❌ Reject Expense</span>
     ) : actionType === "process" ? (
       <span className="text-emerald-600">💸 Mark as Processed (Paid)</span>
+    ) : actionType === "partial-pay" ? (
+      <span className="text-amber-700">🪙 Record Partial Payment</span>
     ) : actionType === "processor-reject" ? (
       <span className="text-rose-600">❌ Reject Disbursement Payout</span>
     ) : actionType === "view" ? (
@@ -261,6 +316,18 @@ export default function ExpenseActionModal({
                   ${expense.amount.toFixed(2)}
                 </span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Total Paid:</span>
+                <span className="font-semibold text-emerald-700 text-sm">
+                  ${getPaidAmount(expense).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Remaining:</span>
+                <span className="font-semibold text-amber-700 text-sm">
+                  ${getRemainingAmount(expense).toFixed(2)}
+                </span>
+              </div>
               {(expense.originalAmount != null || expense.currency) && (
                 <div className="flex justify-between items-center">
                   <span className="text-slate-700">Local amount:</span>
@@ -287,6 +354,18 @@ export default function ExpenseActionModal({
                 <span className="text-slate-700">Project:</span>
                 <span className="font-semibold text-slate-800">{expense.project || "—"}</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Expense Date:</span>
+                <span>{new Date(expense.date).toLocaleDateString()}</span>
+              </div>
+              {expense.dueDate && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Due Date:</span>
+                  <span className="font-semibold text-slate-800">
+                    {new Date(expense.dueDate).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
               <div>
                 <span className="text-slate-700 block">Description:</span>
                 <p className="text-slate-600 italic mt-0.5">&quot;{expense.description}&quot;</p>
@@ -398,6 +477,72 @@ export default function ExpenseActionModal({
                 </button>
               </div>
             </div>
+          ) : actionType === "partial-pay" ? (
+            <form onSubmit={handleActionSubmit} noValidate className="space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Total amount</span>
+                  <span className="font-bold text-slate-900">${expense.amount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Already paid</span>
+                  <span className="font-semibold text-emerald-700">
+                    ${getPaidAmount(expense).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Remaining</span>
+                  <span className="font-semibold text-amber-800">
+                    ${getRemainingAmount(expense).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <FormField
+                label="Amount to Pay Now (USD)"
+                htmlFor="paymentAmount"
+                required
+                error={partialPayForm.errors.paymentAmount}
+                hint={`Max $${getRemainingAmount(expense).toFixed(2)}`}
+              >
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  id="paymentAmount"
+                  value={paymentAmount}
+                  onChange={(e) => {
+                    setPaymentAmount(e.target.value);
+                    partialPayForm.clearError("paymentAmount");
+                  }}
+                  onBlur={() =>
+                    partialPayForm.onBlur(
+                      "paymentAmount",
+                      validatePartialPaymentAmount(paymentAmount, getRemainingAmount(expense))
+                    )
+                  }
+                  placeholder="0.00"
+                  className={partialPayForm.fieldClass("af-input af-input-sm", "paymentAmount")}
+                  aria-invalid={Boolean(partialPayForm.errors.paymentAmount)}
+                />
+              </FormField>
+
+              <FormField label="Payout Notes (Optional)" htmlFor="partialNotes">
+                <textarea
+                  id="partialNotes"
+                  rows={3}
+                  value={actionNotes}
+                  onChange={(e) => setActionNotes(e.target.value)}
+                  placeholder="Enter transaction reference or payout notes..."
+                  className="af-textarea text-xs resize-none"
+                />
+              </FormField>
+
+              <FormActionButtons
+                onCancel={handleClose}
+                submitLabel={submitting ? "Saving..." : "Record Partial Payment"}
+                submitting={submitting}
+              />
+            </form>
           ) : actionType !== "view" ? (
             <form onSubmit={handleActionSubmit} noValidate className="space-y-4">
               <FormField
