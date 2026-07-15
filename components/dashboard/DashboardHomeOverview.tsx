@@ -9,7 +9,7 @@ import {
   getCurrentMonthStats,
   getMonthOverMonthChange,
 } from "../../lib/dashboard/monthlyStats";
-import { CATEGORY_COLORS, CATEGORY_ICONS } from "../../lib/dashboard/constants";
+import { CATEGORY_COLORS } from "../../lib/dashboard/constants";
 
 interface DashboardHomeOverviewProps {
   expenses: Expense[];
@@ -120,10 +120,7 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
               return (
                 <div key={category} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1 text-slate-700">
-                      <span>{CATEGORY_ICONS[category] || "📦"}</span>
-                      {category}
-                    </span>
+                    <span className="text-slate-700">{category}</span>
                     <span className="text-slate-600 font-semibold">${amount.toFixed(2)}</span>
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">

@@ -8,7 +8,9 @@ interface DashboardSectionStatsProps {
   section: DashboardSection;
   stats: DashboardStats;
   expenses: Expense[];
-  users: { isActive: boolean; role: string }[];
+  users?: { isActive: boolean; role: string }[];
+  categories?: { isActive: boolean }[];
+  projects?: { isActive: boolean }[];
   pendingApproverCount: number;
   pendingProcessorCount: number;
 }
@@ -17,7 +19,9 @@ export default function DashboardSectionStats({
   section,
   stats,
   expenses,
-  users,
+  users = [],
+  categories = [],
+  projects = [],
   pendingApproverCount,
   pendingProcessorCount,
 }: DashboardSectionStatsProps) {
@@ -108,6 +112,52 @@ export default function DashboardSectionStats({
           subtext="Full-access accounts"
           emoji="👑"
           valueColor="text-amber-600"
+        />
+      </div>
+    );
+  }
+
+  if (section === "categories") {
+    const activeCount = categories.filter((c) => c.isActive).length;
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <StatCard title="Total Categories" value={String(categories.length)} subtext="Configured categories" emoji="🏷️" />
+        <StatCard
+          title="Active"
+          value={String(activeCount)}
+          subtext="Shown on expense form"
+          emoji="✅"
+          valueColor="text-emerald-600"
+        />
+        <StatCard
+          title="Inactive"
+          value={String(categories.length - activeCount)}
+          subtext="Hidden from form"
+          emoji="○"
+          valueColor="text-rose-500"
+        />
+      </div>
+    );
+  }
+
+  if (section === "projects") {
+    const activeCount = projects.filter((p) => p.isActive).length;
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <StatCard title="Total Projects" value={String(projects.length)} subtext="Configured projects" emoji="📁" />
+        <StatCard
+          title="Active"
+          value={String(activeCount)}
+          subtext="Selectable on form"
+          emoji="✅"
+          valueColor="text-emerald-600"
+        />
+        <StatCard
+          title="Inactive"
+          value={String(projects.length - activeCount)}
+          subtext="Hidden from form"
+          emoji="○"
+          valueColor="text-rose-500"
         />
       </div>
     );

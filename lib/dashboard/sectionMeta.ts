@@ -31,6 +31,18 @@ export const SECTION_META: Record<DashboardSection, SectionMeta> = {
     subtitle: "Create and manage staff accounts and roles",
     breadcrumb: "User Management",
   },
+  categories: {
+    title: "Category",
+    titleAccent: "Management",
+    subtitle: "Manage expense categories shown on the public form",
+    breadcrumb: "Categories",
+  },
+  projects: {
+    title: "Project",
+    titleAccent: "Management",
+    subtitle: "Manage projects assignees pick when submitting expenses",
+    breadcrumb: "Projects",
+  },
   analytics: {
     title: "Analytics",
     titleAccent: "& Tracker",

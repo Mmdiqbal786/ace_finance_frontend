@@ -15,7 +15,7 @@ interface TableRowActionsProps {
   onEdit: () => void;
   onDelete: () => void;
   showDelete?: boolean;
-  align?: "center" | "end";
+  align?: "start" | "center" | "end";
   extraActions?: TableExtraAction[];
 }
 
@@ -32,7 +32,7 @@ export default function TableRowActions({
   onEdit,
   onDelete,
   showDelete = true,
-  align = "end",
+  align = "start",
   extraActions = [],
 }: TableRowActionsProps) {
   const [open, setOpen] = useState(false);
@@ -58,7 +58,9 @@ export default function TableRowActions({
     let left =
       align === "end"
         ? rect.right - menuWidth
-        : rect.left + rect.width / 2 - menuWidth / 2;
+        : align === "start"
+          ? rect.left
+          : rect.left + rect.width / 2 - menuWidth / 2;
 
     left = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8));
     top = Math.max(8, Math.min(top, window.innerHeight - menuHeight - 8));
@@ -109,7 +111,8 @@ export default function TableRowActions({
     action();
   };
 
-  const alignClass = align === "end" ? "justify-end" : "justify-center";
+  const alignClass =
+    align === "end" ? "justify-end" : align === "center" ? "justify-center" : "justify-start";
 
   const menu =
     open &&

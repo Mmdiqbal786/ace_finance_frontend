@@ -156,15 +156,33 @@ export default function DashboardSidebar({
           )}
 
           {user?.role === "ADMIN" && (
-            <NavItem
-              icon="👥"
-              label="User Management"
-              shortLabel="Users"
-              href={DASHBOARD_ROUTES.userManagement}
-              active={isSectionActive(pathname, "user-management")}
-              accent="amber"
-              onNavigate={onMobileClose}
-            />
+            <>
+              <NavItem
+                icon="👥"
+                label="User Management"
+                shortLabel="Users"
+                href={DASHBOARD_ROUTES.userManagement}
+                active={isSectionActive(pathname, "user-management")}
+                accent="amber"
+                onNavigate={onMobileClose}
+              />
+              <NavItem
+                icon="🏷️"
+                label="Categories"
+                href={DASHBOARD_ROUTES.categories}
+                active={isSectionActive(pathname, "categories")}
+                accent="amber"
+                onNavigate={onMobileClose}
+              />
+              <NavItem
+                icon="📁"
+                label="Projects"
+                href={DASHBOARD_ROUTES.projects}
+                active={isSectionActive(pathname, "projects")}
+                accent="amber"
+                onNavigate={onMobileClose}
+              />
+            </>
           )}
 
           <NavItem

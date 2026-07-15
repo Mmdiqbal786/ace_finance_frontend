@@ -11,6 +11,7 @@ export interface Expense {
   requesterEmail: string;
   amount: number;
   category: string;
+  project: string;
   description: string;
   date: string;
   status: string;
@@ -20,6 +21,20 @@ export interface Expense {
   processorNotes?: string;
   processedAt?: string;
   history: HistoryLog[];
+}
+
+export interface CategoryItem {
+  _id: string;
+  name: string;
+  label: string;
+  isActive: boolean;
+}
+
+export interface ProjectItem {
+  _id: string;
+  name: string;
+  code?: string;
+  isActive: boolean;
 }
 
 export interface DashboardStats {
@@ -54,4 +69,6 @@ export type DashboardSection =
   | "approver"
   | "processor"
   | "user-management"
+  | "categories"
+  | "projects"
   | "analytics";

@@ -198,6 +198,17 @@ body {
   background: linear-gradient(90deg, var(--af-navy), var(--af-accent), #70bcfc);
 }
 
+@keyframes af-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+}
+
 @keyframes portal-float {
   0%,
   100% {
