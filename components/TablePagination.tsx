@@ -34,13 +34,13 @@ export default function TablePagination({
         <span className="font-bold text-slate-900">{totalCount}</span>
       </p>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-          Rows per page
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+        <label className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-slate-700">
+          <span className="whitespace-nowrap">Rows per page</span>
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="af-select af-select-sm w-auto cursor-pointer"
+            className="af-select af-select-sm af-w-auto !w-auto min-w-[4.5rem] shrink-0 cursor-pointer"
           >
             {PAGE_SIZE_OPTIONS.map((size) => (
               <option key={size} value={size}>
@@ -50,7 +50,7 @@ export default function TablePagination({
           </select>
         </label>
 
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={() => onPageChange(page - 1)}
@@ -59,7 +59,7 @@ export default function TablePagination({
           >
             Prev
           </button>
-          <span className="min-w-[5rem] text-center text-sm font-semibold text-slate-700">
+          <span className="min-w-[5rem] whitespace-nowrap text-center text-sm font-semibold text-slate-700">
             Page {page} of {totalPages}
           </span>
           <button

@@ -10,9 +10,17 @@ export interface Expense {
   requesterName: string;
   requesterEmail: string;
   amount: number;
+  paidAmount?: number;
+  originalAmount?: number;
+  country?: string;
+  currency?: string;
+  exchangeRate?: number;
+  exchangeRateDate?: string;
   category: string;
+  project: string;
   description: string;
   date: string;
+  dueDate?: string;
   status: string;
   submittedAt: string;
   approverNotes?: string;
@@ -20,6 +28,27 @@ export interface Expense {
   processorNotes?: string;
   processedAt?: string;
   history: HistoryLog[];
+}
+
+export interface CategoryItem {
+  _id: string;
+  name: string;
+  label: string;
+  isActive: boolean;
+}
+
+export interface ProjectItem {
+  _id: string;
+  name: string;
+  code?: string;
+  isActive: boolean;
+}
+
+export interface CountryItem {
+  _id: string;
+  name: string;
+  currency: string;
+  isActive: boolean;
 }
 
 export interface DashboardStats {
@@ -44,6 +73,7 @@ export type ExpenseActionType =
   | "approve"
   | "reject"
   | "process"
+  | "partial-pay"
   | "processor-reject"
   | "view"
   | "edit"
@@ -54,4 +84,7 @@ export type DashboardSection =
   | "approver"
   | "processor"
   | "user-management"
+  | "categories"
+  | "projects"
+  | "countries"
   | "analytics";

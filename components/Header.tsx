@@ -68,7 +68,8 @@ export default function Header() {
     };
   }, [userMenuOpen]);
 
-  const logoHref = user ? DASHBOARD_ROUTES.home : '/';
+  // Logo stays on the same area: home header → /, dashboard header → /dashboard/
+  const logoHref = isDashboard ? DASHBOARD_ROUTES.home : "/";
 
   return (
     <header className={`sticky top-0 z-50 shrink-0 w-full border-b border-slate-200 bg-white ${isDashboard ? "" : "bg-white/90 backdrop-blur-md"}`}>
@@ -131,7 +132,7 @@ export default function Header() {
                         setUserMenuOpen(false);
                         setShowLogoutConfirm(true);
                       }}
-                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-red-50 hover:text-rose-700 transition-colors cursor-pointer"
                     >
                       <span>🚪</span>
                       Sign Out
@@ -140,6 +141,18 @@ export default function Header() {
                 </div>
               )}
             </div>
+          ) : mounted && user ? (
+            <>
+              <span className="hidden sm:inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-[var(--af-accent)] ring-1 ring-inset ring-sky-400">
+                v1.2.0 Stable
+              </span>
+              <Link
+                href={DASHBOARD_ROUTES.home}
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-sm font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
+              >
+                Go to Dashboard
+              </Link>
+            </>
           ) : (
             <>
               <span className="hidden sm:inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-[var(--af-accent)] ring-1 ring-inset ring-sky-400">

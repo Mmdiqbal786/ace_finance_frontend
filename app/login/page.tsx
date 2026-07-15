@@ -1,9 +1,13 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { setAuth, isAuthenticated, getUser } from '../../lib/auth';
+import { useState } from 'react';
+import { useBlockAuthenticatedGuestPages } from '../../hooks/useBlockAuthenticatedGuestPages';
+import { setAuth } from '../../lib/auth';
 import { getDefaultDashboardRoute } from '../../lib/dashboard/routes';
 import { API_URL } from '../../lib/api';
 import BrandLogo from '../../components/BrandLogo';
+import { useFormValidation } from '../../hooks/useFormValidation';
+import { validateLoginEmail, validateLoginPassword } from '../../lib/validation';
+import FormField, { RequiredFieldsNote } from '../../components/FormField';
 
 function LoginSpinner({ className = "h-5 w-5 text-white" }: { className?: string }) {
   return (
@@ -26,12 +30,6 @@ function FullPageLoader({ message }: { message: string }) {
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="portal-bg" aria-hidden="true">
-        <div className="portal-orb portal-orb--violet" />
-        <div className="portal-orb portal-orb--indigo" />
-        <div className="portal-orb portal-orb--cyan" />
-        <div className="portal-grid" />
-      </div>
       <div className="relative z-10 flex flex-col items-center gap-5 text-center">
         <span className="inline-flex h-14 w-14 items-center justify-center">
           <img src="/Ace_logo_small_light.png" alt="Aceolution" width={44} height={44} className="object-contain" />
@@ -46,29 +44,19 @@ function FullPageLoader({ message }: { message: string }) {
   );
 }
 
+type LoginField = "email" | "password";
+
 export default function LoginPage() {
-  const [mounted, setMounted] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
+  const guestAllowed = useBlockAuthenticatedGuestPages();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // const [seeding, setSeeding] = useState(false);
-  // const [seedMsg, setSeedMsg] = useState('');
+  const form = useFormValidation<LoginField>();
 
-  useEffect(() => {
-    if (isAuthenticated()) {
-      setRedirecting(true);
-      const user = getUser();
-      window.location.href = user ? getDefaultDashboardRoute(user.role) : '/dashboard/';
-      return;
-    }
-    setMounted(true);
-  }, []);
-
-  const showFullPageLoader = !mounted || loading || redirecting;
-  const loaderMessage = redirecting
+  const showFullPageLoader = !guestAllowed || loading;
+  const loaderMessage = !guestAllowed
     ? 'Redirecting to dashboard...'
     : loading
       ? 'Signing you in...'
@@ -77,12 +65,14 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!email.trim()) {
-      setError('Please enter your email address.');
-      return;
-    }
-    if (!password) {
-      setError('Please enter your password.');
+    const ok = form.validateAll({
+      email: () => validateLoginEmail(email),
+      password: () => validateLoginPassword(password),
+    });
+
+    if (!ok) {
+      form.focusFirstInvalid();
+      setError("Please fix the highlighted fields below.");
       return;
     }
 
@@ -92,7 +82,7 @@ export default function LoginPage() {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -108,33 +98,12 @@ export default function LoginPage() {
     }
   }
 
-  // async function handleSeed() {
-  //   setSeeding(true);
-  //   setSeedMsg('');
-  //   try {
-  //     const res = await fetch(`${API_URL}/auth/seed`, { method: 'POST' });
-  //     const data = await res.json();
-  //     setSeedMsg(data.message);
-  //   } catch {
-  //     setSeedMsg('Seed failed. Is the backend running?');
-  //   } finally {
-  //     setSeeding(false);
-  //   }
-  // }
-
   return (
     <>
       {showFullPageLoader && <FullPageLoader message={loaderMessage} />}
 
-      {mounted && !redirecting && (
+      {guestAllowed && (
     <div className="portal-page login-page relative flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center overflow-hidden p-4 sm:min-h-[calc(100dvh-4rem)]">
-      <div className="portal-bg" aria-hidden="true">
-        <div className="portal-orb portal-orb--violet" />
-        <div className="portal-orb portal-orb--indigo" />
-        <div className="portal-orb portal-orb--cyan" />
-        <div className="portal-grid" />
-      </div>
-
       <div className="relative z-10 w-full max-w-[420px]">
         <div className="mb-8 text-center">
           <div className="inline-flex flex-col items-center gap-2">
@@ -152,39 +121,43 @@ export default function LoginPage() {
           </p>
 
           <form onSubmit={handleLogin} noValidate className="flex flex-col gap-4" suppressHydrationWarning>
-            <p className="text-xs font-medium text-slate-600 -mt-1 mb-1">
-              Fields marked with <span className="af-required">*</span> are required
-            </p>
-            <div>
-              <label htmlFor="login-email" className="mb-2 block af-label">
-                Email Address <span className="af-required" aria-hidden="true">*</span>
-              </label>
+            <RequiredFieldsNote className="-mt-1 mb-1" />
+            <FormField label="Email Address" htmlFor="login-email" required error={form.errors.email}>
               <input
                 id="login-email"
                 type="email"
-                className="login-input af-input"
+                className={form.fieldClass("login-input af-input", "email")}
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => {
+                  setEmail(e.target.value);
+                  form.clearError("email");
+                  if (error) setError("");
+                }}
+                onBlur={() => form.onBlur("email", validateLoginEmail(email))}
                 autoComplete="email"
                 placeholder="you@aceolution.com"
                 disabled={loading}
+                aria-invalid={Boolean(form.errors.email)}
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label htmlFor="login-password" className="mb-2 block af-label">
-                Password <span className="af-required" aria-hidden="true">*</span>
-              </label>
+            <FormField label="Password" htmlFor="login-password" required error={form.errors.password}>
               <div className="relative">
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
-                className="login-input af-input login-input--password"
+                  className={form.fieldClass("login-input af-input login-input--password", "password")}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => {
+                    setPassword(e.target.value);
+                    form.clearError("password");
+                    if (error) setError("");
+                  }}
+                  onBlur={() => form.onBlur("password", validateLoginPassword(password))}
                   autoComplete="current-password"
                   placeholder="••••••••"
                   disabled={loading}
+                  aria-invalid={Boolean(form.errors.password)}
                 />
                 <button
                   type="button"
@@ -207,7 +180,7 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
-            </div>
+            </FormField>
 
             {error && (
               <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
@@ -224,40 +197,6 @@ export default function LoginPage() {
               Sign In →
             </button>
           </form>
-
-          {/* Seed admin section — hidden for production
-          <div style={{
-            marginTop: '1.75rem', paddingTop: '1.5rem',
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-          }}>
-            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.78rem', textAlign: 'center', marginBottom: '0.75rem' }}>
-              First time setup? Create the admin account:
-            </p>
-            <button
-              id="seed-admin-btn"
-              onClick={handleSeed}
-              disabled={seeding}
-              style={{
-                width: '100%', padding: '0.65rem', borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.1)', cursor: seeding ? 'not-allowed' : 'pointer',
-                background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)',
-                fontSize: '0.8rem', fontWeight: 500, transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => (e.target as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'}
-              onMouseLeave={e => (e.target as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'}
-            >
-              {seeding ? 'Creating...' : '🔑 Seed Admin Account'}
-            </button>
-            {seedMsg && (
-              <p style={{
-                marginTop: '0.5rem', textAlign: 'center', fontSize: '0.8rem',
-                color: seedMsg.includes('created') ? '#86efac' : '#fca5a5',
-              }}>
-                {seedMsg}
-              </p>
-            )}
-          </div>
-          */}
         </div>
 
         <p className="mt-6 text-center text-sm font-medium text-slate-700">

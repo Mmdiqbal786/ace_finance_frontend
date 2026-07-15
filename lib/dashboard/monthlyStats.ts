@@ -76,7 +76,9 @@ export function getCurrentMonthStats(expenses: Expense[]): CurrentMonthStats {
     processed: monthExpenses.filter((expense) => expense.status === "PROCESSED").length,
     pending: monthExpenses.filter(
       (expense) =>
-        expense.status === "PENDING_APPROVER" || expense.status === "APPROVED_APPROVER"
+        expense.status === "PENDING_APPROVER" ||
+        expense.status === "APPROVED_APPROVER" ||
+        expense.status === "PARTIALLY_PAID"
     ).length,
     rejected: monthExpenses.filter(
       (expense) =>

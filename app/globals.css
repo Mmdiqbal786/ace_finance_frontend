@@ -124,56 +124,11 @@ body {
   background: var(--af-bg);
 }
 
-.portal-bg {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.portal-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.18;
-  animation: portal-float 16s ease-in-out infinite;
-}
-
-.portal-orb--violet {
-  width: 28rem;
-  height: 28rem;
-  background: var(--af-navy);
-  top: -10rem;
-  left: -8rem;
-  opacity: 0.08;
-}
-
-.portal-orb--indigo {
-  width: 22rem;
-  height: 22rem;
-  background: #0284c7;
-  top: 12%;
-  right: -6rem;
-  opacity: 0.12;
-  animation-delay: -5s;
-}
-
-.portal-orb--cyan {
-  width: 18rem;
-  height: 18rem;
-  background: #38bdf8;
-  bottom: 10%;
-  left: 35%;
-  opacity: 0.1;
-  animation-delay: -9s;
-}
-
+/* Decorative dots/orbs removed — plain gray page background only */
+.portal-bg,
+.portal-orb,
 .portal-grid {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(32, 60, 98, 0.1) 1px, transparent 1px);
-  background-size: 22px 22px;
-  mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+  display: none !important;
 }
 
 .portal-card {
@@ -198,13 +153,14 @@ body {
   background: linear-gradient(90deg, var(--af-navy), var(--af-accent), #70bcfc);
 }
 
-@keyframes portal-float {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
+@keyframes af-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) translateX(8px);
   }
-  50% {
-    transform: translate(14px, -10px) scale(1.04);
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
   }
 }
 
@@ -280,11 +236,12 @@ body {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Inline toolbar controls — do not stretch full width */
+/* Inline toolbar / pagination controls — do not stretch full width */
 .af-input.af-w-auto,
 .af-select.af-w-auto {
-  width: auto;
-  max-width: 100%;
+  width: auto !important;
+  max-width: none;
+  flex: 0 0 auto;
 }
 
 .af-toolbar .af-toolbar-search,
