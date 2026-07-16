@@ -33,6 +33,7 @@ import ExpenseQueuePanel from "./ExpenseQueuePanel";
 import AnalyticsPanel from "./AnalyticsPanel";
 import SubmitExpensePanel from "./SubmitExpensePanel";
 import MyRequestsPanel from "./MyRequestsPanel";
+import ProfilePanel from "./ProfilePanel";
 import DashboardBreadcrumb from "./DashboardBreadcrumb";
 import { SECTION_META } from "../../lib/dashboard/sectionMeta";
 
@@ -223,7 +224,12 @@ export default function DashboardWorkspace() {
               />
             )}
 
-          {loading ? (
+          {activeSection === "profile" && currentUser ? (
+            <ProfilePanel
+              currentUser={currentUser}
+              onProfileUpdated={setCurrentUser}
+            />
+          ) : loading ? (
             <div className="portal-card flex flex-col items-center justify-center rounded-2xl py-20">
               <svg
                 className="animate-spin h-8 w-8 text-[var(--af-accent)] mb-3"

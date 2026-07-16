@@ -67,4 +67,10 @@ export const SECTION_META: Record<DashboardSection, SectionMeta> = {
     subtitle: "Reports, category breakdown, and full expense database",
     breadcrumb: "Analytics & Tracker",
   },
+  profile: {
+    title: "My",
+    titleAccent: "Profile",
+    subtitle: "View and update your account details",
+    breadcrumb: "Profile",
+  },
 };

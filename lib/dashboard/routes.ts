@@ -12,6 +12,7 @@ export const DASHBOARD_ROUTES = {
   projects: "/dashboard/projects/",
   countries: "/dashboard/countries/",
   analytics: "/dashboard/analytics/",
+  profile: "/dashboard/profile/",
 } as const;
 
 export const DASHBOARD_SECTION_PATHS: Record<Exclude<DashboardSection, "home">, string> = {
@@ -24,6 +25,7 @@ export const DASHBOARD_SECTION_PATHS: Record<Exclude<DashboardSection, "home">, 
   projects: DASHBOARD_ROUTES.projects,
   countries: DASHBOARD_ROUTES.countries,
   analytics: DASHBOARD_ROUTES.analytics,
+  profile: DASHBOARD_ROUTES.profile,
 };
 
 export function getDefaultDashboardRoute(role: AuthUser["role"]): string {
@@ -45,6 +47,7 @@ export function pathnameToSection(pathname: string | null): DashboardSection {
   if (normalized === "/dashboard/projects") return "projects";
   if (normalized === "/dashboard/countries") return "countries";
   if (normalized === "/dashboard/analytics") return "analytics";
+  if (normalized === "/dashboard/profile") return "profile";
   return "home";
 }
 
@@ -55,8 +58,10 @@ export function canAccessSection(
   if (!role) return false;
 
   if (role === "REQUESTER") {
-    return section === "home" || section === "submit-expense" || section === "my-requests";
+    return section === "home" || section === "submit-expense" || section === "my-requests" || section === "profile";
   }
+
+  if (section === "profile") return true;
 
   if (section === "submit-expense" || section === "my-requests") {
     return false;

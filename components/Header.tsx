@@ -127,6 +127,15 @@ export default function Header() {
                   </div>
 
                   <div className="p-2">
+                    <Link
+                      href={DASHBOARD_ROUTES.profile}
+                      role="menuitem"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 hover:text-[var(--af-accent)] transition-colors"
+                    >
+                      <span>👤</span>
+                      Profile
+                    </Link>
                     <button
                       type="button"
                       role="menuitem"

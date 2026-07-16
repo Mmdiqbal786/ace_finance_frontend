@@ -31,6 +31,13 @@ export function setAuth(token: string, user: AuthUser): void {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
+export function updateStoredUser(partial: Partial<AuthUser>): void {
+  const token = getToken();
+  const user = getUser();
+  if (!token || !user) return;
+  setAuth(token, { ...user, ...partial });
+}
+
 export function logout(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);

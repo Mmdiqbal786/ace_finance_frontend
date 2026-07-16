@@ -86,6 +86,7 @@ export type DashboardSection =
   | "home"
   | "submit-expense"
   | "my-requests"
+  | "profile"
   | "approver"
   | "processor"
   | "user-management"
