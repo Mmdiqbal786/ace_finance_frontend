@@ -3,6 +3,9 @@ export interface HistoryLog {
   timestamp: string;
   user: string;
   notes?: string;
+  paymentAmount?: number;
+  totalPaid?: number;
+  remaining?: number;
 }
 
 export interface Expense {

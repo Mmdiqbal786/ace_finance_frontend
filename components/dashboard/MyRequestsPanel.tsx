@@ -111,7 +111,12 @@ export default function MyRequestsPanel({
                           <td className="py-3.5 px-4 text-sm">{e.category}</td>
                           <td className="py-3.5 px-4 text-sm text-slate-700">{e.project || "—"}</td>
                           <td className="py-3.5 px-4">
-                            <DueDateBadge dueDate={e.dueDate} />
+                            <DueDateBadge
+                              dueDate={e.dueDate}
+                              status={e.status}
+                              amount={e.amount}
+                              paidAmount={e.paidAmount}
+                            />
                           </td>
                           <td className="py-3.5 px-4">
                             <StatusBadge status={e.status} className="text-xs py-0.5" />

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import StatusBadge from "../components/StatusBadge";
 import TimelineView from "../components/TimelineView";
+import { getPaidAmount, getRemainingAmount } from "../lib/dashboard/payment";
 import ExpenseRequestFields, {
   ExpenseRequestField,
   ExpenseRequestValues,
@@ -19,6 +20,9 @@ interface HistoryLog {
   timestamp: string;
   user: string;
   notes?: string;
+  paymentAmount?: number;
+  totalPaid?: number;
+  remaining?: number;
 }
 
 interface Expense {
@@ -26,6 +30,7 @@ interface Expense {
   requesterName: string;
   requesterEmail: string;
   amount: number;
+  paidAmount?: number;
   originalAmount?: number;
   country?: string;
   currency?: string;
@@ -541,6 +546,14 @@ export default function PublicPortal() {
                 </div>
                 <div className="text-right">
                   <div className="text-xl font-extrabold text-slate-900">${searchResults[0].amount.toFixed(2)} USD</div>
+                  <div className="mt-1 flex flex-col items-end gap-0.5 text-xs">
+                    <span className="font-semibold text-emerald-700">
+                      Paid: ${getPaidAmount(searchResults[0]).toFixed(2)}
+                    </span>
+                    <span className="font-semibold text-amber-700">
+                      Remaining: ${getRemainingAmount(searchResults[0]).toFixed(2)}
+                    </span>
+                  </div>
                   {searchResults[0].originalAmount != null && searchResults[0].currency && (
                     <div className="text-xs text-slate-600 mt-0.5">
                       {searchResults[0].originalAmount} {searchResults[0].currency}
@@ -579,6 +592,8 @@ export default function PublicPortal() {
                       </div>
                       <div className="text-right">
                         <div>${item.amount.toFixed(2)}</div>
+                        <div className="text-xs text-emerald-700">Paid ${getPaidAmount(item).toFixed(2)}</div>
+                        <div className="text-xs text-amber-700">Left ${getRemainingAmount(item).toFixed(2)}</div>
                         <div className="text-xs text-slate-500">{new Date(item.date).toLocaleDateString()}</div>
                       </div>
                     </button>

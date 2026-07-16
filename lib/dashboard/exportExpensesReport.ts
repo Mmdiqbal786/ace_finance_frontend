@@ -1,3 +1,9 @@
+import {
+  formatPaymentHistorySummary,
+  getAllPaymentHistory,
+  getExpensePaymentHistory,
+  PaymentHistoryEntry,
+} from "./historyPayment";
 import { getPaidAmount, getRemainingAmount } from "./payment";
 import { Expense } from "./types";
 
@@ -47,14 +53,15 @@ function statusLabel(status: string): string {
   }
 }
 
-type ColDef = {
+type ColDef<T> = {
   header: string;
   width: number;
   align?: "Left" | "Right" | "Center";
-  get: (e: Expense) => string;
+  wrap?: boolean;
+  get: (row: T) => string;
 };
 
-const COLUMNS: ColDef[] = [
+const EXPENSE_COLUMNS: ColDef<Expense>[] = [
   { header: "Request ID", width: 180, get: (e) => e.id },
   { header: "Requester Name", width: 130, get: (e) => e.requesterName },
   { header: "Requester Email", width: 170, get: (e) => e.requesterEmail },
@@ -84,6 +91,28 @@ const COLUMNS: ColDef[] = [
     align: "Right",
     get: (e) => formatMoney(getRemainingAmount(e)),
   },
+  {
+    header: "Payment Count",
+    width: 95,
+    align: "Center",
+    get: (e) => String(getExpensePaymentHistory(e).length),
+  },
+  {
+    header: "Date Fully Paid",
+    width: 150,
+    get: (e) => {
+      if (e.status !== "PROCESSED") return "";
+      const payments = getExpensePaymentHistory(e);
+      const lastFull = [...payments].reverse().find((p) => p.paymentType === "Full");
+      return lastFull ? formatDateTime(lastFull.timestamp) : formatDateTime(e.processedAt);
+    },
+  },
+  {
+    header: "Payment History",
+    width: 420,
+    wrap: true,
+    get: (e) => formatPaymentHistorySummary(getExpensePaymentHistory(e)),
+  },
   { header: "Category", width: 100, get: (e) => e.category },
   { header: "Project", width: 100, get: (e) => e.project || "" },
   { header: "Description", width: 220, get: (e) => e.description || "" },
@@ -95,64 +124,116 @@ const COLUMNS: ColDef[] = [
   { header: "Finance Notes", width: 180, get: (e) => e.processorNotes || "" },
 ];
 
+const PAYMENT_COLUMNS: ColDef<PaymentHistoryEntry>[] = [
+  { header: "Request ID", width: 180, get: (p) => p.requestId },
+  { header: "Requester Name", width: 130, get: (p) => p.requesterName },
+  { header: "Payment #", width: 75, align: "Center", get: (p) => String(p.paymentNumber) },
+  { header: "Payment Date", width: 150, get: (p) => formatDateTime(p.timestamp) },
+  {
+    header: "Type",
+    width: 90,
+    align: "Center",
+    get: (p) => (p.paymentType === "Full" ? "Full payment" : "Partial payment"),
+  },
+  {
+    header: "This Payment (USD)",
+    width: 120,
+    align: "Right",
+    get: (p) => formatMoney(p.paymentAmount),
+  },
+  {
+    header: "Total Paid After (USD)",
+    width: 130,
+    align: "Right",
+    get: (p) => formatMoney(p.totalPaidAfter),
+  },
+  {
+    header: "Remaining After (USD)",
+    width: 130,
+    align: "Right",
+    get: (p) => formatMoney(p.remainingAfter),
+  },
+  { header: "Notes", width: 220, wrap: true, get: (p) => p.notes },
+  { header: "Logged By", width: 200, get: (p) => p.loggedBy },
+];
+
 function styleForCell(align: "Left" | "Right" | "Center", zebra: boolean): string {
   if (align === "Right") return zebra ? "CellRightAlt" : "CellRight";
   if (align === "Center") return zebra ? "CellCenterAlt" : "CellCenter";
   return zebra ? "CellLeftAlt" : "CellLeft";
 }
 
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
+function buildWorksheet<T>(
+  name: string,
+  columns: ColDef<T>[],
+  rows: T[],
+  defaultRowHeight = 24
+): string {
+  const columnXml = columns
+    .map((col) => `<Column ss:AutoFitWidth="0" ss:Width="${col.width}"/>`)
+    .join("");
 
-/**
- * Excel SpreadsheetML export — reliable column widths, 11pt font, borders, padded rows.
- */
-export function exportExpensesReport(rows: Expense[]) {
-  const stamp = new Date().toISOString().split("T")[0];
-
-  const columnXml = COLUMNS.map(
-    (col) => `<Column ss:AutoFitWidth="0" ss:Width="${col.width}"/>`
-  ).join("");
-
-  const headerCells = COLUMNS.map(
-    (col) =>
-      `<Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(col.header)}</Data></Cell>`
-  ).join("");
+  const headerCells = columns
+    .map(
+      (col) =>
+        `<Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(col.header)}</Data></Cell>`
+    )
+    .join("");
 
   const dataRows = rows
-    .map((expense, rowIndex) => {
+    .map((row, rowIndex) => {
       const zebra = rowIndex % 2 === 1;
-      const cells = COLUMNS.map((col) => {
-        const styleId = styleForCell(col.align || "Left", zebra);
-        return `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${escapeXml(
-          col.get(expense)
-        )}</Data></Cell>`;
-      }).join("");
-      return `<Row ss:Height="24">${cells}</Row>`;
+      const rowHeight = columns.some((col) => col.wrap && col.get(row))
+        ? 56
+        : defaultRowHeight;
+      const cells = columns
+        .map((col) => {
+          const styleId = col.wrap
+            ? zebra
+              ? "CellWrapAlt"
+              : "CellWrap"
+            : styleForCell(col.align || "Left", zebra);
+          const value = col.get(row);
+          return `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${escapeXml(
+            value
+          )}</Data></Cell>`;
+        })
+        .join("");
+      return `<Row ss:Height="${rowHeight}">${cells}</Row>`;
     })
     .join("");
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
- <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-  <Title>Aceolution Finance Expense Report</Title>
-  <Author>Aceolution Finance</Author>
- </DocumentProperties>
- <Styles>
+  return `<Worksheet ss:Name="${escapeXml(name)}">
+  <Table ss:ExpandedColumnCount="${columns.length}" ss:ExpandedRowCount="${
+    rows.length + 1
+  }" x:FullColumns="1" x:FullRows="1" ss:DefaultRowHeight="22">
+   ${columnXml}
+   <Row ss:Height="28">${headerCells}</Row>
+   ${dataRows}
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <Selected/>
+   <FreezePanes/>
+   <FrozenNoSplit/>
+   <SplitHorizontal>1</SplitHorizontal>
+   <TopRowBottomPane>1</TopRowBottomPane>
+   <ActivePane>2</ActivePane>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+    </Pane>
+    <Pane>
+     <Number>2</Number>
+     <ActiveRow>0</ActiveRow>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+ </Worksheet>`;
+}
+
+const SHARED_STYLES = `
   <Style ss:ID="Default" ss:Name="Normal">
    <Alignment ss:Vertical="Center" ss:WrapText="1"/>
    <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
@@ -234,35 +315,66 @@ export function exportExpensesReport(rows: Expense[]) {
    <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
    <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
   </Style>
+  <Style ss:ID="CellWrap">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Top" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+   <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="CellWrapAlt">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Top" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+   <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+  </Style>`;
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Excel SpreadsheetML export — expense summary + payment history worksheet.
+ */
+export function exportExpensesReport(rows: Expense[]) {
+  const stamp = new Date().toISOString().split("T")[0];
+  const paymentRows = getAllPaymentHistory(rows);
+
+  const expenseSheet = buildWorksheet("Expense Report", EXPENSE_COLUMNS, rows);
+  const paymentSheet = buildWorksheet("Payment History", PAYMENT_COLUMNS, paymentRows);
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Title>Aceolution Finance Expense Report</Title>
+  <Author>Aceolution Finance</Author>
+ </DocumentProperties>
+ <Styles>${SHARED_STYLES}
  </Styles>
- <Worksheet ss:Name="Expense Report">
-  <Table ss:ExpandedColumnCount="${COLUMNS.length}" ss:ExpandedRowCount="${
-    rows.length + 1
-  }" x:FullColumns="1" x:FullRows="1" ss:DefaultRowHeight="22">
-   ${columnXml}
-   <Row ss:Height="28">${headerCells}</Row>
-   ${dataRows}
-  </Table>
-  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
-   <Selected/>
-   <FreezePanes/>
-   <FrozenNoSplit/>
-   <SplitHorizontal>1</SplitHorizontal>
-   <TopRowBottomPane>1</TopRowBottomPane>
-   <ActivePane>2</ActivePane>
-   <Panes>
-    <Pane>
-     <Number>3</Number>
-    </Pane>
-    <Pane>
-     <Number>2</Number>
-     <ActiveRow>0</ActiveRow>
-    </Pane>
-   </Panes>
-   <ProtectObjects>False</ProtectObjects>
-   <ProtectScenarios>False</ProtectScenarios>
-  </WorksheetOptions>
- </Worksheet>
+ ${expenseSheet}
+ ${paymentSheet}
 </Workbook>`;
 
   const blob = new Blob([xml], {
