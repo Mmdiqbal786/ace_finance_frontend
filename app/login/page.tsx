@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useState } from 'react';
 import FullPageLoader from '../../components/FullPageLoader';
 import { useBlockAuthenticatedGuestPages } from '../../hooks/useBlockAuthenticatedGuestPages';
@@ -92,7 +93,6 @@ export default function LoginPage() {
           <div className="inline-flex flex-col items-center gap-2">
             <BrandLogo full showWordmark />
           </div>
-          <p className="mt-4 text-sm font-semibold text-slate-700">Dashboard Login — Staff Only</p>
         </div>
 
         <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-8 shadow-lg">
@@ -165,6 +165,15 @@ export default function LoginPage() {
               </div>
             </FormField>
 
+            <div className="text-right -mt-1">
+              <Link
+                href="/forgot-password/"
+                className="text-sm font-semibold text-[var(--af-accent)] hover:text-[var(--af-accent-soft)] hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             {error && (
               <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
                 ⚠️ {error}
@@ -181,11 +190,6 @@ export default function LoginPage() {
             </button>
           </form>
         </div>
-
-        <p className="mt-6 text-center text-sm font-medium text-slate-700">
-          Public expense form available at{' '}
-          <a href="/" className="font-semibold text-[var(--af-accent)] no-underline hover:text-[var(--af-accent-soft)] underline">the homepage</a>
-        </p>
       </div>
     </div>
       )}
