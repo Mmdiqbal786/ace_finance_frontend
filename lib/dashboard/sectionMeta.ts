@@ -46,7 +46,7 @@ export const SECTION_META: Record<DashboardSection, SectionMeta> = {
   categories: {
     title: "Category",
     titleAccent: "Management",
-    subtitle: "Manage expense categories shown on the public form",
+    subtitle: "Manage expense categories shown on request forms",
     breadcrumb: "Categories",
   },
   projects: {

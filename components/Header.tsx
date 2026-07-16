@@ -145,9 +145,6 @@ export default function Header() {
             </div>
           ) : mounted && user ? (
             <>
-              <span className="hidden sm:inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-[var(--af-accent)] ring-1 ring-inset ring-sky-400">
-                v1.2.0 Stable
-              </span>
               <Link
                 href={getDefaultDashboardRoute(user.role)}
                 className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-sm font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
@@ -157,14 +154,11 @@ export default function Header() {
             </>
           ) : (
             <>
-              <span className="hidden sm:inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-[var(--af-accent)] ring-1 ring-inset ring-sky-400">
-                v1.2.0 Stable
-              </span>
               <Link
-                href="/login"
+                href="/login/"
                 className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-sm font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
               >
-                Dashboard Login
+                Sign In
               </Link>
             </>
           )}
