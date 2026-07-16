@@ -47,6 +47,7 @@ interface ExpenseActionModalProps {
   activeCategories: CategoryItem[];
   activeProjects: ProjectItem[];
   activeCountries: CountryItem[];
+  lockRequesterEmail?: boolean;
 }
 
 export default function ExpenseActionModal({
@@ -57,6 +58,7 @@ export default function ExpenseActionModal({
   activeCategories,
   activeProjects,
   activeCountries,
+  lockRequesterEmail = false,
 }: ExpenseActionModalProps) {
   const [actionNotes, setActionNotes] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
@@ -103,6 +105,7 @@ export default function ExpenseActionModal({
     field: K,
     value: ExpenseRequestValues[K]
   ) => {
+    if (lockRequesterEmail && field === "requesterEmail") return;
     setEditValues((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -130,7 +133,9 @@ export default function ExpenseActionModal({
           headers: authHeaders() as HeadersInit,
           body: JSON.stringify({
             requesterName: editValues.requesterName.trim(),
-            requesterEmail: editValues.requesterEmail.trim().toLowerCase(),
+            requesterEmail: lockRequesterEmail
+              ? expense.requesterEmail.trim().toLowerCase()
+              : editValues.requesterEmail.trim().toLowerCase(),
             originalAmount: parseFloat(editValues.amount),
             country: editValues.country,
             category: editValues.category,
@@ -410,6 +415,7 @@ export default function ExpenseActionModal({
                 compact
                 allowInactiveSelected
                 descriptionRows={3}
+                emailReadOnly={lockRequesterEmail}
               />
 
               <FormActionButtons

@@ -14,6 +14,7 @@ interface TableRowActionsProps {
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  showEdit?: boolean;
   showDelete?: boolean;
   align?: "start" | "center" | "end";
   extraActions?: TableExtraAction[];
@@ -31,6 +32,7 @@ export default function TableRowActions({
   onView,
   onEdit,
   onDelete,
+  showEdit = true,
   showDelete = true,
   align = "start",
   extraActions = [],
@@ -71,7 +73,7 @@ export default function TableRowActions({
   useLayoutEffect(() => {
     if (!open) return;
     updatePosition();
-  }, [open, updatePosition, extraActions.length, showDelete]);
+  }, [open, updatePosition, extraActions.length, showEdit, showDelete]);
 
   useEffect(() => {
     if (!open) return;
@@ -150,15 +152,17 @@ export default function TableRowActions({
           <span className="w-5 text-center text-base leading-none">👁️</span>
           View
         </button>
-        <button
-          type="button"
-          role="menuitem"
-          onClick={() => run(onEdit)}
-          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--af-accent)] hover:bg-sky-50 transition-colors cursor-pointer"
-        >
-          <span className="w-5 text-center text-base leading-none">✏️</span>
-          Edit
-        </button>
+        {showEdit && (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => run(onEdit)}
+            className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--af-accent)] hover:bg-sky-50 transition-colors cursor-pointer"
+          >
+            <span className="w-5 text-center text-base leading-none">✏️</span>
+            Edit
+          </button>
+        )}
         {showDelete && (
           <button
             type="button"

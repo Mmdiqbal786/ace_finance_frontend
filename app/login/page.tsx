@@ -90,7 +90,11 @@ export default function LoginPage() {
       }
       const data = await res.json();
       setAuth(data.access_token, data.user);
-      window.location.href = getDefaultDashboardRoute(data.user.role);
+      if (data.user.mustChangePassword) {
+        window.location.href = "/set-password/";
+      } else {
+        window.location.href = getDefaultDashboardRoute(data.user.role);
+      }
       return;
     } catch (err: any) {
       setError(err.message);

@@ -132,6 +132,27 @@ export default function DashboardSidebar({
             onNavigate={onMobileClose}
           />
 
+          {user?.role === "REQUESTER" && (
+            <>
+              <NavItem
+                icon="📄"
+                label="Submit Expense"
+                shortLabel="Submit"
+                href={DASHBOARD_ROUTES.submitExpense}
+                active={isSectionActive(pathname, "submit-expense")}
+                onNavigate={onMobileClose}
+              />
+              <NavItem
+                icon="📋"
+                label="My Requests"
+                shortLabel="Mine"
+                href={DASHBOARD_ROUTES.myRequests}
+                active={isSectionActive(pathname, "my-requests")}
+                onNavigate={onMobileClose}
+              />
+            </>
+          )}
+
           {(user?.role === "APPROVER" || user?.role === "ADMIN") && (
             <NavItem
               icon="🛡️"
@@ -193,14 +214,16 @@ export default function DashboardSidebar({
             </>
           )}
 
-          <NavItem
-            icon="📊"
-            label="Analytics & Tracker"
-            shortLabel="Analytics"
-            href={DASHBOARD_ROUTES.analytics}
-            active={isSectionActive(pathname, "analytics")}
-            onNavigate={onMobileClose}
-          />
+          {user?.role !== "REQUESTER" && (
+            <NavItem
+              icon="📊"
+              label="Analytics & Tracker"
+              shortLabel="Analytics"
+              href={DASHBOARD_ROUTES.analytics}
+              active={isSectionActive(pathname, "analytics")}
+              onNavigate={onMobileClose}
+            />
+          )}
         </nav>
 
         <div className="border-t border-white/10 p-3">

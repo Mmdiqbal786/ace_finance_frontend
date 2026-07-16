@@ -13,6 +13,18 @@ export const SECTION_META: Record<DashboardSection, SectionMeta> = {
     subtitle: "Monthly performance and workspace overview",
     breadcrumb: "Dashboard",
   },
+  "submit-expense": {
+    title: "Submit",
+    titleAccent: "Expense",
+    subtitle: "Create a new reimbursement request",
+    breadcrumb: "Submit Expense",
+  },
+  "my-requests": {
+    title: "My",
+    titleAccent: "Requests",
+    subtitle: "Track the status of your expense submissions",
+    breadcrumb: "My Requests",
+  },
   approver: {
     title: "Approver",
     titleAccent: "Panel",

@@ -5,18 +5,20 @@ import { getUser, logout, AuthUser, isAuthenticated } from '../lib/auth';
 import { usePathname } from 'next/navigation';
 import Modal from './Modal';
 import BrandLogo from './BrandLogo';
-import { DASHBOARD_ROUTES } from '../lib/dashboard/routes';
+import { DASHBOARD_ROUTES, getDefaultDashboardRoute } from '../lib/dashboard/routes';
 
 const roleBadgeClass: Record<string, string> = {
   ADMIN: 'bg-amber-100 text-amber-800 border-amber-300',
   APPROVER: 'bg-sky-100 text-[var(--af-accent)] border-sky-300',
   PROCESSOR: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+  REQUESTER: 'bg-violet-100 text-violet-800 border-violet-300',
 };
 
 const roleIcon: Record<string, string> = {
   ADMIN: '👑',
   APPROVER: '✅',
   PROCESSOR: '💳',
+  REQUESTER: '📄',
 };
 
 function getInitials(name: string): string {
@@ -147,7 +149,7 @@ export default function Header() {
                 v1.2.0 Stable
               </span>
               <Link
-                href={DASHBOARD_ROUTES.home}
+                href={getDefaultDashboardRoute(user.role)}
                 className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-sm font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
               >
                 Go to Dashboard

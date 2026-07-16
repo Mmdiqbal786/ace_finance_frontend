@@ -81,6 +81,8 @@ export type ExpenseActionType =
 
 export type DashboardSection =
   | "home"
+  | "submit-expense"
+  | "my-requests"
   | "approver"
   | "processor"
   | "user-management"
