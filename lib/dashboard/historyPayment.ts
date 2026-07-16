@@ -125,13 +125,17 @@ export function formatPaymentHistorySummary(entries: PaymentHistoryEntry[]): str
     .map((entry) => {
       const when = new Date(entry.timestamp).toLocaleString();
       const type = entry.paymentType === "Full" ? "Full payment" : "Partial payment";
-      return (
-        `#${entry.paymentNumber} ${when} | ${type} | Paid $${entry.paymentAmount.toFixed(2)} | ` +
-        `Total $${entry.totalPaidAfter.toFixed(2)} | Remaining $${entry.remainingAfter.toFixed(2)}` +
-        (entry.notes ? ` | Note: ${entry.notes}` : "")
-      );
+      const lines = [
+        `Payment #${entry.paymentNumber} (${type})`,
+        `Date: ${when}`,
+        `Paid: $${entry.paymentAmount.toFixed(2)} · Total: $${entry.totalPaidAfter.toFixed(2)} · Remaining: $${entry.remainingAfter.toFixed(2)}`,
+      ];
+      if (entry.notes) {
+        lines.push(`Note: ${entry.notes}`);
+      }
+      return lines.join("\n");
     })
-    .join("\n");
+    .join("\n\n");
 }
 
 export function getAllPaymentHistory(rows: Expense[]): PaymentHistoryEntry[] {

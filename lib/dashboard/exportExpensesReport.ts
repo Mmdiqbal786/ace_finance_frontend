@@ -163,6 +163,15 @@ function styleForCell(align: "Left" | "Right" | "Center", zebra: boolean): strin
   return zebra ? "CellLeftAlt" : "CellLeft";
 }
 
+function estimateWrappedRowHeight(values: string[], defaultRowHeight: number): number {
+  const totalLines = values.reduce((sum, value) => {
+    if (!value) return sum;
+    return sum + value.split("\n").length;
+  }, 0);
+  if (totalLines <= 1) return defaultRowHeight;
+  return Math.min(220, Math.max(56, 18 * totalLines));
+}
+
 function buildWorksheet<T>(
   name: string,
   columns: ColDef<T>[],
@@ -183,9 +192,11 @@ function buildWorksheet<T>(
   const dataRows = rows
     .map((row, rowIndex) => {
       const zebra = rowIndex % 2 === 1;
-      const rowHeight = columns.some((col) => col.wrap && col.get(row))
-        ? 56
-        : defaultRowHeight;
+      const wrappedValues = columns
+        .filter((col) => col.wrap)
+        .map((col) => col.get(row))
+        .filter(Boolean);
+      const rowHeight = estimateWrappedRowHeight(wrappedValues, defaultRowHeight);
       const cells = columns
         .map((col) => {
           const styleId = col.wrap
@@ -194,9 +205,12 @@ function buildWorksheet<T>(
               : "CellWrap"
             : styleForCell(col.align || "Left", zebra);
           const value = col.get(row);
-          return `<Cell ss:StyleID="${styleId}"><Data ss:Type="String">${escapeXml(
-            value
-          )}</Data></Cell>`;
+          const text = escapeXml(value);
+          const cellText = col.wrap ? text.replace(/\n/g, "&#10;") : text;
+          const dataAttrs = col.wrap
+            ? `ss:Type="String" xml:space="preserve"`
+            : `ss:Type="String"`;
+          return `<Cell ss:StyleID="${styleId}"><Data ${dataAttrs}>${cellText}</Data></Cell>`;
         })
         .join("");
       return `<Row ss:Height="${rowHeight}">${cells}</Row>`;
