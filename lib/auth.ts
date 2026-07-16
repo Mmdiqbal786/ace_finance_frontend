@@ -7,7 +7,8 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'APPROVER' | 'PROCESSOR';
+  role: 'ADMIN' | 'APPROVER' | 'PROCESSOR' | 'REQUESTER';
+  mustChangePassword?: boolean;
 }
 
 export function getToken(): string | null {
@@ -30,6 +31,13 @@ export function setAuth(token: string, user: AuthUser): void {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
+export function updateStoredUser(partial: Partial<AuthUser>): void {
+  const token = getToken();
+  const user = getUser();
+  if (!token || !user) return;
+  setAuth(token, { ...user, ...partial });
+}
+
 export function logout(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
@@ -44,6 +52,19 @@ export function isAuthenticated(): boolean {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const now = Math.floor(Date.now() / 1000);
     return payload.exp > now;
+  } catch {
+    return false;
+  }
+}
+
+export function mustChangePassword(): boolean {
+  const user = getUser();
+  if (user?.mustChangePassword) return true;
+  const token = getToken();
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return Boolean(payload.mustChangePassword);
   } catch {
     return false;
   }

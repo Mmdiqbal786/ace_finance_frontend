@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getUser, isAuthenticated, authHeaders, AuthUser } from "../../lib/auth";
+import { getUser, isAuthenticated, authHeaders, AuthUser, mustChangePassword } from "../../lib/auth";
 import { API_URL } from "../../lib/api";
 import DashboardSidebar from "../DashboardSidebar";
 import {
@@ -31,6 +31,9 @@ import UsersPanel from "./UsersPanel";
 import ExpenseActionModal from "./ExpenseActionModal";
 import ExpenseQueuePanel from "./ExpenseQueuePanel";
 import AnalyticsPanel from "./AnalyticsPanel";
+import SubmitExpensePanel from "./SubmitExpensePanel";
+import MyRequestsPanel from "./MyRequestsPanel";
+import ProfilePanel from "./ProfilePanel";
 import DashboardBreadcrumb from "./DashboardBreadcrumb";
 import { SECTION_META } from "../../lib/dashboard/sectionMeta";
 
@@ -49,12 +52,17 @@ export default function DashboardWorkspace() {
   const [activeCategories, setActiveCategories] = useState<CategoryItem[]>([]);
   const [activeProjects, setActiveProjects] = useState<ProjectItem[]>([]);
   const [activeCountries, setActiveCountries] = useState<CountryItem[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
       window.location.href = "/login";
+      return;
+    }
+    if (mustChangePassword()) {
+      window.location.href = "/set-password/";
       return;
     }
     setCurrentUser(getUser());
@@ -68,26 +76,35 @@ export default function DashboardWorkspace() {
   }, [currentUser, activeSection]);
 
   const fetchData = async () => {
+    if (!currentUser) return;
     setLoading(true);
     setError("");
     try {
       const headers = authHeaders();
-      const expensesResponse = await fetch(`${API_URL}/expenses`, { headers });
-      const statsResponse = await fetch(`${API_URL}/expenses/stats`, { headers });
+      const isRequester = currentUser.role === "REQUESTER";
+      const expensesUrl = isRequester ? `${API_URL}/expenses/mine` : `${API_URL}/expenses`;
+      const expensesResponse = await fetch(expensesUrl, { headers });
 
-      if (!expensesResponse.ok || !statsResponse.ok) {
+      if (!expensesResponse.ok) {
         throw new Error("Failed to load dashboard data from backend.");
       }
 
       const expensesData = (await expensesResponse.json()) as Expense[];
-      const statsData = (await statsResponse.json()) as DashboardStats;
-
       setExpenses(
         expensesData.sort(
           (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
         )
       );
-      setStats(statsData);
+
+      if (!isRequester) {
+        const statsResponse = await fetch(`${API_URL}/expenses/stats`, { headers });
+        if (!statsResponse.ok) {
+          throw new Error("Failed to load dashboard stats from backend.");
+        }
+        setStats((await statsResponse.json()) as DashboardStats);
+      } else {
+        setStats(null);
+      }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
     } finally {
@@ -96,6 +113,7 @@ export default function DashboardWorkspace() {
   };
 
   const fetchActiveCatalogs = async () => {
+    setCatalogLoading(true);
     try {
       const [catRes, projRes, countryRes] = await Promise.all([
         fetch(`${API_URL}/categories/active`),
@@ -105,7 +123,10 @@ export default function DashboardWorkspace() {
       if (catRes.ok) setActiveCategories(await catRes.json());
       if (projRes.ok) setActiveProjects(await projRes.json());
       if (countryRes.ok) setActiveCountries(await countryRes.json());
-    } catch {}
+    } catch {
+    } finally {
+      setCatalogLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -185,7 +206,14 @@ export default function DashboardWorkspace() {
           )}
 
           {activeSection !== "home" &&
-            !["categories", "projects", "countries", "user-management"].includes(activeSection) &&
+            ![
+              "categories",
+              "projects",
+              "countries",
+              "user-management",
+              "submit-expense",
+              "my-requests",
+            ].includes(activeSection) &&
             stats && (
               <DashboardSectionStats
                 section={activeSection}
@@ -196,7 +224,12 @@ export default function DashboardWorkspace() {
               />
             )}
 
-          {loading ? (
+          {activeSection === "profile" && currentUser ? (
+            <ProfilePanel
+              currentUser={currentUser}
+              onProfileUpdated={setCurrentUser}
+            />
+          ) : loading ? (
             <div className="portal-card flex flex-col items-center justify-center rounded-2xl py-20">
               <svg
                 className="animate-spin h-8 w-8 text-[var(--af-accent)] mb-3"
@@ -223,6 +256,26 @@ export default function DashboardWorkspace() {
             <>
               {activeSection === "home" && (
                 <DashboardHomeOverview expenses={expenses} stats={stats} />
+              )}
+
+              {activeSection === "submit-expense" && currentUser && (
+                <SubmitExpensePanel
+                  currentUser={currentUser}
+                  categories={activeCategories}
+                  projects={activeProjects}
+                  countries={activeCountries}
+                  catalogLoading={catalogLoading}
+                  onSubmitted={fetchData}
+                />
+              )}
+
+              {activeSection === "my-requests" && (
+                <MyRequestsPanel
+                  expenses={expenses}
+                  categoryFilterOptions={categoryFilterOptions}
+                  projectFilterOptions={projectFilterOptions}
+                  {...expenseActions}
+                />
               )}
 
               {activeSection === "approver" && (
@@ -315,6 +368,7 @@ export default function DashboardWorkspace() {
             activeCategories={activeCategories}
             activeProjects={activeProjects}
             activeCountries={activeCountries}
+            lockRequesterEmail={currentUser?.role === "REQUESTER"}
           />
 
           {activeSection === "user-management" && currentUser?.role === "ADMIN" && (

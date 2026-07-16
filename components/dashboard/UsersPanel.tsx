@@ -22,7 +22,7 @@ import {
 } from "../../lib/dashboard/constants";
 import { validateEmail, validatePassword, validatePersonName } from "../../lib/validation";
 
-type UserRole = "ADMIN" | "APPROVER" | "PROCESSOR";
+type UserRole = "ADMIN" | "APPROVER" | "PROCESSOR" | "REQUESTER";
 
 interface ManagedUser {
   _id: string;
@@ -32,7 +32,7 @@ interface ManagedUser {
   isActive: boolean;
 }
 
-type CreateUserField = "name" | "email" | "password" | "role";
+type CreateUserField = "name" | "email" | "role";
 type EditUserField = "name" | "role" | "password";
 
 interface UsersPanelProps {
@@ -53,7 +53,6 @@ export default function UsersPanel({
 
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<UserRole>("APPROVER");
 
   const [editName, setEditName] = useState("");
@@ -95,7 +94,6 @@ export default function UsersPanel({
     setShowCreate(false);
     setNewName("");
     setNewEmail("");
-    setNewPassword("");
     setNewRole("APPROVER");
     createForm.clearAll();
   };
@@ -105,7 +103,6 @@ export default function UsersPanel({
     const ok = createForm.validateAll({
       name: () => validatePersonName(newName, "Full name"),
       email: () => validateEmail(newEmail),
-      password: () => validatePassword(newPassword),
       role: () => (newRole ? "" : "Role is required."),
     });
     if (!ok) {
@@ -119,13 +116,23 @@ export default function UsersPanel({
         body: JSON.stringify({
           name: newName.trim(),
           email: newEmail.trim().toLowerCase(),
-          password: newPassword,
           role: newRole,
         }),
       });
       if (!res.ok) throw new Error(await readApiError(res, "Failed to create user"));
+      const created = await res.json().catch(() => ({}));
       closeCreate();
-      toast.success("User created successfully!");
+      if (created.welcomeEmailSent) {
+        toast.success("User created — welcome email with auto password sent.");
+      } else if (created.temporaryPassword) {
+        toast.success(
+          `User created. Email not sent${
+            created.welcomeEmailError ? ` (${created.welcomeEmailError})` : ""
+          }. Temporary password: ${created.temporaryPassword}`
+        );
+      } else {
+        toast.success("User created. They must change password on first login.");
+      }
       await fetchUsers();
     } catch (err: any) {
       toast.error(err.message || "Failed to create user");
@@ -303,10 +310,19 @@ export default function UsersPanel({
                                 ? "bg-amber-50 text-amber-800 ring-amber-300"
                                 : u.role === "APPROVER"
                                   ? "bg-sky-50 text-[var(--af-accent)] ring-sky-300"
-                                  : "bg-emerald-50 text-emerald-800 ring-emerald-300"
+                                  : u.role === "REQUESTER"
+                                    ? "bg-violet-50 text-violet-800 ring-violet-300"
+                                    : "bg-emerald-50 text-emerald-800 ring-emerald-300"
                             }`}
                           >
-                            {u.role === "ADMIN" ? "👑" : u.role === "APPROVER" ? "✅" : "💳"} {u.role}
+                            {u.role === "ADMIN"
+                              ? "👑"
+                              : u.role === "APPROVER"
+                                ? "✅"
+                                : u.role === "REQUESTER"
+                                  ? "📄"
+                                  : "💳"}{" "}
+                            {u.role}
                           </span>
                         </td>
                         <td className="py-3.5 px-4">
@@ -379,20 +395,6 @@ export default function UsersPanel({
               aria-invalid={Boolean(createForm.errors.email)}
             />
           </FormField>
-          <FormField label="Password" required error={createForm.errors.password}>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => {
-                setNewPassword(e.target.value);
-                createForm.clearError("password");
-              }}
-              onBlur={() => createForm.onBlur("password", validatePassword(newPassword))}
-              placeholder="Min 8 characters, letter + number"
-              className={createForm.fieldClass("af-input", "password")}
-              aria-invalid={Boolean(createForm.errors.password)}
-            />
-          </FormField>
           <FormField label="Role" required error={createForm.errors.role}>
             <select
               value={newRole}
@@ -402,11 +404,16 @@ export default function UsersPanel({
               }}
               className={createForm.fieldClass("af-select", "role")}
             >
+              <option value="REQUESTER">REQUESTER — Submits & tracks own expenses</option>
               <option value="APPROVER">APPROVER — Reviews & approves expenses</option>
               <option value="PROCESSOR">PROCESSOR — Processes approved expenses</option>
               <option value="ADMIN">ADMIN — Full access + user management</option>
             </select>
           </FormField>
+          <p className="sm:col-span-2 text-xs text-slate-600 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+            A temporary password is generated automatically and emailed to the user. They must set a
+            new password on first login.
+          </p>
           <div className="sm:col-span-2">
             <FormActionButtons onCancel={closeCreate} submitLabel="Create User" />
           </div>
@@ -494,6 +501,7 @@ export default function UsersPanel({
                 }}
                 className={editForm.fieldClass("af-select", "role")}
               >
+                <option value="REQUESTER">REQUESTER</option>
                 <option value="APPROVER">APPROVER</option>
                 <option value="PROCESSOR">PROCESSOR</option>
                 <option value="ADMIN">ADMIN</option>

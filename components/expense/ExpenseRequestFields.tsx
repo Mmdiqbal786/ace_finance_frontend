@@ -63,6 +63,7 @@ interface ExpenseRequestFieldsProps {
   allowInactiveSelected?: boolean;
   showRequiredNote?: boolean;
   descriptionRows?: number;
+  emailReadOnly?: boolean;
 }
 
 export function validatorsForExpenseRequest(
@@ -131,6 +132,7 @@ export default function ExpenseRequestFields({
   allowInactiveSelected = false,
   showRequiredNote = true,
   descriptionRows = 4,
+  emailReadOnly = false,
 }: ExpenseRequestFieldsProps) {
   const inputCls = compact ? "af-input af-input-sm" : "af-input";
   const selectCls = compact
@@ -186,7 +188,13 @@ export default function ExpenseRequestFields({
           htmlFor="requesterEmail"
           required
           error={errors.requesterEmail}
-          hint={compact ? undefined : "Work email preferred for updates"}
+          hint={
+            emailReadOnly
+              ? "Tied to your login account"
+              : compact
+                ? undefined
+                : "Work email preferred for updates"
+          }
         >
           <input
             type="email"
@@ -197,7 +205,13 @@ export default function ExpenseRequestFields({
             placeholder={compact ? undefined : "john.doe@company.com"}
             autoComplete="email"
             maxLength={120}
-            className={fieldClass(inputCls, "requesterEmail")}
+            readOnly={emailReadOnly}
+            disabled={emailReadOnly}
+            className={
+              emailReadOnly
+                ? `${inputCls} bg-slate-50 text-slate-700 cursor-not-allowed`
+                : fieldClass(inputCls, "requesterEmail")
+            }
             aria-invalid={Boolean(errors.requesterEmail)}
           />
         </FormField>

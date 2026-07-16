@@ -474,3 +474,42 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
 }
+
+@keyframes af-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes af-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.af-animate-fade-up {
+  opacity: 0;
+  animation: af-fade-up 620ms ease-out forwards;
+}
+
+.af-float-soft {
+  animation: af-float 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .af-animate-fade-up,
+  .af-float-soft {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

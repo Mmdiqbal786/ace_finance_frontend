@@ -176,6 +176,8 @@ export default function ExpenseQueuePanel({
                           <th className="py-2.5 px-3">Submission Date</th>
                           <th className="py-2.5 px-3">Status</th>
                           <th className="py-2.5 px-3 text-right">Amount</th>
+                          <th className="py-2.5 px-3 text-right">Paid</th>
+                          <th className="py-2.5 px-3 text-right">Remaining</th>
                           <th className="py-2.5 px-3">Action</th>
                         </>
                       )}
@@ -250,7 +252,7 @@ function ExpenseQueueRow({
         </td>
         <td className={`${cellPad} text-sm text-slate-700`}>{e.project || "—"}</td>
         <td className={cellPad}>
-          <DueDateBadge dueDate={e.dueDate} />
+          <DueDateBadge dueDate={e.dueDate} status={e.status} amount={e.amount} paidAmount={e.paidAmount} />
         </td>
         <td className={`${cellPad} text-slate-600 text-xs`}>
           {new Date(e.submittedAt).toLocaleDateString()}
@@ -279,7 +281,7 @@ function ExpenseQueueRow({
         </td>
         <td className={`${cellPad} text-sm text-slate-700`}>{e.project || "—"}</td>
         <td className={cellPad}>
-          <DueDateBadge dueDate={e.dueDate} />
+          <DueDateBadge dueDate={e.dueDate} status={e.status} amount={e.amount} paidAmount={e.paidAmount} />
         </td>
         <td
           className={`${cellPad} max-w-xs truncate text-xs text-[var(--af-accent)] italic`}
@@ -313,7 +315,7 @@ function ExpenseQueueRow({
       </td>
       <td className={`${cellPad} text-xs text-slate-700`}>{e.project || "—"}</td>
       <td className={cellPad}>
-        <DueDateBadge dueDate={e.dueDate} />
+        <DueDateBadge dueDate={e.dueDate} status={e.status} amount={e.amount} paidAmount={e.paidAmount} />
       </td>
       <td className={`${cellPad} text-xs text-slate-700`}>
         {new Date(e.submittedAt).toLocaleDateString()}
@@ -323,6 +325,12 @@ function ExpenseQueueRow({
       </td>
       <td className={`${cellPad} text-right font-semibold text-slate-900`}>
         ${e.amount.toFixed(2)}
+      </td>
+      <td className={`${cellPad} text-right font-semibold text-emerald-700`}>
+        ${getPaidAmount(e).toFixed(2)}
+      </td>
+      <td className={`${cellPad} text-right font-semibold text-amber-700`}>
+        ${getRemainingAmount(e).toFixed(2)}
       </td>
       <td className={cellPad}>{actions}</td>
     </tr>

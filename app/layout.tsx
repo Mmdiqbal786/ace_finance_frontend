@@ -20,7 +20,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "Aceolution Finance | Expense Approval & Tracking System",
-  description: "Enterprise expense requests, approvals, and real-time processing dashboard.",
+  description: "Secure internal expense requests, approvals, disbursements, and payment tracking.",
   icons: {
     icon: [{ url: "/Ace_logo_small.png", type: "image/png" }],
     apple: [{ url: "/Ace_logo_small.png", type: "image/png" }],

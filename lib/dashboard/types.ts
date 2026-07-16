@@ -3,6 +3,9 @@ export interface HistoryLog {
   timestamp: string;
   user: string;
   notes?: string;
+  paymentAmount?: number;
+  totalPaid?: number;
+  remaining?: number;
 }
 
 export interface Expense {
@@ -81,6 +84,9 @@ export type ExpenseActionType =
 
 export type DashboardSection =
   | "home"
+  | "submit-expense"
+  | "my-requests"
+  | "profile"
   | "approver"
   | "processor"
   | "user-management"

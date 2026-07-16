@@ -32,6 +32,7 @@ export const ROLE_FILTER_OPTIONS = [
   { value: "ADMIN", label: "Admin" },
   { value: "APPROVER", label: "Approver" },
   { value: "PROCESSOR", label: "Processor" },
+  { value: "REQUESTER", label: "Requester" },
 ];
 
 export const USER_STATUS_FILTER_OPTIONS = [
