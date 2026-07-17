@@ -28,8 +28,7 @@ export const DASHBOARD_SECTION_PATHS: Record<Exclude<DashboardSection, "home">, 
   profile: DASHBOARD_ROUTES.profile,
 };
 
-export function getDefaultDashboardRoute(role: AuthUser["role"]): string {
-  if (role === "REQUESTER") return DASHBOARD_ROUTES.submitExpense;
+export function getDefaultDashboardRoute(_role: AuthUser["role"]): string {
   return DASHBOARD_ROUTES.home;
 }
 
