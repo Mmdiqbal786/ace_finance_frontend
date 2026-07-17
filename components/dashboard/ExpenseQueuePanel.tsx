@@ -35,6 +35,9 @@ interface ExpenseQueuePanelProps {
   };
   toolbarExtra?: React.ReactNode | ((ctx: { filtered: Expense[] }) => React.ReactNode);
   getExtraActions?: (expense: Expense) => TableExtraAction[];
+  getEditSlotAction?: (expense: Expense) => TableExtraAction | null;
+  showEdit?: boolean;
+  showDelete?: boolean;
   onView: (expense: Expense) => void;
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
@@ -49,6 +52,9 @@ export default function ExpenseQueuePanel({
   emptyInbox,
   toolbarExtra,
   getExtraActions,
+  getEditSlotAction,
+  showEdit = true,
+  showDelete = true,
   onView,
   onEdit,
   onDelete,
@@ -175,6 +181,7 @@ export default function ExpenseQueuePanel({
                           <th className="py-2.5 px-3">Due Date</th>
                           <th className="py-2.5 px-3">Submission Date</th>
                           <th className="py-2.5 px-3">Status</th>
+                          <th className="py-2.5 px-3">Change Request</th>
                           <th className="py-2.5 px-3 text-right">Amount</th>
                           <th className="py-2.5 px-3 text-right">Paid</th>
                           <th className="py-2.5 px-3 text-right">Remaining</th>
@@ -190,6 +197,9 @@ export default function ExpenseQueuePanel({
                         expense={e}
                         variant={variant}
                         extraActions={getExtraActions?.(e) ?? []}
+                        editSlotAction={getEditSlotAction?.(e) ?? null}
+                        showEdit={showEdit}
+                        showDelete={showDelete}
                         onView={() => onView(e)}
                         onEdit={() => onEdit(e)}
                         onDelete={() => onDelete(e)}
@@ -218,6 +228,9 @@ function ExpenseQueueRow({
   expense: e,
   variant,
   extraActions,
+  editSlotAction,
+  showEdit,
+  showDelete,
   onView,
   onEdit,
   onDelete,
@@ -225,6 +238,9 @@ function ExpenseQueueRow({
   expense: Expense;
   variant: ExpenseQueueVariant;
   extraActions: TableExtraAction[];
+  editSlotAction: TableExtraAction | null;
+  showEdit: boolean;
+  showDelete: boolean;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -235,6 +251,9 @@ function ExpenseQueueRow({
       onView={onView}
       onEdit={onEdit}
       onDelete={onDelete}
+      showEdit={showEdit}
+      showDelete={showDelete}
+      editSlotAction={editSlotAction}
       extraActions={extraActions}
     />
   );
@@ -322,6 +341,16 @@ function ExpenseQueueRow({
       </td>
       <td className={cellPad}>
         <StatusBadge status={e.status} className="text-xs py-0.5" />
+      </td>
+      <td
+        className={`${cellPad} max-w-[180px] truncate text-xs text-amber-800 italic`}
+        title={
+          e.changeRequestNotes
+            ? `${e.changeRequestNotes}${e.changeRequestedBy ? ` — ${e.changeRequestedBy}` : ""}`
+            : undefined
+        }
+      >
+        {e.changeRequestNotes ? `"${e.changeRequestNotes}"` : "—"}
       </td>
       <td className={`${cellPad} text-right font-semibold text-slate-900`}>
         ${e.amount.toFixed(2)}

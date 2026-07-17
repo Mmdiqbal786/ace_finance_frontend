@@ -6,6 +6,7 @@ import { CATEGORY_COLORS } from "../../lib/dashboard/constants";
 import { exportExpensesReport } from "../../lib/dashboard/exportExpensesReport";
 import { DashboardStats, Expense } from "../../lib/dashboard/types";
 import ExpenseQueuePanel from "./ExpenseQueuePanel";
+import type { TableExtraAction } from "../TableRowActions";
 
 interface SelectOption {
   value: string;
@@ -20,6 +21,9 @@ interface AnalyticsPanelProps {
   onView: (expense: Expense) => void;
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
+  getEditSlotAction?: (expense: Expense) => TableExtraAction | null;
+  showEdit?: boolean;
+  showDelete?: boolean;
 }
 
 function handleExport(rows: Expense[]) {
@@ -39,6 +43,9 @@ export default function AnalyticsPanel({
   onView,
   onEdit,
   onDelete,
+  getEditSlotAction,
+  showEdit = false,
+  showDelete = false,
 }: AnalyticsPanelProps) {
   return (
     <div className="space-y-6">
@@ -135,6 +142,9 @@ export default function AnalyticsPanel({
         onView={onView}
         onEdit={onEdit}
         onDelete={onDelete}
+        showEdit={showEdit}
+        showDelete={showDelete}
+        getEditSlotAction={getEditSlotAction}
         toolbarExtra={({ filtered }) => (
           <button
             type="button"

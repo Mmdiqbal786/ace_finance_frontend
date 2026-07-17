@@ -12,10 +12,16 @@ function formatUsd(value: number): string {
 }
 
 function getTimelineStyle(action: string) {
-  if (action.includes("Submitted")) {
+  if (action.includes("Submitted") || action.includes("Resubmitted")) {
     return {
       bubble: "bg-slate-100 text-slate-500",
       icon: "📥",
+    };
+  }
+  if (action.includes("Requested Changes") || action.includes("Returned to Approver")) {
+    return {
+      bubble: "bg-orange-50 text-orange-700 border border-orange-200",
+      icon: "↩️",
     };
   }
   if (action.includes("Rejected")) {

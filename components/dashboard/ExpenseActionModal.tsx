@@ -22,8 +22,8 @@ import {
   ExpenseActionType,
   ProjectItem,
 } from "../../lib/dashboard/types";
-import { getPaidAmount, getRemainingAmount } from "../../lib/dashboard/payment";
-import { validatePartialPaymentAmount, validateRejectionNotes } from "../../lib/validation";
+import { canRequesterEditExpense, getPaidAmount, getRemainingAmount } from "../../lib/dashboard/payment";
+import { validatePartialPaymentAmount, validateRejectionNotes, validateChangeRequestNotes } from "../../lib/validation";
 
 type ActionNotesField = "notes";
 type PartialPayField = "paymentAmount" | "notes";
@@ -141,6 +141,7 @@ export default function ExpenseActionModal({
   const [editValues, setEditValues] = useState<ExpenseRequestValues>(emptyEditValues);
   const [attachmentPreview, setAttachmentPreview] = useState<AttachmentPreview | null>(null);
   const [attachmentBusy, setAttachmentBusy] = useState(false);
+  const [changeTarget, setChangeTarget] = useState<"requester" | "approver">("requester");
 
   const editForm = useFormValidation<ExpenseRequestField>();
   const actionNotesForm = useFormValidation<ActionNotesField>();
@@ -236,6 +237,7 @@ export default function ExpenseActionModal({
     setPaymentAmount("");
     setReceiptFile(null);
     setReceiptError("");
+    setChangeTarget(expense.status === "APPROVED_APPROVER" ? "approver" : "requester");
     actionNotesForm.clearAll();
     editForm.clearAll();
     partialPayForm.clearAll();
@@ -281,6 +283,13 @@ export default function ExpenseActionModal({
     if (!expense) return;
 
     if (actionType === "edit") {
+      if (lockRequesterEmail && !canRequesterEditExpense(expense)) {
+        toast.error(
+          "You can only edit a request after Approver/Processor has requested changes."
+        );
+        return;
+      }
+
       const ok = editForm.validateAll(
         validatorsForExpenseRequest(editValues, {
           categories: activeCategories,
@@ -318,7 +327,11 @@ export default function ExpenseActionModal({
         }
 
         handleClose();
-        toast.success("Expense updated successfully!");
+        toast.success(
+          expense.status === "CHANGES_REQUESTED"
+            ? "Changes saved — request resubmitted for approval."
+            : "Expense updated successfully!"
+        );
         onCompleted();
       } catch (err: any) {
         toast.error(err.message || "Failed to update expense");
@@ -369,6 +382,45 @@ export default function ExpenseActionModal({
         onCompleted();
       } catch (err: any) {
         toast.error(err.message || "Partial payment failed");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    if (actionType === "request-changes") {
+      const ok = actionNotesForm.validateAll({
+        notes: () => validateChangeRequestNotes(actionNotes),
+      });
+      if (!ok) {
+        actionNotesForm.focusFirstInvalid();
+        return;
+      }
+
+      const target =
+        expense.status === "APPROVED_APPROVER" ? changeTarget : "requester";
+
+      setSubmitting(true);
+      try {
+        const response = await fetch(`${API_URL}/expenses/${expense.id}/request-changes`, {
+          method: "PATCH",
+          headers: authHeaders() as HeadersInit,
+          body: JSON.stringify({ notes: actionNotes.trim(), target }),
+        });
+
+        if (!response.ok) {
+          throw new Error(await readApiError(response, "Failed to request changes."));
+        }
+
+        handleClose();
+        toast.success(
+          target === "approver"
+            ? "Expense returned to approver queue."
+            : "Changes requested — requester can edit and resubmit."
+        );
+        onCompleted();
+      } catch (err: any) {
+        toast.error(err.message || "Request changes failed");
       } finally {
         setSubmitting(false);
       }
@@ -483,6 +535,8 @@ export default function ExpenseActionModal({
       <span className="text-amber-700">🪙 Record Partial Payment</span>
     ) : actionType === "processor-reject" ? (
       <span className="text-rose-600">❌ Reject Disbursement Payout</span>
+    ) : actionType === "request-changes" ? (
+      <span className="text-amber-700">↩️ Request Changes</span>
     ) : actionType === "view" ? (
       <span className="text-slate-600">📄 Expense Details & Audit</span>
     ) : actionType === "edit" ? (
@@ -644,6 +698,26 @@ export default function ExpenseActionModal({
                 )}
               </div>
 
+              {expense.changeRequestNotes && (
+                <div className="pt-2 mt-2 border-t border-slate-400">
+                  <span className="text-amber-700 font-bold block">
+                    Change Request / Command:
+                  </span>
+                  <p className="text-slate-600 bg-amber-50 p-2 rounded border border-amber-200 mt-1 italic">
+                    &quot;{expense.changeRequestNotes}&quot;
+                  </p>
+                  {(expense.changeRequestedBy || expense.changeRequestedAt) && (
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {expense.changeRequestedBy ? `By ${expense.changeRequestedBy}` : ""}
+                      {expense.changeRequestedBy && expense.changeRequestedAt ? " · " : ""}
+                      {expense.changeRequestedAt
+                        ? new Date(expense.changeRequestedAt).toLocaleString()
+                        : ""}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {expense.approverNotes && (
                 <div className="pt-2 mt-2 border-t border-slate-400">
                   <span className="text-[var(--af-accent)] font-bold block">
@@ -782,6 +856,84 @@ export default function ExpenseActionModal({
                 </button>
               </div>
             </div>
+          ) : actionType === "request-changes" ? (
+            <form onSubmit={handleActionSubmit} noValidate className="space-y-4">
+              {expense.status === "APPROVED_APPROVER" ? (
+                <fieldset className="space-y-2">
+                  <legend className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                    Send back to
+                  </legend>
+                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                    <input
+                      type="radio"
+                      name="changeTarget"
+                      className="mt-0.5"
+                      checked={changeTarget === "approver"}
+                      onChange={() => setChangeTarget("approver")}
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-slate-900">
+                        Approver
+                      </span>
+                      <span className="block text-xs text-slate-600">
+                        Undo approval and return to the approver queue for re-review.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                    <input
+                      type="radio"
+                      name="changeTarget"
+                      className="mt-0.5"
+                      checked={changeTarget === "requester"}
+                      onChange={() => setChangeTarget("requester")}
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-slate-900">
+                        Requester
+                      </span>
+                      <span className="block text-xs text-slate-600">
+                        Ask the requester to edit details and resubmit.
+                      </span>
+                    </span>
+                  </label>
+                </fieldset>
+              ) : (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+                  This will send the request back to the <strong>requester</strong> so they can
+                  edit and resubmit.
+                </div>
+              )}
+
+              <FormField
+                label="What needs to change?"
+                required
+                error={actionNotesForm.errors.notes}
+                htmlFor="changeNotes"
+              >
+                <textarea
+                  id="changeNotes"
+                  rows={3}
+                  value={actionNotes}
+                  onChange={(e) => {
+                    setActionNotes(e.target.value);
+                    actionNotesForm.clearError("notes");
+                  }}
+                  onBlur={() =>
+                    actionNotesForm.onBlur("notes", validateChangeRequestNotes(actionNotes))
+                  }
+                  placeholder="Describe the updates needed..."
+                  className={actionNotesForm.fieldClass("af-textarea text-xs resize-none", "notes")}
+                  aria-invalid={Boolean(actionNotesForm.errors.notes)}
+                />
+              </FormField>
+
+              <FormActionButtons
+                onCancel={handleClose}
+                submitLabel={submitting ? "Sending..." : "Send Request Changes"}
+                submitting={submitting}
+              />
+            </form>
           ) : actionType === "partial-pay" ? (
             <form onSubmit={handleActionSubmit} noValidate className="space-y-4">
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-1.5">

@@ -11,6 +11,7 @@ const URGENCY_STYLES = {
   none: "bg-slate-50 text-slate-500 border-slate-200",
   paid: "bg-emerald-50 text-emerald-700 border-emerald-200",
   rejected: "bg-rose-50 text-rose-700 border-rose-200",
+  changes: "bg-orange-50 text-orange-800 border-orange-200",
 } as const;
 
 const DOT_STYLES = {
@@ -20,10 +21,15 @@ const DOT_STYLES = {
   none: "bg-slate-400",
   paid: "bg-emerald-500",
   rejected: "bg-rose-500",
+  changes: "bg-orange-500",
 } as const;
 
 function isRejectedStatus(status?: string): boolean {
   return status === "REJECTED_APPROVER" || status === "REJECTED_PROCESSOR";
+}
+
+function isChangesRequestedStatus(status?: string): boolean {
+  return status === "CHANGES_REQUESTED";
 }
 
 interface DueDateBadgeProps {
@@ -43,13 +49,26 @@ export default function DueDateBadge({
 }: DueDateBadgeProps) {
   const info = getDueDateInfo(dueDate);
   const rejected = isRejectedStatus(status);
+  const changesRequested = isChangesRequestedStatus(status);
   const paid =
-    !rejected && status != null && amount != null
+    !rejected && !changesRequested && status != null && amount != null
       ? isFullyPaid({ status, amount, paidAmount })
       : false;
 
-  const badgeUrgency = rejected ? "rejected" : paid ? "paid" : info.urgency;
-  const badgeLabel = rejected ? "Rejected" : paid ? "Paid" : info.label;
+  const badgeUrgency = rejected
+    ? "rejected"
+    : changesRequested
+      ? "changes"
+      : paid
+        ? "paid"
+        : info.urgency;
+  const badgeLabel = rejected
+    ? "Rejected"
+    : changesRequested
+      ? "Changes needed"
+      : paid
+        ? "Paid"
+        : info.label;
 
   return (
     <div className={`inline-flex flex-col gap-0.5 ${className}`}>

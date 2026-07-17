@@ -160,6 +160,14 @@ export function validateRejectionNotes(value: string): string {
   return "";
 }
 
+export function validateChangeRequestNotes(value: string): string {
+  const notes = value.trim();
+  if (!notes) return "Please explain what needs to change.";
+  if (notes.length < 5) return "Please provide at least 5 characters.";
+  if (notes.length > 500) return "Notes must be 500 characters or fewer.";
+  return "";
+}
+
 export function validatePartialPaymentAmount(value: string, remaining: number): string {
   const raw = value.trim();
   if (!raw) return "Payment amount is required.";

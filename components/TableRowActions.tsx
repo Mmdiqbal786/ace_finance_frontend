@@ -16,6 +16,8 @@ interface TableRowActionsProps {
   onDelete: () => void;
   showEdit?: boolean;
   showDelete?: boolean;
+  /** Replaces the Edit slot when provided (e.g. Request Changes for approver/processor). */
+  editSlotAction?: TableExtraAction | null;
   align?: "start" | "center" | "end";
   extraActions?: TableExtraAction[];
 }
@@ -34,6 +36,7 @@ export default function TableRowActions({
   onDelete,
   showEdit = true,
   showDelete = true,
+  editSlotAction = null,
   align = "start",
   extraActions = [],
 }: TableRowActionsProps) {
@@ -73,7 +76,7 @@ export default function TableRowActions({
   useLayoutEffect(() => {
     if (!open) return;
     updatePosition();
-  }, [open, updatePosition, extraActions.length, showEdit, showDelete]);
+  }, [open, updatePosition, extraActions.length, showEdit, showDelete, editSlotAction]);
 
   useEffect(() => {
     if (!open) return;
@@ -152,16 +155,32 @@ export default function TableRowActions({
           <span className="w-5 text-center text-base leading-none">👁️</span>
           View
         </button>
-        {showEdit && (
+        {editSlotAction ? (
           <button
             type="button"
             role="menuitem"
-            onClick={() => run(onEdit)}
-            className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--af-accent)] hover:bg-sky-50 transition-colors cursor-pointer"
+            onClick={() => run(editSlotAction.onClick)}
+            className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors cursor-pointer ${
+              toneClass[editSlotAction.tone || "default"]
+            }`}
           >
-            <span className="w-5 text-center text-base leading-none">✏️</span>
-            Edit
+            {editSlotAction.icon && (
+              <span className="w-5 text-center text-base leading-none">{editSlotAction.icon}</span>
+            )}
+            {editSlotAction.label}
           </button>
+        ) : (
+          showEdit && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => run(onEdit)}
+              className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--af-accent)] hover:bg-sky-50 transition-colors cursor-pointer"
+            >
+              <span className="w-5 text-center text-base leading-none">✏️</span>
+              Edit
+            </button>
+          )
         )}
         {showDelete && (
           <button

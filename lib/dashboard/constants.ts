@@ -20,6 +20,7 @@ export const CATEGORY_FILTER_OPTIONS = [
 export const STATUS_FILTER_OPTIONS = [
   { value: "ALL", label: "All Statuses" },
   { value: "PENDING_APPROVER", label: "Pending Approver" },
+  { value: "CHANGES_REQUESTED", label: "Changes Requested" },
   { value: "APPROVED_APPROVER", label: "Pending processing" },
   { value: "PARTIALLY_PAID", label: "Partially paid" },
   { value: "PROCESSED", label: "Processed & Paid" },
@@ -50,7 +51,10 @@ export function matchesExpenseSearch(e: Expense, search: string): boolean {
     e.requesterEmail.toLowerCase().includes(q) ||
     e.description.toLowerCase().includes(q) ||
     (e.project || "").toLowerCase().includes(q) ||
-    e.category.toLowerCase().includes(q)
+    e.category.toLowerCase().includes(q) ||
+    (e.changeRequestNotes || "").toLowerCase().includes(q) ||
+    (e.approverNotes || "").toLowerCase().includes(q) ||
+    (e.processorNotes || "").toLowerCase().includes(q)
   );
 }
 
