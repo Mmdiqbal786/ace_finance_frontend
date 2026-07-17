@@ -166,7 +166,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="portal-page login-page relative flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center overflow-hidden p-4 sm:min-h-[calc(100dvh-4rem)]">
+    <div className="portal-page login-page relative flex flex-1 items-center justify-center p-4 py-6 sm:py-8">
       <div className="relative z-10 w-full max-w-[420px]">
         <div className="mb-8 text-center">
           <BrandLogo full showWordmark />
