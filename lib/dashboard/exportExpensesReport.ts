@@ -4,6 +4,10 @@ import {
   getExpensePaymentHistory,
   PaymentHistoryEntry,
 } from "./historyPayment";
+import {
+  formatChangeRequestHistorySummary,
+  getChangeRequestLogs,
+} from "./changeRequestHistory";
 import { getPaidAmount, getRemainingAmount } from "./payment";
 import { Expense } from "./types";
 
@@ -60,6 +64,8 @@ type ColDef<T> = {
   width: number;
   align?: "Left" | "Right" | "Center";
   wrap?: boolean;
+  /** Export as Excel Number (avoids "number stored as text"). */
+  number?: boolean;
   get: (row: T) => string;
 };
 
@@ -73,30 +79,35 @@ const EXPENSE_COLUMNS: ColDef<Expense>[] = [
     header: "Local Amount",
     width: 100,
     align: "Right",
+    number: true,
     get: (e) => formatMoney(e.originalAmount),
   },
   {
     header: "Amount (USD)",
     width: 100,
     align: "Right",
+    number: true,
     get: (e) => formatMoney(e.amount),
   },
   {
     header: "Total Paid (USD)",
     width: 110,
     align: "Right",
+    number: true,
     get: (e) => formatMoney(getPaidAmount(e)),
   },
   {
     header: "Remaining (USD)",
     width: 110,
     align: "Right",
+    number: true,
     get: (e) => formatMoney(getRemainingAmount(e)),
   },
   {
     header: "Payment Count",
     width: 95,
     align: "Center",
+    number: true,
     get: (e) => String(getExpensePaymentHistory(e).length),
   },
   {
@@ -124,10 +135,28 @@ const EXPENSE_COLUMNS: ColDef<Expense>[] = [
   { header: "Date Submitted", width: 150, get: (e) => formatDateTime(e.submittedAt) },
   { header: "Manager Notes", width: 180, get: (e) => e.approverNotes || "" },
   { header: "Finance Notes", width: 180, get: (e) => e.processorNotes || "" },
-  { header: "Change Request Notes", width: 220, wrap: true, get: (e) => e.changeRequestNotes || "" },
-  { header: "Change Requested By", width: 180, get: (e) => e.changeRequestedBy || "" },
   {
-    header: "Change Requested At",
+    header: "Change Requests Count",
+    width: 110,
+    align: "Center",
+    number: true,
+    get: (e) => String(getChangeRequestLogs(e).length),
+  },
+  {
+    header: "All Change Request History",
+    width: 420,
+    wrap: true,
+    get: (e) => formatChangeRequestHistorySummary(e),
+  },
+  {
+    header: "Latest Change Request Notes",
+    width: 220,
+    wrap: true,
+    get: (e) => e.changeRequestNotes || "",
+  },
+  { header: "Latest Change Requested By", width: 180, get: (e) => e.changeRequestedBy || "" },
+  {
+    header: "Latest Change Requested At",
     width: 150,
     get: (e) => formatDateTime(e.changeRequestedAt),
   },
@@ -136,6 +165,16 @@ const EXPENSE_COLUMNS: ColDef<Expense>[] = [
 type WorkflowHistoryEntry = {
   requestId: string;
   requesterName: string;
+  action: string;
+  timestamp: string;
+  loggedBy: string;
+  notes: string;
+};
+
+type ChangeRequestExportEntry = {
+  requestId: string;
+  requesterName: string;
+  sequence: number;
   action: string;
   timestamp: string;
   loggedBy: string;
@@ -159,6 +198,29 @@ function getAllWorkflowHistory(expenses: Expense[]): WorkflowHistoryEntry[] {
   return rows.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
+function getAllChangeRequestHistory(expenses: Expense[]): ChangeRequestExportEntry[] {
+  const rows: ChangeRequestExportEntry[] = [];
+  for (const expense of expenses) {
+    const logs = getChangeRequestLogs(expense);
+    logs.forEach((log, index) => {
+      rows.push({
+        requestId: expense.id,
+        requesterName: expense.requesterName,
+        sequence: index + 1,
+        action: log.action,
+        timestamp: log.timestamp,
+        loggedBy: log.user,
+        notes: log.notes,
+      });
+    });
+  }
+  return rows.sort((a, b) => {
+    const byId = a.requestId.localeCompare(b.requestId);
+    if (byId !== 0) return byId;
+    return a.sequence - b.sequence;
+  });
+}
+
 const WORKFLOW_COLUMNS: ColDef<WorkflowHistoryEntry>[] = [
   { header: "Request ID", width: 180, get: (r) => r.requestId },
   { header: "Requester Name", width: 130, get: (r) => r.requesterName },
@@ -168,10 +230,26 @@ const WORKFLOW_COLUMNS: ColDef<WorkflowHistoryEntry>[] = [
   { header: "Notes / Command", width: 280, wrap: true, get: (r) => r.notes },
 ];
 
+const CHANGE_REQUEST_COLUMNS: ColDef<ChangeRequestExportEntry>[] = [
+  { header: "Request ID", width: 180, get: (r) => r.requestId },
+  { header: "Requester Name", width: 130, get: (r) => r.requesterName },
+  { header: "#", width: 50, align: "Center", number: true, get: (r) => String(r.sequence) },
+  { header: "Action", width: 160, get: (r) => r.action },
+  { header: "Timestamp", width: 150, get: (r) => formatDateTime(r.timestamp) },
+  { header: "Requested By", width: 200, get: (r) => r.loggedBy },
+  { header: "Command / Notes", width: 300, wrap: true, get: (r) => r.notes },
+];
+
 const PAYMENT_COLUMNS: ColDef<PaymentHistoryEntry>[] = [
   { header: "Request ID", width: 180, get: (p) => p.requestId },
   { header: "Requester Name", width: 130, get: (p) => p.requesterName },
-  { header: "Payment #", width: 75, align: "Center", get: (p) => String(p.paymentNumber) },
+  {
+    header: "Payment #",
+    width: 75,
+    align: "Center",
+    number: true,
+    get: (p) => String(p.paymentNumber),
+  },
   { header: "Payment Date", width: 150, get: (p) => formatDateTime(p.timestamp) },
   {
     header: "Type",
@@ -183,18 +261,21 @@ const PAYMENT_COLUMNS: ColDef<PaymentHistoryEntry>[] = [
     header: "This Payment (USD)",
     width: 120,
     align: "Right",
+    number: true,
     get: (p) => formatMoney(p.paymentAmount),
   },
   {
     header: "Total Paid After (USD)",
     width: 130,
     align: "Right",
+    number: true,
     get: (p) => formatMoney(p.totalPaidAfter),
   },
   {
     header: "Remaining After (USD)",
     width: 130,
     align: "Right",
+    number: true,
     get: (p) => formatMoney(p.remainingAfter),
   },
   { header: "Notes", width: 220, wrap: true, get: (p) => p.notes },
@@ -210,10 +291,11 @@ function styleForCell(align: "Left" | "Right" | "Center", zebra: boolean): strin
 function estimateWrappedRowHeight(values: string[], defaultRowHeight: number): number {
   const totalLines = values.reduce((sum, value) => {
     if (!value) return sum;
+    // Count blank separators between blocks as visual lines too
     return sum + value.split("\n").length;
   }, 0);
   if (totalLines <= 1) return defaultRowHeight;
-  return Math.min(220, Math.max(56, 18 * totalLines));
+  return Math.min(320, Math.max(56, 16 * totalLines + 8));
 }
 
 function buildWorksheet<T>(
@@ -249,6 +331,9 @@ function buildWorksheet<T>(
               : "CellWrap"
             : styleForCell(col.align || "Left", zebra);
           const value = col.get(row);
+          if (col.number && value !== "" && Number.isFinite(Number(value))) {
+            return `<Cell ss:StyleID="${styleId}"><Data ss:Type="Number">${value}</Data></Cell>`;
+          }
           const text = escapeXml(value);
           const cellText = col.wrap ? text.replace(/\n/g, "&#10;") : text;
           const dataAttrs = col.wrap
@@ -293,7 +378,7 @@ function buildWorksheet<T>(
 
 const SHARED_STYLES = `
   <Style ss:ID="Default" ss:Name="Normal">
-   <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+   <Alignment ss:Vertical="Top" ss:WrapText="1"/>
    <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
   </Style>
   <Style ss:ID="Header">
@@ -308,7 +393,7 @@ const SHARED_STYLES = `
    <Interior ss:Color="#203C62" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="CellLeft">
-   <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+   <Alignment ss:Horizontal="Left" ss:Vertical="Top" ss:WrapText="1"/>
    <Borders>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
@@ -319,7 +404,7 @@ const SHARED_STYLES = `
    <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="CellLeftAlt">
-   <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+   <Alignment ss:Horizontal="Left" ss:Vertical="Top" ss:WrapText="1"/>
    <Borders>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
@@ -330,7 +415,7 @@ const SHARED_STYLES = `
    <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="CellRight">
-   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   <Alignment ss:Horizontal="Right" ss:Vertical="Top"/>
    <Borders>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
@@ -339,9 +424,10 @@ const SHARED_STYLES = `
    </Borders>
    <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
    <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+   <NumberFormat ss:Format="#,##0.00"/>
   </Style>
   <Style ss:ID="CellRightAlt">
-   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   <Alignment ss:Horizontal="Right" ss:Vertical="Top"/>
    <Borders>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
@@ -350,9 +436,10 @@ const SHARED_STYLES = `
    </Borders>
    <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
    <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+   <NumberFormat ss:Format="#,##0.00"/>
   </Style>
   <Style ss:ID="CellCenter">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Top"/>
    <Borders>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
@@ -363,7 +450,7 @@ const SHARED_STYLES = `
    <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="CellCenterAlt">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Top"/>
    <Borders>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
@@ -409,14 +496,16 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 /**
- * Excel SpreadsheetML export — expense summary + workflow history + payment history.
+ * Excel SpreadsheetML export — expense summary + change requests + workflow + payments.
  */
 export function exportExpensesReport(rows: Expense[]) {
   const stamp = new Date().toISOString().split("T")[0];
   const paymentRows = getAllPaymentHistory(rows);
   const workflowRows = getAllWorkflowHistory(rows);
+  const changeRequestRows = getAllChangeRequestHistory(rows);
 
   const expenseSheet = buildWorksheet("Expense Report", EXPENSE_COLUMNS, rows);
+  const changeSheet = buildWorksheet("Change Requests", CHANGE_REQUEST_COLUMNS, changeRequestRows);
   const workflowSheet = buildWorksheet("Workflow History", WORKFLOW_COLUMNS, workflowRows);
   const paymentSheet = buildWorksheet("Payment History", PAYMENT_COLUMNS, paymentRows);
 
@@ -434,6 +523,7 @@ export function exportExpensesReport(rows: Expense[]) {
  <Styles>${SHARED_STYLES}
  </Styles>
  ${expenseSheet}
+ ${changeSheet}
  ${workflowSheet}
  ${paymentSheet}
 </Workbook>`;

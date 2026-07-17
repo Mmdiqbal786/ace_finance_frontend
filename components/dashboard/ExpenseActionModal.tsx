@@ -23,6 +23,7 @@ import {
   ProjectItem,
 } from "../../lib/dashboard/types";
 import { canRequesterEditExpense, getPaidAmount, getRemainingAmount } from "../../lib/dashboard/payment";
+import { getChangeRequestLogs } from "../../lib/dashboard/changeRequestHistory";
 import { validatePartialPaymentAmount, validateRejectionNotes, validateChangeRequestNotes } from "../../lib/validation";
 
 type ActionNotesField = "notes";
@@ -698,25 +699,38 @@ export default function ExpenseActionModal({
                 )}
               </div>
 
-              {expense.changeRequestNotes && (
-                <div className="pt-2 mt-2 border-t border-slate-400">
-                  <span className="text-amber-700 font-bold block">
-                    Change Request / Command:
-                  </span>
-                  <p className="text-slate-600 bg-amber-50 p-2 rounded border border-amber-200 mt-1 italic">
-                    &quot;{expense.changeRequestNotes}&quot;
-                  </p>
-                  {(expense.changeRequestedBy || expense.changeRequestedAt) && (
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      {expense.changeRequestedBy ? `By ${expense.changeRequestedBy}` : ""}
-                      {expense.changeRequestedBy && expense.changeRequestedAt ? " · " : ""}
-                      {expense.changeRequestedAt
-                        ? new Date(expense.changeRequestedAt).toLocaleString()
-                        : ""}
-                    </p>
-                  )}
-                </div>
-              )}
+              {(() => {
+                const changeLogs = getChangeRequestLogs(expense);
+                if (changeLogs.length === 0) return null;
+                return (
+                  <div className="pt-2 mt-2 border-t border-slate-400">
+                    <span className="text-amber-700 font-bold block">
+                      Change Request History ({changeLogs.length})
+                    </span>
+                    <ul className="mt-2 space-y-2">
+                      {changeLogs.map((log, idx) => (
+                        <li
+                          key={`${log.timestamp}-${idx}`}
+                          className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-1">
+                            <span className="font-semibold text-amber-900">
+                              #{idx + 1} · {log.action}
+                            </span>
+                            <span className="text-[11px] text-slate-500">
+                              {new Date(log.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="mt-1 italic text-slate-700">
+                            &quot;{log.notes || "No notes"}&quot;
+                          </p>
+                          <p className="mt-1 text-[11px] text-slate-500">By {log.user}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })()}
 
               {expense.approverNotes && (
                 <div className="pt-2 mt-2 border-t border-slate-400">
