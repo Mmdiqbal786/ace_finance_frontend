@@ -7,6 +7,7 @@ import ExpenseRequestFields, {
   ExpenseRequestValues,
   validatorsForExpenseRequest,
 } from "../expense/ExpenseRequestFields";
+import FormField from "../FormField";
 import { useFormValidation } from "../../hooks/useFormValidation";
 import { API_URL } from "../../lib/api";
 import { AuthUser } from "../../lib/auth";
@@ -25,6 +26,15 @@ interface SubmitExpensePanelProps {
   onSubmitted?: () => void;
 }
 
+const ALLOWED_INVOICE_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+const MAX_INVOICE_BYTES = 5 * 1024 * 1024;
+
 function emptyValues(user: AuthUser): ExpenseRequestValues {
   return {
     requesterName: user.name || "",
@@ -39,6 +49,17 @@ function emptyValues(user: AuthUser): ExpenseRequestValues {
   };
 }
 
+function validateInvoiceFile(file: File | null): string {
+  if (!file) return "Please attach an invoice.";
+  if (!ALLOWED_INVOICE_TYPES.includes(file.type)) {
+    return "Invoice must be a PDF or image (JPG, PNG, WEBP, GIF).";
+  }
+  if (file.size > MAX_INVOICE_BYTES) {
+    return "Invoice file must be 5 MB or smaller.";
+  }
+  return "";
+}
+
 export default function SubmitExpensePanel({
   currentUser,
   categories,
@@ -49,6 +70,8 @@ export default function SubmitExpensePanel({
 }: SubmitExpensePanelProps) {
   const [values, setValues] = useState<ExpenseRequestValues>(() => emptyValues(currentUser));
   const form = useFormValidation<ExpenseRequestField>();
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
+  const [invoiceError, setInvoiceError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [success, setSuccess] = useState<Expense | null>(null);
@@ -74,11 +97,21 @@ export default function SubmitExpensePanel({
     if (submitError) setSubmitError("");
   };
 
+  const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setInvoiceFile(file);
+    setInvoiceError(validateInvoiceFile(file));
+    if (submitError) setSubmitError("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validators = validatorsForExpenseRequest(values, { categories, projects, countries });
-    const ok = form.validateAll(validators);
-    if (!ok) {
+    const fieldsOk = form.validateAll(validators);
+    const invoiceMsg = validateInvoiceFile(invoiceFile);
+    setInvoiceError(invoiceMsg);
+
+    if (!fieldsOk || invoiceMsg) {
       form.focusFirstInvalid();
       setSubmitError("Please fix the highlighted fields before submitting.");
       return;
@@ -87,20 +120,21 @@ export default function SubmitExpensePanel({
     setSubmitting(true);
     setSubmitError("");
     try {
+      const formData = new FormData();
+      formData.append("requesterName", values.requesterName.trim());
+      formData.append("requesterEmail", currentUser.email.trim().toLowerCase());
+      formData.append("originalAmount", String(Number(values.amount)));
+      formData.append("country", values.country);
+      formData.append("category", values.category);
+      formData.append("project", values.project);
+      formData.append("description", values.description.trim());
+      formData.append("date", values.date);
+      formData.append("dueDate", values.dueDate);
+      formData.append("invoice", invoiceFile as File);
+
       const response = await fetch(`${API_URL}/expenses`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requesterName: values.requesterName.trim(),
-          requesterEmail: currentUser.email.trim().toLowerCase(),
-          originalAmount: Number(values.amount),
-          country: values.country,
-          category: values.category,
-          project: values.project,
-          description: values.description.trim(),
-          date: values.date,
-          dueDate: values.dueDate,
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -110,6 +144,8 @@ export default function SubmitExpensePanel({
       const result = (await response.json()) as Expense;
       setSuccess(result);
       setValues(emptyValues(currentUser));
+      setInvoiceFile(null);
+      setInvoiceError("");
       form.clearAll();
       toast.success("Expense request submitted.");
       onSubmitted?.();
@@ -139,6 +175,14 @@ export default function SubmitExpensePanel({
             <span className="text-slate-600">Amount (USD)</span>
             <span className="font-semibold text-slate-900">${success.amount.toFixed(2)}</span>
           </div>
+          {success.invoiceOriginalName && (
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-600">Invoice</span>
+              <span className="font-semibold text-slate-800 truncate max-w-[60%]">
+                {success.invoiceOriginalName}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row gap-2 pt-2">
           <Link
@@ -201,6 +245,29 @@ export default function SubmitExpensePanel({
           emailReadOnly
           showRequiredNote={false}
         />
+
+        <FormField
+          label="Invoice Attachment"
+          htmlFor="invoice"
+          required
+          error={invoiceError}
+          hint="PDF or image (JPG, PNG, WEBP, GIF), max 5 MB"
+        >
+          <input
+            id="invoice"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,application/pdf,image/*"
+            onChange={handleInvoiceChange}
+            disabled={submitting}
+            className={`af-input${invoiceError ? " is-invalid" : ""} file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200`}
+            aria-invalid={Boolean(invoiceError)}
+          />
+          {invoiceFile && !invoiceError && (
+            <p className="mt-1.5 text-xs text-slate-600">
+              Selected: <span className="font-semibold text-slate-800">{invoiceFile.name}</span>
+            </p>
+          )}
+        </FormField>
 
         <button
           type="submit"

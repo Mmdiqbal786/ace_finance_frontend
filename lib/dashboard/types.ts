@@ -8,6 +8,16 @@ export interface HistoryLog {
   remaining?: number;
 }
 
+export interface PaymentReceipt {
+  fileName: string;
+  originalName: string;
+  mimeType?: string;
+  size?: number;
+  uploadedAt: string;
+  uploadedBy?: string;
+  paymentAmount?: number;
+}
+
 export interface Expense {
   id: string;
   requesterName: string;
@@ -30,6 +40,11 @@ export interface Expense {
   approvedAt?: string;
   processorNotes?: string;
   processedAt?: string;
+  invoiceFileName?: string;
+  invoiceOriginalName?: string;
+  invoiceMimeType?: string;
+  invoiceSize?: number;
+  paymentReceipts?: PaymentReceipt[];
   history: HistoryLog[];
 }
 
