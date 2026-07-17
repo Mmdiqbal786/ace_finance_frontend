@@ -24,6 +24,14 @@ function LoginSpinner({ className = "h-5 w-5 text-white" }: { className?: string
 }
 
 type LoginField = "email" | "password";
+type TwoFactorMethod = "email" | "totp";
+
+type ChallengeState = {
+  challengeToken: string;
+  methods: TwoFactorMethod[];
+  emailHint: string;
+  message: string;
+};
 
 export default function LoginPage() {
   const guestAllowed = useBlockAuthenticatedGuestPages();
@@ -32,14 +40,31 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [challenge, setChallenge] = useState<ChallengeState | null>(null);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpMethod, setOtpMethod] = useState<TwoFactorMethod>('email');
+  const [resendCooldown, setResendCooldown] = useState(0);
   const form = useFormValidation<LoginField>();
 
-  const showFullPageLoader = !guestAllowed || loading;
+  const showFullPageLoader = !guestAllowed || (loading && !challenge);
   const loaderMessage = !guestAllowed
     ? 'Redirecting to dashboard...'
     : loading
       ? 'Signing you in...'
       : 'Loading Aceolution Finance...';
+
+  function startResendCooldown(seconds = 30) {
+    setResendCooldown(seconds);
+    const timer = window.setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -63,11 +88,65 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.message || 'Login failed');
       }
-      const data = await res.json();
+      // Admin without authenticator: signed in immediately
+      if (data.access_token && data.user) {
+        setAuth(data.access_token, data.user);
+        if (data.user.mustChangePassword) {
+          window.location.href = "/set-password/";
+        } else {
+          window.location.href = getDefaultDashboardRoute(data.user.role);
+        }
+        return;
+      }
+      if (!data.requires2fa || !data.challengeToken) {
+        throw new Error('Unexpected login response. Please try again.');
+      }
+      const methods = (data.methods || ['email']) as TwoFactorMethod[];
+      setChallenge({
+        challengeToken: data.challengeToken,
+        methods,
+        emailHint: data.emailHint || email.trim().toLowerCase(),
+        message: data.message || 'Enter your verification code.',
+      });
+      setOtpMethod(methods.includes('email') ? 'email' : methods[0]);
+      setOtpCode('');
+      startResendCooldown(30);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerify2fa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!challenge) return;
+    const cleaned = otpCode.replace(/\s/g, '');
+    if (!/^\d{6}$/.test(cleaned)) {
+      setError('Enter the 6-digit verification code.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_URL}/auth/verify-2fa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeToken: challenge.challengeToken,
+          code: cleaned,
+          method: otpMethod,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Verification failed');
+      }
       setAuth(data.access_token, data.user);
       if (data.user.mustChangePassword) {
         window.location.href = "/set-password/";
@@ -81,6 +160,35 @@ export default function LoginPage() {
     }
   }
 
+  async function handleResendOtp() {
+    if (!challenge || resendCooldown > 0) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_URL}/auth/resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengeToken: challenge.challengeToken }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Could not resend code');
+      }
+      setChallenge({
+        challengeToken: data.challengeToken,
+        methods: data.methods || challenge.methods,
+        emailHint: data.emailHint || challenge.emailHint,
+        message: data.message || challenge.message,
+      });
+      setOtpMethod('email');
+      startResendCooldown(30);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <>
       {showFullPageLoader && <FullPageLoader message={loaderMessage} />}
@@ -90,9 +198,14 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[420px]">
         <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-6 shadow-lg sm:p-8">
           <h1 className="text-2xl font-extrabold text-slate-900">
-            Sign <span className="af-title-accent">In</span>
+            {challenge ? (
+              <>Verify <span className="af-title-accent">Sign In</span></>
+            ) : (
+              <>Sign <span className="af-title-accent">In</span></>
+            )}
           </h1>
 
+          {!challenge ? (
           <form onSubmit={handleLogin} noValidate className="mt-7 flex flex-col gap-4" suppressHydrationWarning>
             <FormField label="Email Address" htmlFor="login-email" required error={form.errors.email}>
               <input
@@ -175,9 +288,137 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-[10px] bg-[var(--af-navy)] py-3.5 text-[0.95rem] font-bold text-white shadow-lg shadow-[var(--af-navy)]/15 transition-all hover:bg-[var(--af-navy-soft)] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
-              Sign In →
+              {loading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <LoginSpinner /> Sending code...
+                </span>
+              ) : (
+                'Continue →'
+              )}
             </button>
           </form>
+          ) : (
+          <form onSubmit={handleVerify2fa} noValidate className="mt-7 flex flex-col gap-4">
+            <p className="text-sm text-slate-600">{challenge.message}</p>
+
+            {challenge.methods.length > 1 && (
+              <div className="flex gap-2 rounded-xl border border-slate-300 bg-slate-50 p-1">
+                {challenge.methods.includes('email') && (
+                  <button
+                    type="button"
+                    onClick={() => setOtpMethod('email')}
+                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold cursor-pointer ${
+                      otpMethod === 'email'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Email code
+                  </button>
+                )}
+                {challenge.methods.includes('totp') && (
+                  <button
+                    type="button"
+                    onClick={() => setOtpMethod('totp')}
+                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold cursor-pointer ${
+                      otpMethod === 'totp'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Authenticator
+                  </button>
+                )}
+              </div>
+            )}
+
+            <FormField
+              label={otpMethod === 'totp' ? 'Authenticator code' : 'Email verification code'}
+              htmlFor="login-otp"
+              required
+              hint={
+                otpMethod === 'email'
+                  ? `Sent to ${challenge.emailHint}`
+                  : 'Open Google Authenticator or Microsoft Authenticator'
+              }
+            >
+              <input
+                id="login-otp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                className="login-input af-input tracking-[0.35em] text-center text-lg font-bold"
+                value={otpCode}
+                onChange={(e) => {
+                  setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                  if (error) setError('');
+                }}
+                placeholder="••••••"
+                disabled={loading}
+                autoFocus
+              />
+            </FormField>
+
+            {otpMethod === 'email' && (
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChallenge(null);
+                    setOtpCode('');
+                    setError('');
+                  }}
+                  className="font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                >
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={loading || resendCooldown > 0}
+                  className="font-semibold text-[var(--af-accent)] hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer"
+                >
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                </button>
+              </div>
+            )}
+
+            {otpMethod === 'totp' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setChallenge(null);
+                  setOtpCode('');
+                  setError('');
+                }}
+                className="text-left text-sm font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+              >
+                ← Back
+              </button>
+            )}
+
+            {error && (
+              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
+                ⚠️ {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || otpCode.length !== 6}
+              className="w-full rounded-[10px] bg-[var(--af-navy)] py-3.5 text-[0.95rem] font-bold text-white shadow-lg shadow-[var(--af-navy)]/15 transition-all hover:bg-[var(--af-navy-soft)] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            >
+              {loading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <LoginSpinner /> Verifying...
+                </span>
+              ) : (
+                'Verify & Sign In →'
+              )}
+            </button>
+          </form>
+          )}
         </div>
       </div>
     </div>

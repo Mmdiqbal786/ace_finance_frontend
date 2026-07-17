@@ -114,6 +114,22 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
+  const [totpLoading, setTotpLoading] = useState(true);
+  const [totpEnabled, setTotpEnabled] = useState(false);
+  const [totpBusy, setTotpBusy] = useState(false);
+  const [totpError, setTotpError] = useState("");
+  const [totpSetup, setTotpSetup] = useState<{
+    secret: string;
+    qrCodeDataUrl: string;
+  } | null>(null);
+  const [totpEnableCode, setTotpEnableCode] = useState("");
+  const [totpDisablePassword, setTotpDisablePassword] = useState("");
+  const [totpDisableCode, setTotpDisableCode] = useState("");
+  const [totpDisableCodeSent, setTotpDisableCodeSent] = useState(false);
+  const [totpDisableEmailHint, setTotpDisableEmailHint] = useState("");
+  const [totpDisableResendCooldown, setTotpDisableResendCooldown] = useState(0);
+  const [showTotpDisablePassword, setShowTotpDisablePassword] = useState(false);
+
   const profileForm = useFormValidation<ProfileField>();
   const passwordForm = useFormValidation<PasswordField>();
 
@@ -148,6 +164,148 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setTotpLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/auth/totp/status`, { headers: authHeaders() });
+        if (!res.ok) throw new Error(await readApiError(res, "Failed to load authenticator status."));
+        const data = await res.json();
+        if (!cancelled) setTotpEnabled(Boolean(data.enabled));
+      } catch (err: any) {
+        if (!cancelled) toast.error(err.message || "Failed to load authenticator status.");
+      } finally {
+        if (!cancelled) setTotpLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSetupTotp = async () => {
+    setTotpBusy(true);
+    setTotpError("");
+    try {
+      const res = await fetch(`${API_URL}/auth/totp/setup`, {
+        method: "POST",
+        headers: authHeaders() as HeadersInit,
+      });
+      if (!res.ok) throw new Error(await readApiError(res, "Failed to start authenticator setup."));
+      const data = await res.json();
+      setTotpSetup({ secret: data.secret, qrCodeDataUrl: data.qrCodeDataUrl });
+      setTotpEnableCode("");
+    } catch (err: any) {
+      setTotpError(err.message || "Failed to start authenticator setup.");
+    } finally {
+      setTotpBusy(false);
+    }
+  };
+
+  const handleEnableTotp = async () => {
+    if (!/^\d{6}$/.test(totpEnableCode)) {
+      setTotpError("Enter the 6-digit code from your authenticator app.");
+      return;
+    }
+    setTotpBusy(true);
+    setTotpError("");
+    try {
+      const res = await fetch(`${API_URL}/auth/totp/enable`, {
+        method: "POST",
+        headers: authHeaders() as HeadersInit,
+        body: JSON.stringify({ code: totpEnableCode }),
+      });
+      if (!res.ok) throw new Error(await readApiError(res, "Failed to enable authenticator."));
+      setTotpEnabled(true);
+      setTotpSetup(null);
+      setTotpEnableCode("");
+      toast.success("Authenticator app enabled.");
+    } catch (err: any) {
+      setTotpError(err.message || "Failed to enable authenticator.");
+    } finally {
+      setTotpBusy(false);
+    }
+  };
+
+  const startTotpDisableResendCooldown = (seconds = 30) => {
+    setTotpDisableResendCooldown(seconds);
+    const timer = window.setInterval(() => {
+      setTotpDisableResendCooldown((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSendDisableEmailCode = async () => {
+    if (!totpDisablePassword) {
+      setTotpError("Enter your current password.");
+      return;
+    }
+    setTotpBusy(true);
+    setTotpError("");
+    try {
+      const res = await fetch(`${API_URL}/auth/totp/disable/send-code`, {
+        method: "POST",
+        headers: authHeaders() as HeadersInit,
+        body: JSON.stringify({ password: totpDisablePassword }),
+      });
+      if (!res.ok) throw new Error(await readApiError(res, "Failed to send email code."));
+      const data = await res.json();
+      setTotpDisableCodeSent(true);
+      setTotpDisableEmailHint(data.emailHint || "");
+      setTotpDisableCode("");
+      startTotpDisableResendCooldown(30);
+      toast.success(data.message || "Email code sent.");
+    } catch (err: any) {
+      setTotpError(err.message || "Failed to send email code.");
+    } finally {
+      setTotpBusy(false);
+    }
+  };
+
+  const handleDisableTotp = async () => {
+    if (!totpDisablePassword) {
+      setTotpError("Enter your current password.");
+      return;
+    }
+    if (!totpDisableCodeSent) {
+      setTotpError("Send an email code first.");
+      return;
+    }
+    if (!/^\d{6}$/.test(totpDisableCode)) {
+      setTotpError("Enter the 6-digit code from your email.");
+      return;
+    }
+    setTotpBusy(true);
+    setTotpError("");
+    try {
+      const res = await fetch(`${API_URL}/auth/totp/disable`, {
+        method: "POST",
+        headers: authHeaders() as HeadersInit,
+        body: JSON.stringify({
+          password: totpDisablePassword,
+          code: totpDisableCode,
+        }),
+      });
+      if (!res.ok) throw new Error(await readApiError(res, "Failed to disable authenticator."));
+      setTotpEnabled(false);
+      setTotpDisablePassword("");
+      setTotpDisableCode("");
+      setTotpDisableCodeSent(false);
+      setTotpDisableEmailHint("");
+      toast.success("Authenticator app disabled.");
+    } catch (err: any) {
+      setTotpError(err.message || "Failed to disable authenticator.");
+    } finally {
+      setTotpBusy(false);
+    }
+  };
 
   const handleCancelEdit = () => {
     setEditName(profile.name);
@@ -430,6 +588,184 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
           </button>
         </form>
       </div>
+
+      <div className="portal-card rounded-2xl p-6 sm:p-8 lg:col-span-2">
+          <div className="border-b border-slate-200 pb-4">
+            <h2 className="text-lg font-bold text-slate-900">Authenticator App (optional)</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              {currentUser.role === "ADMIN"
+                ? "Admins are not required to use email verification. Optionally enable an authenticator app for sign-in."
+                : "Email verification is always required at sign-in. Optionally also enable an authenticator app so you can use either method."}
+            </p>
+          </div>
+
+          <div className="mt-5 space-y-4">
+            {totpLoading ? (
+              <p className="text-sm text-slate-600">Loading security settings...</p>
+            ) : totpEnabled ? (
+              <>
+                <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                  Authenticator is enabled for your account.
+                </p>
+                <p className="text-sm text-slate-600">
+                  To disable it (for example after reinstalling the app), enter your password and
+                  confirm with an email code — not the authenticator app code.
+                </p>
+                <FormField label="Current password" htmlFor="totp-disable-password" required>
+                  <PasswordInput
+                    id="totp-disable-password"
+                    value={totpDisablePassword}
+                    onChange={(value) => {
+                      setTotpDisablePassword(value);
+                      if (totpError) setTotpError("");
+                    }}
+                    className="af-input"
+                    autoComplete="current-password"
+                    disabled={totpBusy}
+                    visible={showTotpDisablePassword}
+                    onToggleVisible={() => setShowTotpDisablePassword((v) => !v)}
+                  />
+                </FormField>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSendDisableEmailCode}
+                    disabled={totpBusy || totpDisableResendCooldown > 0}
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-400 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60 cursor-pointer"
+                  >
+                    {totpBusy
+                      ? "Sending..."
+                      : totpDisableResendCooldown > 0
+                        ? `Resend in ${totpDisableResendCooldown}s`
+                        : totpDisableCodeSent
+                          ? "Resend email code"
+                          : "Send email code"}
+                  </button>
+                  {totpDisableCodeSent && totpDisableEmailHint && (
+                    <span className="text-xs text-slate-500">Sent to {totpDisableEmailHint}</span>
+                  )}
+                </div>
+                {totpDisableCodeSent && (
+                  <FormField
+                    label="Email verification code"
+                    htmlFor="totp-disable-code"
+                    required
+                    hint="Check your inbox for the 6-digit code"
+                  >
+                    <input
+                      id="totp-disable-code"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      className="af-input tracking-[0.3em] text-center font-bold"
+                      value={totpDisableCode}
+                      onChange={(e) => {
+                        setTotpDisableCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                        if (totpError) setTotpError("");
+                      }}
+                      placeholder="••••••"
+                    />
+                  </FormField>
+                )}
+                {totpError && (
+                  <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
+                    {totpError}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleDisableTotp}
+                  disabled={totpBusy || !totpDisableCodeSent || totpDisableCode.length !== 6}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-rose-300 bg-white px-5 text-sm font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-60 cursor-pointer"
+                >
+                  {totpBusy ? "Disabling..." : "Disable Authenticator"}
+                </button>
+              </>
+            ) : totpSetup ? (
+              <>
+                <p className="text-sm text-slate-600">
+                  Scan this QR code in your authenticator app, or enter the secret manually.
+                </p>
+                <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={totpSetup.qrCodeDataUrl}
+                    alt="Authenticator QR code"
+                    className="h-[180px] w-[180px] rounded-xl border border-slate-300 bg-white p-2"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Manual secret
+                    </p>
+                    <p className="mt-1 break-all rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-sm text-slate-800">
+                      {totpSetup.secret}
+                    </p>
+                  </div>
+                </div>
+                <FormField label="Enter code from app to confirm" htmlFor="totp-enable-code" required>
+                  <input
+                    id="totp-enable-code"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="af-input tracking-[0.3em] text-center font-bold"
+                    value={totpEnableCode}
+                    onChange={(e) => setTotpEnableCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="••••••"
+                  />
+                </FormField>
+                {totpError && (
+                  <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
+                    {totpError}
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleEnableTotp}
+                    disabled={totpBusy || totpEnableCode.length !== 6}
+                    className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--af-navy)] px-5 text-sm font-bold text-white hover:bg-[var(--af-navy-soft)] disabled:opacity-60 cursor-pointer"
+                  >
+                    {totpBusy ? "Enabling..." : "Confirm & Enable"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTotpSetup(null);
+                      setTotpEnableCode("");
+                      setTotpError("");
+                    }}
+                    disabled={totpBusy}
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-400 px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-slate-600">
+                  {currentUser.role === "ADMIN"
+                    ? "Not enabled yet. Until you enable it, Admin sign-in is password only (no email code)."
+                    : "Not enabled yet. You can still sign in with the email verification code."}
+                </p>
+                {totpError && (
+                  <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
+                    {totpError}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSetupTotp}
+                  disabled={totpBusy}
+                  className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--af-navy)] px-5 text-sm font-bold text-white hover:bg-[var(--af-navy-soft)] disabled:opacity-60 cursor-pointer"
+                >
+                  {totpBusy ? "Preparing..." : "Set up Authenticator App"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
     </div>
   );
 }
