@@ -72,6 +72,13 @@ export default function Header() {
 
   // Logo stays on the same area: home header → /, dashboard header → /dashboard/
   const logoHref = isDashboard ? DASHBOARD_ROUTES.home : "/";
+  const path = pathname?.replace(/\/$/, "") || "";
+  const isAuthGuestPage =
+    path === "/login" ||
+    path === "/forgot-password" ||
+    path === "/reset-password" ||
+    path === "/set-password";
+  const showHeaderSignIn = mounted && !user && !isDashboard && !isAuthGuestPage;
 
   return (
     <header className={`sticky top-0 z-50 shrink-0 w-full border-b border-slate-200 bg-white ${isDashboard ? "" : "bg-white/90 backdrop-blur-md"}`}>
@@ -161,16 +168,14 @@ export default function Header() {
                 Go to Dashboard
               </Link>
             </>
-          ) : (
-            <>
-              <Link
-                href="/login/"
-                className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-sm font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
-              >
-                Sign In
-              </Link>
-            </>
-          )}
+          ) : showHeaderSignIn ? (
+            <Link
+              href="/login/"
+              className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-sm font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
+            >
+              Sign In
+            </Link>
+          ) : null}
         </div>
       </div>
 

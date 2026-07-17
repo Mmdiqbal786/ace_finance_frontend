@@ -6,10 +6,9 @@ import { useBlockAuthenticatedGuestPages } from '../../hooks/useBlockAuthenticat
 import { setAuth } from '../../lib/auth';
 import { getDefaultDashboardRoute } from '../../lib/dashboard/routes';
 import { API_URL } from '../../lib/api';
-import BrandLogo from '../../components/BrandLogo';
+import FormField from '../../components/FormField';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { validateLoginEmail, validateLoginPassword } from '../../lib/validation';
-import FormField from '../../components/FormField';
 
 function LoginSpinner({ className = "h-5 w-5 text-white" }: { className?: string }) {
   return (
@@ -89,12 +88,6 @@ export default function LoginPage() {
       {guestAllowed && (
     <div className="portal-page login-page relative flex flex-1 items-center justify-center p-4 py-6 sm:py-8">
       <div className="relative z-10 w-full max-w-[420px]">
-        <div className="mb-5 text-center sm:mb-6">
-          <div className="inline-flex flex-col items-center gap-2">
-            <BrandLogo full showWordmark />
-          </div>
-        </div>
-
         <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-6 shadow-lg sm:p-8">
           <h1 className="text-2xl font-extrabold text-slate-900">
             Sign <span className="af-title-accent">In</span>
