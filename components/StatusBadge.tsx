@@ -14,6 +14,10 @@ export default function StatusBadge({ status, className = "" }: StatusBadgeProps
       label = "Awaiting Manager Approval";
       badgeStyle = "bg-amber-50 text-amber-700 ring-amber-200";
       break;
+    case "CHANGES_REQUESTED":
+      label = "Changes Requested";
+      badgeStyle = "bg-orange-50 text-orange-700 ring-orange-200";
+      break;
     case "APPROVED_APPROVER":
       label = "Approved - Awaiting Processing";
       badgeStyle = "bg-sky-50 text-[var(--af-accent)] ring-sky-200";

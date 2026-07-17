@@ -38,6 +38,8 @@ function statusLabel(status: string): string {
   switch (status) {
     case "PENDING_APPROVER":
       return "Pending Approver";
+    case "CHANGES_REQUESTED":
+      return "Changes Requested";
     case "APPROVED_APPROVER":
       return "Pending Processing";
     case "PARTIALLY_PAID":
@@ -122,6 +124,48 @@ const EXPENSE_COLUMNS: ColDef<Expense>[] = [
   { header: "Date Submitted", width: 150, get: (e) => formatDateTime(e.submittedAt) },
   { header: "Manager Notes", width: 180, get: (e) => e.approverNotes || "" },
   { header: "Finance Notes", width: 180, get: (e) => e.processorNotes || "" },
+  { header: "Change Request Notes", width: 220, wrap: true, get: (e) => e.changeRequestNotes || "" },
+  { header: "Change Requested By", width: 180, get: (e) => e.changeRequestedBy || "" },
+  {
+    header: "Change Requested At",
+    width: 150,
+    get: (e) => formatDateTime(e.changeRequestedAt),
+  },
+];
+
+type WorkflowHistoryEntry = {
+  requestId: string;
+  requesterName: string;
+  action: string;
+  timestamp: string;
+  loggedBy: string;
+  notes: string;
+};
+
+function getAllWorkflowHistory(expenses: Expense[]): WorkflowHistoryEntry[] {
+  const rows: WorkflowHistoryEntry[] = [];
+  for (const expense of expenses) {
+    for (const log of expense.history || []) {
+      rows.push({
+        requestId: expense.id,
+        requesterName: expense.requesterName,
+        action: log.action,
+        timestamp: log.timestamp,
+        loggedBy: log.user,
+        notes: log.notes || "",
+      });
+    }
+  }
+  return rows.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
+const WORKFLOW_COLUMNS: ColDef<WorkflowHistoryEntry>[] = [
+  { header: "Request ID", width: 180, get: (r) => r.requestId },
+  { header: "Requester Name", width: 130, get: (r) => r.requesterName },
+  { header: "Action", width: 180, get: (r) => r.action },
+  { header: "Timestamp", width: 150, get: (r) => formatDateTime(r.timestamp) },
+  { header: "Logged By", width: 200, get: (r) => r.loggedBy },
+  { header: "Notes / Command", width: 280, wrap: true, get: (r) => r.notes },
 ];
 
 const PAYMENT_COLUMNS: ColDef<PaymentHistoryEntry>[] = [
@@ -365,13 +409,15 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 /**
- * Excel SpreadsheetML export — expense summary + payment history worksheet.
+ * Excel SpreadsheetML export — expense summary + workflow history + payment history.
  */
 export function exportExpensesReport(rows: Expense[]) {
   const stamp = new Date().toISOString().split("T")[0];
   const paymentRows = getAllPaymentHistory(rows);
+  const workflowRows = getAllWorkflowHistory(rows);
 
   const expenseSheet = buildWorksheet("Expense Report", EXPENSE_COLUMNS, rows);
+  const workflowSheet = buildWorksheet("Workflow History", WORKFLOW_COLUMNS, workflowRows);
   const paymentSheet = buildWorksheet("Payment History", PAYMENT_COLUMNS, paymentRows);
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -388,6 +434,7 @@ export function exportExpensesReport(rows: Expense[]) {
  <Styles>${SHARED_STYLES}
  </Styles>
  ${expenseSheet}
+ ${workflowSheet}
  ${paymentSheet}
 </Workbook>`;
 

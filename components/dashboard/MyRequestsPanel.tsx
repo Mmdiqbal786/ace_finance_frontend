@@ -8,7 +8,11 @@ import TablePagination from "../TablePagination";
 import TableRowActions from "../TableRowActions";
 import { usePaginatedList } from "../../hooks/usePaginatedList";
 import { filterExpenseTable } from "../../lib/dashboard/constants";
-import { getPaidAmount, getRemainingAmount } from "../../lib/dashboard/payment";
+import {
+  canRequesterEditExpense,
+  getPaidAmount,
+  getRemainingAmount,
+} from "../../lib/dashboard/payment";
 import { Expense } from "../../lib/dashboard/types";
 
 interface SelectOption {
@@ -94,6 +98,7 @@ export default function MyRequestsPanel({
                       <th className="py-3 px-4">Project</th>
                       <th className="py-3 px-4">Due Date</th>
                       <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Change Request</th>
                       <th className="py-3 px-4 text-right">Amount</th>
                       <th className="py-3 px-4 text-right">Paid</th>
                       <th className="py-3 px-4 text-right">Remaining</th>
@@ -102,7 +107,8 @@ export default function MyRequestsPanel({
                   </thead>
                   <tbody>
                     {table.paginated.map((e) => {
-                      const canMutate = e.status === "PENDING_APPROVER";
+                      // Edit only after staff Request Changes — requesters never delete
+                      const canEdit = canRequesterEditExpense(e);
                       return (
                         <tr key={e.id} className="hover:bg-slate-50 transition-colors">
                           <td className="py-3.5 px-4 font-mono text-sm text-[var(--af-accent)] font-bold">
@@ -121,6 +127,12 @@ export default function MyRequestsPanel({
                           <td className="py-3.5 px-4">
                             <StatusBadge status={e.status} className="text-xs py-0.5" />
                           </td>
+                          <td
+                            className="py-3.5 px-4 max-w-[180px] truncate text-xs text-amber-800 italic"
+                            title={e.changeRequestNotes || undefined}
+                          >
+                            {e.changeRequestNotes ? `"${e.changeRequestNotes}"` : "—"}
+                          </td>
                           <td className="py-3.5 px-4 text-right font-bold text-slate-900">
                             ${e.amount.toFixed(2)}
                           </td>
@@ -135,8 +147,9 @@ export default function MyRequestsPanel({
                               onView={() => onView(e)}
                               onEdit={() => onEdit(e)}
                               onDelete={() => onDelete(e)}
-                              showEdit={canMutate}
-                              showDelete={canMutate}
+                              showEdit={canEdit}
+                              showDelete={false}
+                              editSlotAction={null}
                             />
                           </td>
                         </tr>

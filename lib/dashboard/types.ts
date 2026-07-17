@@ -8,6 +8,16 @@ export interface HistoryLog {
   remaining?: number;
 }
 
+export interface PaymentReceipt {
+  fileName: string;
+  originalName: string;
+  mimeType?: string;
+  size?: number;
+  uploadedAt: string;
+  uploadedBy?: string;
+  paymentAmount?: number;
+}
+
 export interface Expense {
   id: string;
   requesterName: string;
@@ -27,9 +37,17 @@ export interface Expense {
   status: string;
   submittedAt: string;
   approverNotes?: string;
-  approvedAt?: string;
   processorNotes?: string;
+  changeRequestNotes?: string;
+  changeRequestedAt?: string;
+  changeRequestedBy?: string;
+  approvedAt?: string;
   processedAt?: string;
+  invoiceFileName?: string;
+  invoiceOriginalName?: string;
+  invoiceMimeType?: string;
+  invoiceSize?: number;
+  paymentReceipts?: PaymentReceipt[];
   history: HistoryLog[];
 }
 
@@ -78,6 +96,7 @@ export type ExpenseActionType =
   | "process"
   | "partial-pay"
   | "processor-reject"
+  | "request-changes"
   | "view"
   | "edit"
   | "delete";

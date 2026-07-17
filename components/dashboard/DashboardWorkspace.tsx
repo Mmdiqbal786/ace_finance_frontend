@@ -17,6 +17,7 @@ import {
   ProjectItem,
   CountryItem,
 } from "../../lib/dashboard/types";
+import { isFullyPaid } from "../../lib/dashboard/payment";
 import {
   canAccessSection,
   getDefaultDashboardRoute,
@@ -306,6 +307,13 @@ export default function DashboardWorkspace() {
                       onClick: () => openActionModal(e, "reject"),
                     },
                   ]}
+                  getEditSlotAction={(e) => ({
+                    label: "Request Changes",
+                    icon: "↩️",
+                    onClick: () => openActionModal(e, "request-changes"),
+                  })}
+                  showEdit={false}
+                  showDelete={true}
                   {...expenseActions}
                 />
               )}
@@ -344,6 +352,17 @@ export default function DashboardWorkspace() {
                       onClick: () => openActionModal(e, "processor-reject"),
                     },
                   ]}
+                  getEditSlotAction={(e) =>
+                    e.status === "APPROVED_APPROVER"
+                      ? {
+                          label: "Request Changes",
+                          icon: "↩️",
+                          onClick: () => openActionModal(e, "request-changes"),
+                        }
+                      : null
+                  }
+                  showEdit={false}
+                  showDelete={true}
                   {...expenseActions}
                 />
               )}
@@ -355,6 +374,28 @@ export default function DashboardWorkspace() {
                   categoryFilterOptions={categoryFilterOptions}
                   projectFilterOptions={projectFilterOptions}
                   {...expenseActions}
+                  showEdit={false}
+                  showDelete={
+                    currentUser?.role === "ADMIN" ||
+                    currentUser?.role === "APPROVER" ||
+                    currentUser?.role === "PROCESSOR"
+                  }
+                  getEditSlotAction={(e) => {
+                    if (isFullyPaid(e)) return null;
+                    const role = currentUser?.role;
+                    const canApproverReturn =
+                      e.status === "PENDING_APPROVER" &&
+                      (role === "APPROVER" || role === "ADMIN");
+                    const canProcessorReturn =
+                      e.status === "APPROVED_APPROVER" &&
+                      (role === "PROCESSOR" || role === "ADMIN");
+                    if (!canApproverReturn && !canProcessorReturn) return null;
+                    return {
+                      label: "Request Changes",
+                      icon: "↩️",
+                      onClick: () => openActionModal(e, "request-changes"),
+                    };
+                  }}
                 />
               )}
             </>

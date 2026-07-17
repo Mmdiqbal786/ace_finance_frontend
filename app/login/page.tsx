@@ -6,10 +6,9 @@ import { useBlockAuthenticatedGuestPages } from '../../hooks/useBlockAuthenticat
 import { setAuth } from '../../lib/auth';
 import { getDefaultDashboardRoute } from '../../lib/dashboard/routes';
 import { API_URL } from '../../lib/api';
-import BrandLogo from '../../components/BrandLogo';
+import FormField from '../../components/FormField';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { validateLoginEmail, validateLoginPassword } from '../../lib/validation';
-import FormField, { RequiredFieldsNote } from '../../components/FormField';
 
 function LoginSpinner({ className = "h-5 w-5 text-white" }: { className?: string }) {
   return (
@@ -87,24 +86,14 @@ export default function LoginPage() {
       {showFullPageLoader && <FullPageLoader message={loaderMessage} />}
 
       {guestAllowed && (
-    <div className="portal-page login-page relative flex min-h-[calc(100dvh-3.5rem)] flex-1 items-center justify-center overflow-hidden p-4 sm:min-h-[calc(100dvh-4rem)]">
+    <div className="portal-page login-page relative flex flex-1 items-center justify-center p-4 py-6 sm:py-8">
       <div className="relative z-10 w-full max-w-[420px]">
-        <div className="mb-8 text-center">
-          <div className="inline-flex flex-col items-center gap-2">
-            <BrandLogo full showWordmark />
-          </div>
-        </div>
-
-        <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-8 shadow-lg">
+        <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-6 shadow-lg sm:p-8">
           <h1 className="text-2xl font-extrabold text-slate-900">
             Sign <span className="af-title-accent">In</span>
           </h1>
-          <p className="mt-2 mb-7 text-sm font-medium text-slate-700">
-            Enter your credentials to access the dashboard
-          </p>
 
-          <form onSubmit={handleLogin} noValidate className="flex flex-col gap-4" suppressHydrationWarning>
-            <RequiredFieldsNote className="-mt-1 mb-1" />
+          <form onSubmit={handleLogin} noValidate className="mt-7 flex flex-col gap-4" suppressHydrationWarning>
             <FormField label="Email Address" htmlFor="login-email" required error={form.errors.email}>
               <input
                 id="login-email"
