@@ -46,12 +46,10 @@ export default function LoginPage() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const form = useFormValidation<LoginField>();
 
-  const showFullPageLoader = !guestAllowed || (loading && !challenge);
+  const showFullPageLoader = !guestAllowed;
   const loaderMessage = !guestAllowed
     ? 'Redirecting to dashboard...'
-    : loading
-      ? 'Signing you in...'
-      : 'Loading Aceolution Finance...';
+    : 'Loading Aceolution Finance...';
 
   function startResendCooldown(seconds = 30) {
     setResendCooldown(seconds);
@@ -64,6 +62,31 @@ export default function LoginPage() {
         return prev - 1;
       });
     }, 1000);
+  }
+
+  async function fetchWithTimeout(
+    input: string,
+    init: RequestInit,
+    timeoutMs = 70_000,
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(input, { ...init, signal: controller.signal });
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
+
+  function loginFetchError(err: any): string {
+    if (err?.name === 'AbortError') {
+      return 'The server took too long to respond. The API may be waking up on Render — wait ~1 minute and try again.';
+    }
+    const msg = String(err?.message || '');
+    if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+      return 'Cannot reach the API. Check that the backend is awake, or open the API URL once to wake it, then try again.';
+    }
+    return msg || 'Login failed';
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -83,14 +106,16 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
+      const res = await fetchWithTimeout(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(
+          Array.isArray(data.message) ? data.message.join(' ') : data.message || 'Login failed',
+        );
       }
       // Admin without authenticator: signed in immediately
       if (data.access_token && data.user) {
@@ -116,7 +141,7 @@ export default function LoginPage() {
       setOtpCode('');
       startResendCooldown(30);
     } catch (err: any) {
-      setError(err.message);
+      setError(loginFetchError(err));
     } finally {
       setLoading(false);
     }
@@ -134,7 +159,7 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_URL}/auth/verify-2fa`, {
+      const res = await fetchWithTimeout(`${API_URL}/auth/verify-2fa`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -145,7 +170,9 @@ export default function LoginPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'Verification failed');
+        throw new Error(
+          Array.isArray(data.message) ? data.message.join(' ') : data.message || 'Verification failed',
+        );
       }
       setAuth(data.access_token, data.user);
       if (data.user.mustChangePassword) {
@@ -155,7 +182,7 @@ export default function LoginPage() {
       }
       return;
     } catch (err: any) {
-      setError(err.message);
+      setError(loginFetchError(err));
       setLoading(false);
     }
   }
@@ -165,14 +192,16 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_URL}/auth/resend-otp`, {
+      const res = await fetchWithTimeout(`${API_URL}/auth/resend-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ challengeToken: challenge.challengeToken }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'Could not resend code');
+        throw new Error(
+          Array.isArray(data.message) ? data.message.join(' ') : data.message || 'Could not resend code',
+        );
       }
       setChallenge({
         challengeToken: data.challengeToken,
@@ -183,7 +212,7 @@ export default function LoginPage() {
       setOtpMethod('email');
       startResendCooldown(30);
     } catch (err: any) {
-      setError(err.message);
+      setError(loginFetchError(err));
     } finally {
       setLoading(false);
     }
@@ -282,6 +311,12 @@ export default function LoginPage() {
               </div>
             )}
 
+            {loading && !challenge && (
+              <p className="text-center text-xs font-medium text-slate-500">
+                Connecting to API… On Render free tier the first request can take up to ~50 seconds.
+              </p>
+            )}
+
             <button
               id="login-submit"
               type="submit"
@@ -290,7 +325,7 @@ export default function LoginPage() {
             >
               {loading ? (
                 <span className="inline-flex items-center justify-center gap-2">
-                  <LoginSpinner /> Sending code...
+                  <LoginSpinner /> Signing you in...
                 </span>
               ) : (
                 'Continue →'
