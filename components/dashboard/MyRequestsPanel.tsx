@@ -9,6 +9,10 @@ import TableRowActions from "../TableRowActions";
 import { usePaginatedList } from "../../hooks/usePaginatedList";
 import { filterExpenseTable } from "../../lib/dashboard/constants";
 import {
+  formatChangeRequestHistorySummary,
+  getChangeRequestLogs,
+} from "../../lib/dashboard/changeRequestHistory";
+import {
   canRequesterEditExpense,
   getPaidAmount,
   getRemainingAmount,
@@ -128,10 +132,22 @@ export default function MyRequestsPanel({
                             <StatusBadge status={e.status} className="text-xs py-0.5" />
                           </td>
                           <td
-                            className="py-3.5 px-4 max-w-[180px] truncate text-xs text-amber-800 italic"
-                            title={e.changeRequestNotes || undefined}
+                            className="py-3.5 px-4 max-w-[200px] truncate text-xs text-amber-800 italic"
+                            title={formatChangeRequestHistorySummary(e) || undefined}
                           >
-                            {e.changeRequestNotes ? `"${e.changeRequestNotes}"` : "—"}
+                            {(() => {
+                              const logs = getChangeRequestLogs(e);
+                              if (logs.length === 0) return "—";
+                              const latest = logs[logs.length - 1];
+                              return (
+                                <span>
+                                  <span className="not-italic font-semibold text-amber-900">
+                                    {logs.length}×
+                                  </span>{" "}
+                                  &quot;{latest.notes || "No notes"}&quot;
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="py-3.5 px-4 text-right font-bold text-slate-900">
                             ${e.amount.toFixed(2)}

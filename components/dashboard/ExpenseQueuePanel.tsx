@@ -12,6 +12,10 @@ import {
   filterExpenseTable,
   filterTrackerTable,
 } from "../../lib/dashboard/constants";
+import {
+  formatChangeRequestHistorySummary,
+  getChangeRequestLogs,
+} from "../../lib/dashboard/changeRequestHistory";
 import { getPaidAmount, getRemainingAmount } from "../../lib/dashboard/payment";
 import { Expense } from "../../lib/dashboard/types";
 
@@ -343,14 +347,20 @@ function ExpenseQueueRow({
         <StatusBadge status={e.status} className="text-xs py-0.5" />
       </td>
       <td
-        className={`${cellPad} max-w-[180px] truncate text-xs text-amber-800 italic`}
-        title={
-          e.changeRequestNotes
-            ? `${e.changeRequestNotes}${e.changeRequestedBy ? ` — ${e.changeRequestedBy}` : ""}`
-            : undefined
-        }
+        className={`${cellPad} max-w-[200px] truncate text-xs text-amber-800 italic`}
+        title={formatChangeRequestHistorySummary(e) || undefined}
       >
-        {e.changeRequestNotes ? `"${e.changeRequestNotes}"` : "—"}
+        {(() => {
+          const logs = getChangeRequestLogs(e);
+          if (logs.length === 0) return "—";
+          const latest = logs[logs.length - 1];
+          return (
+            <span>
+              <span className="not-italic font-semibold text-amber-900">{logs.length}×</span>{" "}
+              &quot;{latest.notes || "No notes"}&quot;
+            </span>
+          );
+        })()}
       </td>
       <td className={`${cellPad} text-right font-semibold text-slate-900`}>
         ${e.amount.toFixed(2)}

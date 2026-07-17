@@ -54,7 +54,13 @@ export function matchesExpenseSearch(e: Expense, search: string): boolean {
     e.category.toLowerCase().includes(q) ||
     (e.changeRequestNotes || "").toLowerCase().includes(q) ||
     (e.approverNotes || "").toLowerCase().includes(q) ||
-    (e.processorNotes || "").toLowerCase().includes(q)
+    (e.processorNotes || "").toLowerCase().includes(q) ||
+    (e.history || []).some(
+      (h) =>
+        (h.notes || "").toLowerCase().includes(q) ||
+        (h.action || "").toLowerCase().includes(q) ||
+        (h.user || "").toLowerCase().includes(q)
+    )
   );
 }
 
