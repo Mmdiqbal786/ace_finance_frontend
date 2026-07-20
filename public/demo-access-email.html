@@ -46,27 +46,38 @@
       border-bottom: 1px solid #475569;
       backdrop-filter: blur(8px);
     }
-    .copy-bar button {
+    .copy-bar button,
+    .copy-bar a.btn-secondary {
       cursor: pointer;
-      border: none;
       border-radius: 10px;
       font-family: inherit;
       font-weight: 800;
       font-size: 12px;
       padding: 10px 12px;
       line-height: 1.25;
+      text-decoration: none;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
     }
     .copy-bar .btn-primary {
       background: #70bcfc;
       color: #0f172a;
+      border: none;
       flex: 1 1 100%;
     }
     .copy-bar .btn-secondary {
       background: transparent;
-      color: #e2e8f0;
+      color: #e2e8f0 !important;
       border: 1.5px solid #94a3b8;
       flex: 1 1 calc(50% - 8px);
       min-width: 140px;
+    }
+    .copy-bar a.btn-secondary:hover {
+      background: rgba(148, 163, 184, 0.18);
+      color: #ffffff !important;
     }
     .copy-bar .copy-status {
       flex: 1 1 100%;
@@ -161,7 +172,7 @@
     @media (min-width: 640px) {
       .copy-bar .btn-primary { flex: 0 1 auto; }
       .copy-bar .btn-secondary { flex: 0 1 auto; }
-      .copy-bar button { font-size: 13px; padding: 10px 16px; }
+      .copy-bar button, .copy-bar a.btn-secondary { font-size: 13px; padding: 10px 16px; }
       .page-wrap { padding: 28px 12px; }
       .pad { padding: 26px 28px 10px; }
       .pad-sm { padding: 18px 28px 8px; }
@@ -197,6 +208,7 @@
     <button type="button" class="btn-primary" id="copy-share-invite">Share access invite (Teams text)</button>
     <button type="button" class="btn-secondary" id="copy-full-guide">Copy full guide (Teams text)</button>
     <button type="button" class="btn-secondary" id="copy-accounts-only">Copy accounts only</button>
+    <a class="btn-secondary" href="/docs-guide.html">Open full documentation</a>
     <span class="copy-status" id="copy-status" aria-live="polite"></span>
   </div>
 
@@ -250,6 +262,7 @@
               <div class="cta-row">
                 <a class="cta-primary" href="https://ace-finance-frontend.onrender.com/">Open App →</a>
                 <a class="cta-secondary" href="https://ace-finance-backend.onrender.com/">Wake Backend API first</a>
+                <a class="cta-secondary" href="/docs-guide.html">Open full documentation</a>
               </div>
               <p style="margin:12px 0 0;font-size:12px;line-height:1.5;color:#b45309;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:10px 12px;">
                 <strong>Note:</strong> The backend is on Render’s free tier and may sleep after inactivity.
@@ -638,6 +651,8 @@
               <p style="margin:0 0 10px;font-size:14px;color:#334155;line-height:1.6;">
                 Please try the full path above (<strong>FLOW A: A1→A7</strong>), verify audit + Excel export, and share feedback
                 (bugs, UX, missing fields, email delays, etc.).
+                For page-by-page success/error reference, open the
+                <a href="/docs-guide.html" style="color:#1850a8;font-weight:700;">Full App Documentation</a>.
               </p>
               <p style="margin:0;font-size:15px;color:#0f172a;">
                 Thanks,<br/>
