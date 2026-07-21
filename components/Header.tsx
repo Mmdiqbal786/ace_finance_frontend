@@ -73,12 +73,14 @@ export default function Header() {
   // Logo stays on the same area: home header → /, dashboard header → /dashboard/
   const logoHref = isDashboard ? DASHBOARD_ROUTES.home : "/";
   const path = pathname?.replace(/\/$/, "") || "";
+  const isHomePage = path === "" || path === "/";
   const isAuthGuestPage =
     path === "/login" ||
     path === "/forgot-password" ||
     path === "/reset-password" ||
     path === "/set-password";
   const showHeaderSignIn = mounted && !user && !isDashboard && !isAuthGuestPage;
+  const showMarketingNav = mounted && !user && isHomePage;
 
   return (
     <header className={`sticky top-0 z-50 shrink-0 w-full border-b border-slate-200 bg-white ${isDashboard ? "" : "bg-white/90 backdrop-blur-md"}`}>
@@ -171,9 +173,24 @@ export default function Header() {
           ) : showHeaderSignIn ? (
             <Link
               href="/login/"
-              className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-sm font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
+              className={
+                showMarketingNav
+                  ? "group inline-flex h-11 items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-blue-600 pl-5 pr-1.5 text-sm font-bold text-white shadow-md shadow-teal-500/25 transition-all hover:shadow-lg hover:shadow-teal-500/30"
+                  : "inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-sm font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
+              }
             >
-              Sign In
+              {showMarketingNav ? (
+                <>
+                  Sign In
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 transition-transform group-hover:translate-x-0.5">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5-5 5M6 12h12" />
+                    </svg>
+                  </span>
+                </>
+              ) : (
+                "Sign In"
+              )}
             </Link>
           ) : null}
         </div>
