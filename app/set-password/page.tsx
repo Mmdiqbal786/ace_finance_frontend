@@ -13,7 +13,8 @@ import { getDefaultDashboardRoute } from "../../lib/dashboard/routes";
 import { API_URL } from "../../lib/api";
 import { useFormValidation } from "../../hooks/useFormValidation";
 import { validatePassword } from "../../lib/validation";
-import FormField, { RequiredFieldsNote } from "../../components/FormField";
+import FormField from "../../components/FormField";
+import AuthSplitLayout from "../../components/AuthSplitLayout";
 import { readApiError } from "../../lib/apiError";
 
 type SetPasswordField = "currentPassword" | "newPassword" | "confirmPassword";
@@ -175,9 +176,7 @@ export default function SetPasswordPage() {
   }
 
   return (
-    <div className="portal-page relative flex flex-1 items-center justify-center p-4 py-6 sm:py-8">
-      <div className="relative z-10 w-full max-w-[420px]">
-        <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-8 shadow-lg">
+    <AuthSplitLayout>
           <h1 className="text-2xl font-extrabold text-slate-900">
             Create <span className="af-title-accent">Password</span>
           </h1>
@@ -186,8 +185,6 @@ export default function SetPasswordPage() {
           </p>
 
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-            <RequiredFieldsNote className="-mt-1 mb-1" />
-
             <FormField
               label="Temporary Password"
               htmlFor="currentPassword"
@@ -278,8 +275,6 @@ export default function SetPasswordPage() {
           >
             Sign out instead
           </button>
-        </div>
-      </div>
-    </div>
+    </AuthSplitLayout>
   );
 }

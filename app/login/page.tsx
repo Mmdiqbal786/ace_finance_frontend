@@ -7,6 +7,7 @@ import { setAuth } from '../../lib/auth';
 import { getDefaultDashboardRoute } from '../../lib/dashboard/routes';
 import { API_URL } from '../../lib/api';
 import FormField from '../../components/FormField';
+import AuthSplitLayout from '../../components/AuthSplitLayout';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { validateLoginEmail, validateLoginPassword } from '../../lib/validation';
 
@@ -223,9 +224,7 @@ export default function LoginPage() {
       {showFullPageLoader && <FullPageLoader message={loaderMessage} />}
 
       {guestAllowed && (
-    <div className="portal-page login-page relative flex flex-1 items-center justify-center p-4 py-6 sm:py-8">
-      <div className="relative z-10 w-full max-w-[420px]">
-        <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-6 shadow-lg sm:p-8">
+    <AuthSplitLayout>
           <h1 className="text-2xl font-extrabold text-slate-900">
             {challenge ? (
               <>Verify <span className="af-title-accent">Sign In</span></>
@@ -454,9 +453,7 @@ export default function LoginPage() {
             </button>
           </form>
           )}
-        </div>
-      </div>
-    </div>
+    </AuthSplitLayout>
       )}
     </>
   );
