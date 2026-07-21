@@ -9,10 +9,6 @@ import TableRowActions from "../TableRowActions";
 import { usePaginatedList } from "../../hooks/usePaginatedList";
 import { filterExpenseTable } from "../../lib/dashboard/constants";
 import {
-  formatChangeRequestHistorySummary,
-  getChangeRequestLogs,
-} from "../../lib/dashboard/changeRequestHistory";
-import {
   canRequesterEditExpense,
   getPaidAmount,
   getRemainingAmount,
@@ -97,16 +93,14 @@ export default function MyRequestsPanel({
                 <table className="af-table min-w-full">
                   <thead>
                     <tr>
-                      <th className="py-3 px-4">Request ID</th>
-                      <th className="py-3 px-4">Category</th>
                       <th className="py-3 px-4">Project</th>
+                      <th className="py-3 px-4">Submission Date</th>
                       <th className="py-3 px-4">Due Date</th>
                       <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4">Change Request</th>
                       <th className="py-3 px-4 text-right">Amount</th>
                       <th className="py-3 px-4 text-right">Paid</th>
                       <th className="py-3 px-4 text-right">Remaining</th>
-                      <th className="py-3 px-4">Actions</th>
+                      <th className="py-3 px-4">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -115,11 +109,10 @@ export default function MyRequestsPanel({
                       const canEdit = canRequesterEditExpense(e);
                       return (
                         <tr key={e.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-3.5 px-4 font-mono text-sm text-[var(--af-accent)] font-bold">
-                            {e.id}
-                          </td>
-                          <td className="py-3.5 px-4 text-sm">{e.category}</td>
                           <td className="py-3.5 px-4 text-sm text-slate-700">{e.project || "—"}</td>
+                          <td className="py-3.5 px-4 text-xs text-slate-700">
+                            {new Date(e.submittedAt).toLocaleDateString()}
+                          </td>
                           <td className="py-3.5 px-4">
                             <DueDateBadge
                               dueDate={e.dueDate}
@@ -130,24 +123,6 @@ export default function MyRequestsPanel({
                           </td>
                           <td className="py-3.5 px-4">
                             <StatusBadge status={e.status} className="text-xs py-0.5" />
-                          </td>
-                          <td
-                            className="py-3.5 px-4 max-w-[200px] truncate text-xs text-amber-800 italic"
-                            title={formatChangeRequestHistorySummary(e) || undefined}
-                          >
-                            {(() => {
-                              const logs = getChangeRequestLogs(e);
-                              if (logs.length === 0) return "—";
-                              const latest = logs[logs.length - 1];
-                              return (
-                                <span>
-                                  <span className="not-italic font-semibold text-amber-900">
-                                    {logs.length}×
-                                  </span>{" "}
-                                  &quot;{latest.notes || "No notes"}&quot;
-                                </span>
-                              );
-                            })()}
                           </td>
                           <td className="py-3.5 px-4 text-right font-bold text-slate-900">
                             ${e.amount.toFixed(2)}

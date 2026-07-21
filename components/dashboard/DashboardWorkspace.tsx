@@ -168,7 +168,7 @@ export default function DashboardWorkspace() {
       />
 
       <div className="portal-page relative min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="relative z-10 mx-auto w-full max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-screen-2xl px-3 py-5 sm:px-6 sm:py-8 lg:px-10 2xl:px-12">
           <DashboardBreadcrumb section={activeSection} />
 
           <div className="flex items-start justify-between gap-3 mb-6 sm:mb-8">
