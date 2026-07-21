@@ -6,7 +6,7 @@ import FullPageLoader from "../../components/FullPageLoader";
 import { useBlockAuthenticatedGuestPages } from "../../hooks/useBlockAuthenticatedGuestPages";
 import { useFormValidation } from "../../hooks/useFormValidation";
 import { validateLoginEmail } from "../../lib/validation";
-import FormField, { RequiredFieldsNote } from "../../components/FormField";
+import FormField from "../../components/FormField";
 import AuthSplitLayout from "../../components/AuthSplitLayout";
 import { API_URL } from "../../lib/api";
 import { readApiError } from "../../lib/apiError";
@@ -80,7 +80,6 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-              <RequiredFieldsNote className="-mt-1 mb-1" />
               <FormField label="Email Address" htmlFor="forgot-email" required error={form.errors.email}>
                 <input
                   id="forgot-email"

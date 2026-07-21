@@ -5,7 +5,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFormValidation } from "../../hooks/useFormValidation";
 import { validatePassword } from "../../lib/validation";
-import FormField, { RequiredFieldsNote } from "../../components/FormField";
+import FormField from "../../components/FormField";
 import AuthSplitLayout from "../../components/AuthSplitLayout";
 import { API_URL } from "../../lib/api";
 import { readApiError } from "../../lib/apiError";
@@ -200,8 +200,6 @@ function ResetPasswordForm() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-              <RequiredFieldsNote className="-mt-1 mb-1" />
-
               <FormField
                 label="New Password"
                 htmlFor="newPassword"

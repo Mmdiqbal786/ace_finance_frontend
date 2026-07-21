@@ -13,7 +13,7 @@ import { getDefaultDashboardRoute } from "../../lib/dashboard/routes";
 import { API_URL } from "../../lib/api";
 import { useFormValidation } from "../../hooks/useFormValidation";
 import { validatePassword } from "../../lib/validation";
-import FormField, { RequiredFieldsNote } from "../../components/FormField";
+import FormField from "../../components/FormField";
 import AuthSplitLayout from "../../components/AuthSplitLayout";
 import { readApiError } from "../../lib/apiError";
 
@@ -185,8 +185,6 @@ export default function SetPasswordPage() {
           </p>
 
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-            <RequiredFieldsNote className="-mt-1 mb-1" />
-
             <FormField
               label="Temporary Password"
               htmlFor="currentPassword"
