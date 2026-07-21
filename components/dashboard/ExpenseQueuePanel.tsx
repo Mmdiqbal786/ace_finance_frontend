@@ -149,49 +149,20 @@ export default function ExpenseQueuePanel({
                 <table className="af-table min-w-full">
                   <thead>
                     <tr>
-                      {variant === "approver" && (
-                        <>
-                          <th className="py-3 px-4">Request ID</th>
-                          <th className="py-3 px-4">Requester</th>
-                          <th className="py-3 px-4">Category</th>
-                          <th className="py-3 px-4">Project</th>
-                          <th className="py-3 px-4">Due Date</th>
-                          <th className="py-3 px-4">Date Submitted</th>
-                          <th className="py-3 px-4">Description</th>
-                          <th className="py-3 px-4 text-right">Amount</th>
-                          <th className="py-3 px-4">Actions</th>
-                        </>
-                      )}
-                      {variant === "processor" && (
-                        <>
-                          <th className="py-3 px-4">Request ID</th>
-                          <th className="py-3 px-4">Requester</th>
-                          <th className="py-3 px-4">Category</th>
-                          <th className="py-3 px-4">Project</th>
-                          <th className="py-3 px-4">Due Date</th>
-                          <th className="py-3 px-4">Approver&apos;s Notes</th>
-                          <th className="py-3 px-4 text-right">Amount</th>
-                          <th className="py-3 px-4 text-right">Total Paid</th>
-                          <th className="py-3 px-4 text-right">Remaining</th>
-                          <th className="py-3 px-4">Actions</th>
-                        </>
-                      )}
-                      {variant === "tracker" && (
-                        <>
-                          <th className="py-2.5 px-3">ID</th>
-                          <th className="py-2.5 px-3">Requester</th>
-                          <th className="py-2.5 px-3">Category</th>
-                          <th className="py-2.5 px-3">Project</th>
-                          <th className="py-2.5 px-3">Due Date</th>
-                          <th className="py-2.5 px-3">Submission Date</th>
-                          <th className="py-2.5 px-3">Status</th>
-                          <th className="py-2.5 px-3">Change Request</th>
-                          <th className="py-2.5 px-3 text-right">Amount</th>
-                          <th className="py-2.5 px-3 text-right">Paid</th>
-                          <th className="py-2.5 px-3 text-right">Remaining</th>
-                          <th className="py-2.5 px-3">Action</th>
-                        </>
-                      )}
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>ID</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Requester</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Category</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Project</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Submission Date</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Invoice Number</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Invoice Date</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Due Date</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Status</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Change Request</th>
+                      <th className={`${isTracker ? "py-2.5 px-3" : "py-3 px-4"} text-right`}>Amount</th>
+                      <th className={`${isTracker ? "py-2.5 px-3" : "py-3 px-4"} text-right`}>Paid</th>
+                      <th className={`${isTracker ? "py-2.5 px-3" : "py-3 px-4"} text-right`}>Remaining</th>
+                      <th className={isTracker ? "py-2.5 px-3" : "py-3 px-4"}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -262,70 +233,6 @@ function ExpenseQueueRow({
     />
   );
 
-  if (variant === "approver") {
-    return (
-      <tr className="hover:bg-slate-50 transition-colors">
-        <td className={`${cellPad} font-mono text-sm text-[var(--af-accent)] font-bold`}>{e.id}</td>
-        <td className={cellPad}>
-          <div className="font-semibold text-slate-900">{e.requesterName}</div>
-          <div className="text-xs text-slate-700">{e.requesterEmail}</div>
-        </td>
-        <td className={cellPad}>
-          <span className="font-medium">{e.category}</span>
-        </td>
-        <td className={`${cellPad} text-sm text-slate-700`}>{e.project || "—"}</td>
-        <td className={cellPad}>
-          <DueDateBadge dueDate={e.dueDate} status={e.status} amount={e.amount} paidAmount={e.paidAmount} />
-        </td>
-        <td className={`${cellPad} text-slate-600 text-xs`}>
-          {new Date(e.submittedAt).toLocaleDateString()}
-        </td>
-        <td className={`${cellPad} max-w-xs truncate text-xs text-slate-700`} title={e.description}>
-          {e.description}
-        </td>
-        <td className={`${cellPad} text-right font-bold text-slate-900`}>
-          ${e.amount.toFixed(2)}
-        </td>
-        <td className={cellPad}>{actions}</td>
-      </tr>
-    );
-  }
-
-  if (variant === "processor") {
-    return (
-      <tr className="hover:bg-slate-50 transition-colors">
-        <td className={`${cellPad} font-mono text-sm text-[var(--af-accent)] font-bold`}>{e.id}</td>
-        <td className={cellPad}>
-          <div className="font-semibold text-slate-900">{e.requesterName}</div>
-          <div className="text-xs text-slate-700">{e.requesterEmail}</div>
-        </td>
-        <td className={cellPad}>
-          <span className="font-medium">{e.category}</span>
-        </td>
-        <td className={`${cellPad} text-sm text-slate-700`}>{e.project || "—"}</td>
-        <td className={cellPad}>
-          <DueDateBadge dueDate={e.dueDate} status={e.status} amount={e.amount} paidAmount={e.paidAmount} />
-        </td>
-        <td
-          className={`${cellPad} max-w-xs truncate text-xs text-[var(--af-accent)] italic`}
-          title={e.approverNotes}
-        >
-          &quot;{e.approverNotes || "No notes written."}&quot;
-        </td>
-        <td className={`${cellPad} text-right font-bold text-slate-900`}>
-          ${e.amount.toFixed(2)}
-        </td>
-        <td className={`${cellPad} text-right font-semibold text-emerald-700`}>
-          ${getPaidAmount(e).toFixed(2)}
-        </td>
-        <td className={`${cellPad} text-right font-semibold text-amber-700`}>
-          ${getRemainingAmount(e).toFixed(2)}
-        </td>
-        <td className={cellPad}>{actions}</td>
-      </tr>
-    );
-  }
-
   return (
     <tr className="hover:bg-slate-50 transition-colors">
       <td className={`${cellPad} font-mono text-sm text-[var(--af-accent)] font-bold`}>{e.id}</td>
@@ -337,11 +244,17 @@ function ExpenseQueueRow({
         <span>{e.category}</span>
       </td>
       <td className={`${cellPad} text-xs text-slate-700`}>{e.project || "—"}</td>
-      <td className={cellPad}>
-        <DueDateBadge dueDate={e.dueDate} status={e.status} amount={e.amount} paidAmount={e.paidAmount} />
-      </td>
       <td className={`${cellPad} text-xs text-slate-700`}>
         {new Date(e.submittedAt).toLocaleDateString()}
+      </td>
+      <td className={`${cellPad} text-xs text-slate-700`}>
+        {e.invoiceNumber?.trim() || "—"}
+      </td>
+      <td className={`${cellPad} text-xs text-slate-700`}>
+        {e.invoiceDate ? new Date(e.invoiceDate).toLocaleDateString() : "—"}
+      </td>
+      <td className={cellPad}>
+        <DueDateBadge dueDate={e.dueDate} status={e.status} amount={e.amount} paidAmount={e.paidAmount} />
       </td>
       <td className={cellPad}>
         <StatusBadge status={e.status} className="text-xs py-0.5" />
