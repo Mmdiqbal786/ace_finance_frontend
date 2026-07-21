@@ -26,6 +26,8 @@ export type ExpenseRequestField =
   | "dueDate"
   | "project"
   | "category"
+  | "invoiceNumber"
+  | "invoiceDate"
   | "description";
 
 export interface ExpenseCatalogOption {
@@ -45,6 +47,8 @@ export interface ExpenseRequestValues {
   dueDate: string;
   project: string;
   category: string;
+  invoiceNumber: string;
+  invoiceDate: string;
   description: string;
 }
 
@@ -64,6 +68,8 @@ interface ExpenseRequestFieldsProps {
   showRequiredNote?: boolean;
   descriptionRows?: number;
   emailReadOnly?: boolean;
+  /** Hide date picker; value is set automatically (e.g. today on submit). */
+  hideExpenseDate?: boolean;
 }
 
 export function validatorsForExpenseRequest(
@@ -91,6 +97,12 @@ export function validatorsForExpenseRequest(
     amount: () => validateAmount(values.amount),
     date: () => validateExpenseDate(values.date),
     dueDate: () => validateDueDate(values.dueDate, values.date),
+    invoiceNumber: () => "",
+    invoiceDate: () => {
+      if (!values.invoiceDate) return "";
+      if (values.invoiceDate > todayIso()) return "Invoice date cannot be in the future.";
+      return "";
+    },
     project: () => {
       const base = validateRequiredSelect(values.project, "project");
       if (base) return base;
@@ -133,6 +145,7 @@ export default function ExpenseRequestFields({
   showRequiredNote = true,
   descriptionRows = 4,
   emailReadOnly = false,
+  hideExpenseDate = false,
 }: ExpenseRequestFieldsProps) {
   const inputCls = compact ? "af-input af-input-sm" : "af-input";
   const selectCls = compact
@@ -304,6 +317,80 @@ export default function ExpenseRequestFields({
           </select>
         </FormField>
 
+        <FormField label="Invoice Number" htmlFor="invoiceNumber" error={errors.invoiceNumber}>
+          <input
+            type="text"
+            id="invoiceNumber"
+            value={values.invoiceNumber}
+            onChange={set("invoiceNumber")}
+            maxLength={100}
+            placeholder={compact ? undefined : "Optional"}
+            className={fieldClass(inputCls, "invoiceNumber")}
+            aria-invalid={Boolean(errors.invoiceNumber)}
+          />
+        </FormField>
+
+        <FormField label="Invoice Date" htmlFor="invoiceDate" error={errors.invoiceDate}>
+          <input
+            type="date"
+            id="invoiceDate"
+            value={values.invoiceDate}
+            onChange={set("invoiceDate")}
+            onBlur={() =>
+              onBlurField(
+                "invoiceDate",
+                values.invoiceDate && values.invoiceDate > todayIso()
+                  ? "Invoice date cannot be in the future."
+                  : ""
+              )
+            }
+            max={todayIso()}
+            className={fieldClass(inputCls, "invoiceDate")}
+            aria-invalid={Boolean(errors.invoiceDate)}
+          />
+        </FormField>
+
+        {!hideExpenseDate && (
+          <FormField label="Expense Date" htmlFor="date" required error={errors.date}>
+            <input
+              type="date"
+              id="date"
+              value={values.date}
+              onChange={set("date")}
+              onBlur={() => onBlurField("date", validateExpenseDate(values.date))}
+              max={todayIso()}
+              min={daysAgoIso(365)}
+              className={fieldClass(inputCls, "date")}
+              aria-invalid={Boolean(errors.date)}
+            />
+          </FormField>
+        )}
+
+        <FormField
+          label="Due Date"
+          htmlFor="dueDate"
+          required
+          error={errors.dueDate}
+          hint={compact ? undefined : "When payment is due"}
+        >
+          <input
+            type="date"
+            id="dueDate"
+            value={values.dueDate}
+            onChange={set("dueDate")}
+            onBlur={() =>
+              onBlurField(
+                "dueDate",
+                validateDueDate(values.dueDate, values.date || todayIso())
+              )
+            }
+            min={values.date || todayIso()}
+            max={daysFromNowIso(365 * 2)}
+            className={fieldClass(inputCls, "dueDate")}
+            aria-invalid={Boolean(errors.dueDate)}
+          />
+        </FormField>
+
         <FormField
           label={`Amount (${currency})`}
           htmlFor="amount"
@@ -322,44 +409,6 @@ export default function ExpenseRequestFields({
             className={fieldClass(inputCls, "amount")}
             aria-invalid={Boolean(errors.amount)}
             disabled={!values.country}
-          />
-        </FormField>
-      </div>
-
-      <div className={`grid grid-cols-1 ${compact ? "sm:grid-cols-2 gap-3" : "sm:grid-cols-2 gap-4"}`}>
-        <FormField label="Expense Date" htmlFor="date" required error={errors.date}>
-          <input
-            type="date"
-            id="date"
-            value={values.date}
-            onChange={set("date")}
-            onBlur={() => onBlurField("date", validateExpenseDate(values.date))}
-            max={todayIso()}
-            min={daysAgoIso(365)}
-            className={fieldClass(inputCls, "date")}
-            aria-invalid={Boolean(errors.date)}
-          />
-        </FormField>
-
-        <FormField
-          label="Due Date"
-          htmlFor="dueDate"
-          required
-          error={errors.dueDate}
-          hint={compact ? undefined : "When payment is due"}
-        >
-          <input
-            type="date"
-            id="dueDate"
-            value={values.dueDate}
-            onChange={set("dueDate")}
-            onBlur={() =>
-              onBlurField("dueDate", validateDueDate(values.dueDate, values.date))
-            }
-            min={values.date || daysAgoIso(365)}
-            max={daysFromNowIso(365 * 2)}
-            className={fieldClass(inputCls, "dueDate")}
-            aria-invalid={Boolean(errors.dueDate)}
           />
         </FormField>
       </div>

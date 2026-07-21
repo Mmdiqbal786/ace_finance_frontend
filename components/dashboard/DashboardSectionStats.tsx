@@ -49,6 +49,7 @@ export default function DashboardSectionStats({
           value={`$${pendingApproverAmount.toFixed(2)}`}
           subtext="Total awaiting sign-off"
           emoji="💵"
+          valueColor="text-orange-500"
         />
         <StatCard
           title="Rejected (All Time)"
@@ -76,6 +77,7 @@ export default function DashboardSectionStats({
           value={`$${pendingProcessorAmount.toFixed(2)}`}
           subtext="Total ready for release"
           emoji="💵"
+          valueColor="text-orange-500"
         />
         <StatCard
           title="Paid (All Time)"
@@ -178,6 +180,7 @@ export default function DashboardSectionStats({
           value={`$${stats.totalRequestedAmount.toFixed(2)}`}
           subtext="Requested amount"
           emoji="💵"
+          valueColor="text-orange-500"
         />
         <StatCard
           title="Total Disbursed"

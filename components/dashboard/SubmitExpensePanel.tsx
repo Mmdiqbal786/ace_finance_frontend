@@ -45,6 +45,8 @@ function emptyValues(user: AuthUser): ExpenseRequestValues {
     dueDate: "",
     project: "",
     category: "",
+    invoiceNumber: "",
+    invoiceDate: "",
     description: "",
   };
 }
@@ -106,7 +108,9 @@ export default function SubmitExpensePanel({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validators = validatorsForExpenseRequest(values, { categories, projects, countries });
+    const expenseDate = todayIso();
+    const submitValues = { ...values, date: expenseDate };
+    const validators = validatorsForExpenseRequest(submitValues, { categories, projects, countries });
     const fieldsOk = form.validateAll(validators);
     const invoiceMsg = validateInvoiceFile(invoiceFile);
     setInvoiceError(invoiceMsg);
@@ -128,8 +132,10 @@ export default function SubmitExpensePanel({
       formData.append("category", values.category);
       formData.append("project", values.project);
       formData.append("description", values.description.trim());
-      formData.append("date", values.date);
+      formData.append("date", expenseDate);
       formData.append("dueDate", values.dueDate);
+      if (values.invoiceNumber.trim()) formData.append("invoiceNumber", values.invoiceNumber.trim());
+      if (values.invoiceDate) formData.append("invoiceDate", values.invoiceDate);
       formData.append("invoice", invoiceFile as File);
 
       const response = await fetch(`${API_URL}/expenses`, {
@@ -212,9 +218,6 @@ export default function SubmitExpensePanel({
         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
           <span>📄</span> New Expense Request
         </h3>
-        <p className="text-xs text-slate-600 mt-1">
-          Fields marked with <span className="text-rose-500 font-bold">*</span> are required.
-        </p>
       </div>
 
       {catalogError && (
@@ -243,11 +246,12 @@ export default function SubmitExpensePanel({
           countries={countries}
           catalogLoading={catalogLoading}
           emailReadOnly
+          hideExpenseDate
           showRequiredNote={false}
         />
 
         <FormField
-          label="Invoice Attachment"
+          label="Attachment"
           htmlFor="invoice"
           required
           error={invoiceError}

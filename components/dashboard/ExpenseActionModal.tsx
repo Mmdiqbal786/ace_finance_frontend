@@ -110,6 +110,8 @@ const emptyEditValues = (): ExpenseRequestValues => ({
   dueDate: "",
   project: "",
   category: "",
+  invoiceNumber: "",
+  invoiceDate: "",
   description: "",
 });
 
@@ -254,6 +256,8 @@ export default function ExpenseActionModal({
         dueDate: expense.dueDate || "",
         project: expense.project || "",
         category: expense.category,
+        invoiceNumber: expense.invoiceNumber || "",
+        invoiceDate: expense.invoiceDate || "",
         description: expense.description,
       });
     }
@@ -320,6 +324,8 @@ export default function ExpenseActionModal({
             description: editValues.description.trim(),
             date: editValues.date,
             dueDate: editValues.dueDate,
+            invoiceNumber: editValues.invoiceNumber.trim() || "",
+            invoiceDate: editValues.invoiceDate || "",
           }),
         });
 
@@ -611,6 +617,20 @@ export default function ExpenseActionModal({
                 <span className="text-slate-700">Expense Date:</span>
                 <span>{new Date(expense.date).toLocaleDateString()}</span>
               </div>
+              {expense.invoiceNumber?.trim() && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Invoice Number:</span>
+                  <span className="font-semibold text-slate-800">
+                    {expense.invoiceNumber.trim()}
+                  </span>
+                </div>
+              )}
+              {expense.invoiceDate && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Invoice Date:</span>
+                  <span>{new Date(expense.invoiceDate).toLocaleDateString()}</span>
+                </div>
+              )}
               {expense.dueDate && (
                 <div className="flex justify-between items-center">
                   <span className="text-slate-700">Due Date:</span>
@@ -625,7 +645,7 @@ export default function ExpenseActionModal({
               </div>
 
               <div className="flex justify-between items-center gap-3">
-                <span className="text-slate-700 shrink-0">Invoice:</span>
+                <span className="text-slate-700 shrink-0">Attachment:</span>
                 {expense.invoiceOriginalName || expense.invoiceFileName ? (
                   <div className="flex items-center justify-end gap-2 min-w-0 max-w-[70%]">
                     <button

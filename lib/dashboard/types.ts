@@ -34,6 +34,8 @@ export interface Expense {
   description: string;
   date: string;
   dueDate?: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
   status: string;
   submittedAt: string;
   approverNotes?: string;
