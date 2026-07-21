@@ -64,6 +64,8 @@ const emptyFormValues = (date = ""): ExpenseRequestValues => ({
   dueDate: "",
   project: "",
   category: "",
+  invoiceNumber: "",
+  invoiceDate: "",
   description: "",
 });
 
