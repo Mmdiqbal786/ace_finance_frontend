@@ -11,6 +11,14 @@ import {
 } from "../../lib/docs-guide";
 import "./docs-guide.css";
 
+/** Bump when screenshots are refreshed so browsers skip stale cached PNGs. */
+const SCREENSHOT_CACHE_BUST = "20260721f";
+
+const docsBodyHtml = DOCS_GUIDE_BODY_HTML.replace(
+  /src="(\/docs-screenshots\/[^"?]+\.png)(?:\?[^"]*)?"/g,
+  `src="$1?v=${SCREENSHOT_CACHE_BUST}"`
+);
+
 export default function DocsGuideContent() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [copying, setCopying] = useState(false);
@@ -63,7 +71,7 @@ export default function DocsGuideContent() {
           ref={contentRef}
           id="docs-content"
           className="docs-guide-body min-w-0 overflow-hidden rounded-xl border border-slate-400 bg-white shadow-xl sm:rounded-2xl"
-          dangerouslySetInnerHTML={{ __html: DOCS_GUIDE_BODY_HTML }}
+          dangerouslySetInnerHTML={{ __html: docsBodyHtml }}
         />
       </div>
     </div>

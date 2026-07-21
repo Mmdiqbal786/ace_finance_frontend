@@ -163,7 +163,7 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
 
         <div class="block info">
           <h4>Submit Expense · <code>/dashboard/submit-expense/</code></h4>
-          Country (currency) · Project · Category · Amount · dates · description · invoice → Submit.<br/>
+          Country (currency) · Project · Category · optional invoice number/date · Due Date · Amount · description · attachment → Submit.<br/>
           System stores USD + FX rate/date → status Pending Approver.
         </div>
         <figure class="shot">
@@ -173,7 +173,7 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         <div class="block ok"><h4>Success</h4>Toast: <strong>Expense request submitted.</strong></div>
         <div class="block err">
           <h4>Errors</h4>
-          Required selects · amount rules · date rules · description ≤500 · Invoice required · PDF/image max 5 MB · Failed to submit…
+          Required selects · amount rules · date rules · description ≤500 · PDF/image max 5 MB · Failed to submit…
         </div>
         <figure class="shot">
           <img src="/docs-screenshots/41-submit-validation-errors.png" alt="Submit validation errors" loading="lazy" />
@@ -332,6 +332,10 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/38-export-clicked-toast.png" alt="Excel export toast" loading="lazy" />
           <figcaption>After Export — toast / download feedback</figcaption>
         </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/38b-export-workbook-example.png" alt="Exported Excel workbook opened in Microsoft Excel" loading="lazy" />
+          <figcaption>Real Excel export — AceolutionFinance_Report opened in Microsoft Excel (Expense Report · Change Requests · Workflow History · Payment History)</figcaption>
+        </figure>
         <div class="block ok">
           <h4>Success</h4>
           Toast: <strong>Report downloaded.</strong><br/>
@@ -429,7 +433,7 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
             <tr><td>Reject (approver/processor)</td><td>Requester</td></tr>
             <tr><td>Request changes / return to approver</td><td>Requester or Approvers</td></tr>
             <tr><td>Fully paid</td><td>Requester</td></tr>
-            <tr><td>Due tomorrow (cron)</td><td>Approvers / Processors</td></tr>
+            <tr><td>Due in 3 days / due tomorrow (daily cron)</td><td>Approvers / Processors</td></tr>
             <tr><td>Welcome / reset / disable TOTP</td><td>That user</td></tr>
           </table>
         </div>
