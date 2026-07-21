@@ -79,8 +79,11 @@ export default function Header() {
     path === "/forgot-password" ||
     path === "/reset-password" ||
     path === "/set-password";
+  const isGuidePage = path === "/demo-guide" || path === "/docs-guide";
   const showHeaderSignIn = mounted && !user && !isDashboard && !isAuthGuestPage;
   const showMarketingNav = mounted && !user && isHomePage;
+
+  if (isGuidePage) return null;
 
   return (
     <header className={`sticky top-0 z-50 shrink-0 w-full border-b border-slate-200 bg-white ${isDashboard ? "" : "bg-white/90 backdrop-blur-md"}`}>

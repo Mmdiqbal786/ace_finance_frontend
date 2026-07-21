@@ -8,8 +8,9 @@ export default function Footer() {
   const isDashboard = pathname?.startsWith("/dashboard");
   const path = pathname?.replace(/\/$/, "") || "";
   const isHome = path === "" || path === "/";
+  const isGuidePage = path === "/demo-guide" || path === "/docs-guide";
 
-  if (isDashboard) return null;
+  if (isDashboard || isGuidePage) return null;
 
   if (isHome) {
     return (
