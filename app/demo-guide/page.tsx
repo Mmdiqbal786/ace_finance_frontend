@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import DemoGuideContent from "../../components/demo-guide/DemoGuideContent";
 
 const GATE_KEY = "ace_demo_guide_unlocked";
 const PASSWORD_HASH =
@@ -32,12 +33,6 @@ export default function DemoGuideGatePage() {
     setChecking(false);
   }, []);
 
-  useEffect(() => {
-    if (unlocked) {
-      window.location.replace("/demo-access-email.html");
-    }
-  }, [unlocked]);
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
@@ -54,14 +49,16 @@ export default function DemoGuideGatePage() {
     setUnlocked(true);
   }
 
-  if (checking || unlocked) {
+  if (checking) {
     return (
       <div className="portal-page relative flex min-h-[70vh] flex-1 items-center justify-center p-4">
-        <p className="text-sm font-semibold text-slate-600">
-          {unlocked ? "Opening demo guide…" : "Loading…"}
-        </p>
+        <p className="text-sm font-semibold text-slate-600">Loading…</p>
       </div>
     );
+  }
+
+  if (unlocked) {
+    return <DemoGuideContent />;
   }
 
   return (

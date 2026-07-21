@@ -73,6 +73,8 @@ const EXPENSE_COLUMNS: ColDef<Expense>[] = [
   { header: "Request ID", width: 180, get: (e) => e.id },
   { header: "Requester Name", width: 130, get: (e) => e.requesterName },
   { header: "Requester Email", width: 170, get: (e) => e.requesterEmail },
+  { header: "Project", width: 100, get: (e) => e.project || "" },
+  { header: "Category", width: 100, get: (e) => e.category },
   { header: "Country", width: 110, get: (e) => e.country || "" },
   { header: "Currency", width: 75, align: "Center", get: (e) => (e.currency || "").toUpperCase() },
   {
@@ -126,8 +128,6 @@ const EXPENSE_COLUMNS: ColDef<Expense>[] = [
     wrap: true,
     get: (e) => formatPaymentHistorySummary(getExpensePaymentHistory(e)),
   },
-  { header: "Category", width: 100, get: (e) => e.category },
-  { header: "Project", width: 100, get: (e) => e.project || "" },
   { header: "Description", width: 220, get: (e) => e.description || "" },
   { header: "Expense Date", width: 105, get: (e) => formatDate(e.date) },
   { header: "Invoice Number", width: 120, get: (e) => e.invoiceNumber || "" },

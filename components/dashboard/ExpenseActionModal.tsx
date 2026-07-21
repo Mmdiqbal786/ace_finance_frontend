@@ -570,6 +570,14 @@ export default function ExpenseActionModal({
                 </span>
               </div>
               <div className="flex justify-between items-center">
+                <span className="text-slate-700">Project:</span>
+                <span className="font-semibold text-slate-800">{expense.project || "—"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Category:</span>
+                <span>{expense.category}</span>
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-slate-700">Amount (USD):</span>
                 <span className="font-extrabold text-slate-900 text-sm">
                   ${expense.amount.toFixed(2)}
@@ -605,14 +613,6 @@ export default function ExpenseActionModal({
                   </span>
                 </div>
               )}
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">Category:</span>
-                <span>{expense.category}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">Project:</span>
-                <span className="font-semibold text-slate-800">{expense.project || "—"}</span>
-              </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-700">Expense Date:</span>
                 <span>{new Date(expense.date).toLocaleDateString()}</span>

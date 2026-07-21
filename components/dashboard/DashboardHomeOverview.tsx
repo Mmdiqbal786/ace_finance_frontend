@@ -10,6 +10,7 @@ import {
   getMonthOverMonthChange,
 } from "../../lib/dashboard/monthlyStats";
 import { CATEGORY_COLORS } from "../../lib/dashboard/constants";
+import { todayIso } from "../../lib/validation";
 
 interface DashboardHomeOverviewProps {
   expenses: Expense[];
@@ -27,6 +28,14 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
   const monthlyTrend = useMemo(() => buildMonthlyStats(expenses, 6), [expenses]);
   const monthCategories = useMemo(() => getCurrentMonthByCategory(expenses), [expenses]);
   const momChange = useMemo(() => getMonthOverMonthChange(expenses), [expenses]);
+  const dueTodayApprovalCount = useMemo(() => {
+    const today = todayIso();
+    return expenses.filter(
+      (expense) =>
+        expense.status === "PENDING_APPROVER" &&
+        expense.dueDate?.slice(0, 10) === today
+    ).length;
+  }, [expenses]);
 
   const maxMonthlyValue = Math.max(
     ...monthlyTrend.map((month) => Math.max(month.requested, month.paid)),
@@ -35,7 +44,7 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
           title="Requested This Month"
           value={`$${currentMonth.requested.toFixed(2)}`}
@@ -51,11 +60,18 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
           valueColor="text-emerald-600"
         />
         <StatCard
-          title="Still Pending"
+          title="To Be Approved"
           value={String(currentMonth.pending)}
           subtext="Awaiting approval or payout"
           emoji="⏳"
           valueColor="text-amber-600"
+        />
+        <StatCard
+          title="Due Today"
+          value={String(dueTodayApprovalCount)}
+          subtext="Awaiting approval today"
+          emoji="📅"
+          valueColor="text-orange-600"
         />
         <StatCard
           title="Rejected This Month"
