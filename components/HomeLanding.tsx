@@ -69,7 +69,7 @@ const VALUES = [
     ),
   },
   {
-    title: "Client-Centric Roles",
+    title: "Role-Based Access",
     body: "Requesters, approvers, processors, and admins each see the right queues.",
     accent: "#86efac",
     icon: (
@@ -288,7 +288,7 @@ export default function HomeLanding() {
           <div className="max-w-xl">
             <p className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.22em] text-teal-600">
               <span className="h-[3px] w-7 rounded-full bg-teal-500" />
-              Digital solutions
+              Internal expense tool
             </p>
 
             <h1 className="mt-4 text-[clamp(2.15rem,5.2vw,3.4rem)] font-extrabold leading-[1.1] tracking-tight text-[#0f172a]">
@@ -297,7 +297,7 @@ export default function HomeLanding() {
             </h1>
 
             <p className="mt-5 max-w-md text-[15px] leading-relaxed text-slate-500 sm:text-base">
-              Custom expense workflows that drive growth, efficiency, and innovation — approvals, disbursements, and audit trails in one place.
+              Aceolution&apos;s internal platform for expense requests, approvals, disbursements, and audit trails — built for your team.
             </p>
 
             <div className="mt-8">
@@ -305,7 +305,7 @@ export default function HomeLanding() {
                 href="/login"
                 className="group inline-flex h-[52px] items-center gap-3 rounded-full bg-[#0a1628] pl-7 pr-1.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-[#132338]"
               >
-                Let&apos;s Build Together
+                Sign In
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-400 text-[#0a1628] transition-transform group-hover:translate-x-0.5">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5-5 5M6 12h12" />
@@ -359,9 +359,9 @@ export default function HomeLanding() {
         <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
           <Reveal className="!h-auto">
             <div className="text-center">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-teal-500">What we do</p>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-teal-500">Platform features</p>
               <h2 className="mt-3 text-[clamp(1.5rem,3.5vw,2rem)] font-extrabold tracking-tight text-[#0f172a]">
-                Our Core Services
+                Core Capabilities
               </h2>
             </div>
           </Reveal>
@@ -398,15 +398,15 @@ export default function HomeLanding() {
               </span>
 
               <div className="relative z-10 min-w-0 flex-1 sm:pr-32">
-                <h2 className="text-[clamp(1.25rem,3vw,1.65rem)] font-extrabold text-white">Have an Idea?</h2>
-                <p className="mt-1 text-sm text-white/90">Let&apos;s turn it into something amazing.</p>
+                <h2 className="text-[clamp(1.25rem,3vw,1.65rem)] font-extrabold text-white">Ready to continue?</h2>
+                <p className="mt-1 text-sm text-white/90">Sign in to submit, approve, or process expenses.</p>
               </div>
 
               <Link
                 href="/login"
                 className="group relative z-10 inline-flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-extrabold text-[#0a1628] shadow sm:w-auto"
               >
-                Start Your Project
+                Sign In
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0a1628] text-white transition-transform group-hover:translate-x-0.5">
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5-5 5M6 12h12" />
