@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useFormValidation } from "../../hooks/useFormValidation";
 import { validatePassword } from "../../lib/validation";
 import FormField, { RequiredFieldsNote } from "../../components/FormField";
+import AuthSplitLayout from "../../components/AuthSplitLayout";
 import { API_URL } from "../../lib/api";
 import { readApiError } from "../../lib/apiError";
 
@@ -165,9 +166,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="portal-page login-page relative flex flex-1 items-center justify-center p-4 py-6 sm:py-8">
-      <div className="relative z-10 w-full max-w-[420px]">
-        <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-8 shadow-lg">
+    <AuthSplitLayout>
           <h1 className="text-2xl font-extrabold text-slate-900">
             New <span className="af-title-accent">Password</span>
           </h1>
@@ -264,9 +263,7 @@ function ResetPasswordForm() {
               </button>
             </form>
           )}
-        </div>
-      </div>
-    </div>
+    </AuthSplitLayout>
   );
 }
 
