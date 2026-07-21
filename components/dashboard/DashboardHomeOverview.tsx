@@ -41,6 +41,7 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
           value={`$${currentMonth.requested.toFixed(2)}`}
           subtext={`${currentMonth.submissions} submissions · ${formatChange(momChange.requestedChange)}`}
           emoji="💵"
+          valueColor="text-orange-500"
         />
         <StatCard
           title="Paid This Month"
