@@ -20,8 +20,8 @@ import {
 import { isFullyPaid } from "../../lib/dashboard/payment";
 import {
   canAccessSection,
-  getDefaultDashboardRoute,
   pathnameToSection,
+  resolveAccessibleDashboardPath,
 } from "../../lib/dashboard/routes";
 import DashboardHomeOverview from "./DashboardHomeOverview";
 import DashboardSectionStats from "./DashboardSectionStats";
@@ -72,9 +72,12 @@ export default function DashboardWorkspace() {
   useEffect(() => {
     if (!currentUser) return;
     if (!canAccessSection(currentUser.role, activeSection)) {
-      window.location.href = getDefaultDashboardRoute(currentUser.role);
+      window.location.href = resolveAccessibleDashboardPath(
+        currentUser.role,
+        pathname
+      );
     }
-  }, [currentUser, activeSection]);
+  }, [currentUser, activeSection, pathname]);
 
   const fetchData = async () => {
     if (!currentUser) return;

@@ -1,10 +1,11 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import FullPageLoader from '../../components/FullPageLoader';
 import { useBlockAuthenticatedGuestPages } from '../../hooks/useBlockAuthenticatedGuestPages';
 import { setAuth } from '../../lib/auth';
-import { getDefaultDashboardRoute } from '../../lib/dashboard/routes';
+import { resolveAccessibleDashboardPath } from '../../lib/dashboard/routes';
 import { API_URL } from '../../lib/api';
 import FormField from '../../components/FormField';
 import AuthSplitLayout from '../../components/AuthSplitLayout';
@@ -34,8 +35,10 @@ type ChallengeState = {
   message: string;
 };
 
-export default function LoginPage() {
-  const guestAllowed = useBlockAuthenticatedGuestPages();
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next");
+  const guestAllowed = useBlockAuthenticatedGuestPages(nextPath);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,6 +49,10 @@ export default function LoginPage() {
   const [otpMethod, setOtpMethod] = useState<TwoFactorMethod>('email');
   const [resendCooldown, setResendCooldown] = useState(0);
   const form = useFormValidation<LoginField>();
+
+  function goAfterLogin(role: Parameters<typeof resolveAccessibleDashboardPath>[0]) {
+    window.location.href = resolveAccessibleDashboardPath(role, nextPath);
+  }
 
   const showFullPageLoader = !guestAllowed;
   const loaderMessage = !guestAllowed
@@ -124,7 +131,7 @@ export default function LoginPage() {
         if (data.user.mustChangePassword) {
           window.location.href = "/set-password/";
         } else {
-          window.location.href = getDefaultDashboardRoute(data.user.role);
+          goAfterLogin(data.user.role);
         }
         return;
       }
@@ -179,7 +186,7 @@ export default function LoginPage() {
       if (data.user.mustChangePassword) {
         window.location.href = "/set-password/";
       } else {
-        window.location.href = getDefaultDashboardRoute(data.user.role);
+        goAfterLogin(data.user.role);
       }
       return;
     } catch (err: any) {
@@ -456,5 +463,13 @@ export default function LoginPage() {
     </AuthSplitLayout>
       )}
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<FullPageLoader message="Loading Aceolution Finance..." />}>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -28,8 +28,49 @@ export const DASHBOARD_SECTION_PATHS: Record<Exclude<DashboardSection, "home">, 
   profile: DASHBOARD_ROUTES.profile,
 };
 
-export function getDefaultDashboardRoute(_role: AuthUser["role"]): string {
+export function getDefaultDashboardRoute(role: AuthUser["role"]): string {
+  if (role === "REQUESTER") return DASHBOARD_ROUTES.myRequests;
   return DASHBOARD_ROUTES.home;
+}
+
+/** Only allow same-origin dashboard deep links from `?next=`. */
+export function isSafeInternalPath(path: string | null | undefined): path is string {
+  if (!path) return false;
+  if (!path.startsWith("/dashboard")) return false;
+  if (path.startsWith("//")) return false;
+  if (path.includes("://")) return false;
+  return true;
+}
+
+function normalizeDashboardPath(path: string): string {
+  const trimmed = path.trim();
+  if (trimmed === "/dashboard" || trimmed === "/dashboard/") return DASHBOARD_ROUTES.home;
+  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
+}
+
+/**
+ * Resolve an intended dashboard path for a role.
+ * If the role cannot access it, fall back to a safe role default.
+ */
+export function resolveAccessibleDashboardPath(
+  role: AuthUser["role"],
+  intendedPath?: string | null
+): string {
+  const fallback =
+    role === "REQUESTER" ? DASHBOARD_ROUTES.myRequests : DASHBOARD_ROUTES.home;
+
+  if (!isSafeInternalPath(intendedPath)) {
+    return getDefaultDashboardRoute(role);
+  }
+
+  const path = normalizeDashboardPath(intendedPath);
+  const section = pathnameToSection(path);
+  if (canAccessSection(role, section)) {
+    if (section === "home") return DASHBOARD_ROUTES.home;
+    return DASHBOARD_SECTION_PATHS[section];
+  }
+
+  return fallback;
 }
 
 export function pathnameToSection(pathname: string | null): DashboardSection {
