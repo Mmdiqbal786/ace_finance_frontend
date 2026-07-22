@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import ExpenseRequestFields, {
   ExpenseRequestField,
   ExpenseRequestValues,
@@ -14,7 +13,6 @@ import { AuthUser } from "../../lib/auth";
 import { readApiError } from "../../lib/apiError";
 import { toast } from "../../lib/toast";
 import { todayIso } from "../../lib/validation";
-import { DASHBOARD_ROUTES } from "../../lib/dashboard/routes";
 import { CategoryItem, CountryItem, Expense, ProjectItem } from "../../lib/dashboard/types";
 
 interface SubmitExpensePanelProps {
@@ -76,7 +74,6 @@ export default function SubmitExpensePanel({
   const [invoiceError, setInvoiceError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [success, setSuccess] = useState<Expense | null>(null);
 
   useEffect(() => {
     setValues((prev) => ({
@@ -148,12 +145,15 @@ export default function SubmitExpensePanel({
       }
 
       const result = (await response.json()) as Expense;
-      setSuccess(result);
       setValues(emptyValues(currentUser));
       setInvoiceFile(null);
       setInvoiceError("");
       form.clearAll();
-      toast.success("Expense request submitted.");
+      toast.success("Expense request submitted.", {
+        sticky: true,
+        center: true,
+        detail: `Expense ID: ${result.id}`,
+      });
       onSubmitted?.();
     } catch (err: any) {
       setSubmitError(err.message || "Failed to submit expense request.");
@@ -162,52 +162,6 @@ export default function SubmitExpensePanel({
       setSubmitting(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="portal-card rounded-2xl shadow-xl p-6 sm:p-8 space-y-4 max-w-2xl">
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
-          <h3 className="text-sm font-bold text-emerald-800">Request submitted successfully</h3>
-          <p className="text-xs text-emerald-700 mt-1">
-            Your expense request is now awaiting manager approval.
-          </p>
-        </div>
-        <div className="text-sm space-y-2">
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-600">Request ID</span>
-            <span className="font-mono font-bold text-[var(--af-accent)]">{success.id}</span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-600">Amount (USD)</span>
-            <span className="font-semibold text-slate-900">${success.amount.toFixed(2)}</span>
-          </div>
-          {success.invoiceOriginalName && (
-            <div className="flex justify-between gap-4">
-              <span className="text-slate-600">Invoice</span>
-              <span className="font-semibold text-slate-800 truncate max-w-[60%]">
-                {success.invoiceOriginalName}
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 pt-2">
-          <Link
-            href={DASHBOARD_ROUTES.myRequests}
-            className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--af-navy)] px-4 text-sm font-semibold text-white hover:bg-[var(--af-navy-soft)] transition-colors"
-          >
-            View My Requests
-          </Link>
-          <button
-            type="button"
-            onClick={() => setSuccess(null)}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-          >
-            Submit Another
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const catalogError =
     !catalogLoading && (categories.length === 0 || projects.length === 0 || countries.length === 0);

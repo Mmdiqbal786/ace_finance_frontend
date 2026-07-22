@@ -25,11 +25,14 @@ export const DOCS_GUIDE_BODY_HTML = `
           <strong style="color:#0f172a;">Contents</strong><br/>
           <a href="#status">1. Status legend &amp; flow</a><br/>
           <a href="#login">2. All login possibilities</a><br/>
+          <a href="#login-2fa-methods" style="padding-left:12px;">2a. After password — Email code + Authenticator</a><br/>
+          <a href="#first-login-setup" style="padding-left:12px;">2b. First login — Create Password + Set up Authenticator</a><br/>
           <a href="#requester">3. Requester pages (submit, track, edit)</a><br/>
           <a href="#approver">4. Approver — every action</a><br/>
           <a href="#processor">5. Processor — every action</a><br/>
           <a href="#analytics">6. Analytics, details &amp; Excel</a><br/>
           <a href="#profile">7. Profile, password &amp; Authenticator</a><br/>
+          <a href="#change-authenticator" style="padding-left:12px;">7a. Change authenticator app</a><br/>
           <a href="#admin">8. Admin pages</a><br/>
           <a href="#emails">9. Emails &amp; attachments</a><br/>
           <a href="#email-requester">9a. Requester emails (inbox screenshots)</a><br/>
@@ -66,7 +69,7 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
       <!-- 2 LOGIN -->
       <div class="pad-sm" id="login">
         <div class="section-title">2) All login possibilities</div>
-        <p class="meta">Path: <code>/login/</code> · Related: <code>/forgot-password/</code> · <code>/reset-password/</code> · <code>/set-password/</code></p>
+        <p class="meta">Path: <code>/login/</code> · Related: <code>/forgot-password/</code> · <code>/reset-password/</code> · <code>/set-password/</code> · <code>/setup-authenticator/</code></p>
 
         <figure class="shot">
           <img src="/docs-screenshots/01-landing.png" alt="Landing page" loading="lazy" />
@@ -79,19 +82,35 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         </figure>
 
         <div class="block info">
-          <h4>Login A — Requester / Approver / Processor (Email OTP)</h4>
+          <h4>Login A — Requester / Approver / Processor (Email OTP + Authenticator)</h4>
           1. Enter email + password → Continue<br/>
           2. App sends 6-digit code to email<br/>
-          3. Enter code → Verify &amp; Sign In → <code>/dashboard/</code>
+          3. On <strong>Verify Sign In</strong>, choose one method:<br/>
+          &nbsp;&nbsp;• <strong>Email code</strong> — code from inbox<br/>
+          &nbsp;&nbsp;• <strong>Authenticator</strong> — 6-digit code from the app (shown after authenticator is set up)<br/>
+          4. Verify &amp; Sign In<br/>
+          5. If first login after welcome email → <code>/set-password/</code> then <code>/setup-authenticator/</code><br/>
+          6. If authenticator not set yet → <code>/setup-authenticator/</code> (required)<br/>
+          7. Otherwise → role dashboard
+        </div>
+
+        <div class="block info" id="login-2fa-methods">
+          <h4>2a) After password — Email code + Authenticator tabs</h4>
+          When authenticator is enabled, Verify Sign In shows two options on the same screen:<br/>
+          <strong>Email code</strong> | <strong>Authenticator</strong> — use either one to finish sign-in (not both).
         </div>
         <figure class="shot">
           <img src="/docs-screenshots/05-login-otp-challenge.png" alt="Email OTP verify screen" loading="lazy" />
-          <figcaption>Login step 2 — Email OTP (Requester / Approver / Processor)</figcaption>
+          <figcaption>Login step 2 — Email code tab (Requester / Approver / Processor)</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/05c-login-authenticator-challenge.png" alt="Authenticator code verify screen" loading="lazy" />
+          <figcaption>Login step 2 — Authenticator tab (same screen; switch Email code ↔ Authenticator)</figcaption>
         </figure>
 
         <div class="block info">
           <h4>Login B — Admin (password only)</h4>
-          Admin has no email OTP by default. Password success goes straight to dashboard.
+          Admin has no email OTP by default. Password success goes straight to dashboard. Authenticator is optional for Admin.
         </div>
         <figure class="shot">
           <img src="/docs-screenshots/04-login-admin-dashboard.png" alt="Admin dashboard after login" loading="lazy" />
@@ -103,9 +122,29 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           If Admin enabled TOTP in Profile: after password, enter 6-digit authenticator code (no email OTP).
         </div>
 
+        <div class="block info" id="first-login-setup">
+          <h4>2b) First login after welcome email — Create Password + Set up Authenticator</h4>
+          Separate gated pages (not the verify tabs above):<br/>
+          <strong>1. Create Password</strong> (<code>/set-password/</code>) — replace temporary password<br/>
+          <strong>2. Set up Authenticator</strong> (<code>/setup-authenticator/</code>) — scan QR + confirm 6-digit code<br/>
+          Then the user reaches the dashboard. Authenticator is required for Requester / Approver / Processor.
+        </div>
+        <figure class="shot">
+          <img src="/docs-screenshots/email-requester-10-welcome.png" alt="Welcome email" loading="lazy" />
+          <figcaption>Welcome email — temporary password + sign-in link (starts the flow)</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/28-set-password-first-login.png" alt="First login set password" loading="lazy" />
+          <figcaption>Option / step 1 — Create Password (after welcome email / first login)</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/28c-setup-authenticator-required.png" alt="Required authenticator setup" loading="lazy" />
+          <figcaption>Option / step 2 — Set up Authenticator (required before dashboard)</figcaption>
+        </figure>
+
         <div class="block ok">
           <h4>Success</h4>
-          Token stored → land on <code>/dashboard/</code> (or <code>/set-password/</code> if must change password).
+          Token stored → <code>/set-password/</code> (if required) → <code>/setup-authenticator/</code> (non-admin without TOTP) → role dashboard.
         </div>
 
         <div class="block err">
@@ -115,7 +154,8 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           • We could not send the verification email…<br/>
           • Enter the 6-digit verification code.<br/>
           • Invalid or expired verification code.<br/>
-          • Verification session expired. Please sign in again.
+          • Verification session expired. Please sign in again.<br/>
+          • Invalid authenticator code (setup / login TOTP)
         </div>
 
         <figure class="shot">
@@ -139,14 +179,10 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/29b-reset-password-missing-token.png" alt="Reset password missing token" loading="lazy" />
           <figcaption>Reset password — missing token</figcaption>
         </figure>
-        <figure class="shot">
-          <img src="/docs-screenshots/28-set-password-first-login.png" alt="First login set password" loading="lazy" />
-          <figcaption>First-login Create Password (Admin-created users with temporary password)</figcaption>
-        </figure>
         <div class="block info">
-          <h4>Forgot / Reset / First-login set password</h4>
-          Reset link ~1 hour. New Admin-created users must set password on first login.<br/>
-          Success: “Your password has been updated…” / password changed → dashboard.<br/>
+          <h4>Forgot / Reset password</h4>
+          Reset link ~1 hour.<br/>
+          Success: “Your password has been updated…” / password changed → post-auth destination (authenticator setup if still required).<br/>
           Errors: invalid/expired link · password &lt; 8 chars · need letter+number · passwords do not match · current password incorrect · Enter the temporary password…
         </div>
       </div>
@@ -170,7 +206,7 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/08-submit-expense.png" alt="Submit expense form" loading="lazy" />
           <figcaption>Submit Expense form (real page)</figcaption>
         </figure>
-        <div class="block ok"><h4>Success</h4>Toast: <strong>Expense request submitted.</strong></div>
+        <div class="block ok"><h4>Success</h4>Centered sticky toast: <strong>Expense request submitted.</strong> + Expense ID — stays until Dismiss.</div>
         <div class="block err">
           <h4>Errors</h4>
           Required selects · amount rules · date rules · description ≤500 · PDF/image max 5 MB · Failed to submit…
@@ -347,10 +383,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
       <!-- 7 PROFILE -->
       <div class="pad-sm" id="profile">
         <div class="section-title">7) Profile, password &amp; Authenticator</div>
-        <p class="meta">Path: <code>/dashboard/profile/</code> · All roles</p>
+        <p class="meta">Path: <code>/dashboard/profile/</code> · All roles · Authenticator <strong>required</strong> for Requester / Approver / Processor · <strong>optional</strong> for Admin</p>
         <figure class="shot">
           <img src="/docs-screenshots/32-profile-full.png" alt="Profile page" loading="lazy" />
-          <figcaption>Profile — details, change password, authenticator</figcaption>
+          <figcaption>Profile — details, change password, authenticator (required for non-admin)</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/32d-profile-authenticator-enabled.png" alt="Authenticator enabled on profile" loading="lazy" />
+          <figcaption>Authenticator section — enabled + Change authenticator app</figcaption>
         </figure>
         <figure class="shot">
           <img src="/docs-screenshots/32b-profile-edit-mode.png" alt="Edit profile" loading="lazy" />
@@ -364,22 +404,47 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/32c-password-validation-errors.png" alt="Password validation" loading="lazy" />
           <figcaption>Change Password — validation errors</figcaption>
         </figure>
+
+        <div class="block info">
+          <h4>Authenticator — required (non-admin) / optional (Admin)</h4>
+          Non-admin must enroll after welcome email / login if missing (<code>/setup-authenticator/</code>).<br/>
+          Admin may enable from Profile. Non-admin cannot disable authenticator.
+        </div>
+        <figure class="shot">
+          <img src="/docs-screenshots/28c-setup-authenticator-required.png" alt="Setup authenticator page" loading="lazy" />
+          <figcaption>Setup Authenticator page — QR + Confirm &amp; Continue (gated before dashboard)</figcaption>
+        </figure>
         <figure class="shot">
           <img src="/docs-screenshots/33-totp-setup-qr.png" alt="Authenticator QR setup" loading="lazy" />
-          <figcaption>Authenticator setup — QR code + manual secret + Confirm &amp; Enable</figcaption>
+          <figcaption>Authenticator QR + manual secret (setup page or Profile first-time enable)</figcaption>
         </figure>
+
+        <div class="block info" id="change-authenticator">
+          <h4>7a) Change authenticator app (replace — all roles with TOTP on)</h4>
+          Profile → <strong>Change authenticator app</strong> → current password + email code → new QR → Confirm &amp; Replace.<br/>
+          Confirming <strong>deletes the old secret</strong> — previous authenticator entries stop working. Authenticator stays required (never turns off for non-admin).
+        </div>
+        <figure class="shot">
+          <img src="/docs-screenshots/34-totp-change-authenticator.png" alt="Change authenticator on profile" loading="lazy" />
+          <figcaption>Profile — Change authenticator app (password + email code, then new QR)</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/email-requester-11-change-authenticator.png" alt="Change authenticator email" loading="lazy" />
+          <figcaption>Email — code to change / replace authenticator</figcaption>
+        </figure>
+
         <div class="block info">
-          <h4>Disable Authenticator</h4>
-          Requires current password + email code (recovery if phone app reinstalled).<br/>
-          Success: Authenticator app disabled. · Admin becomes password-only again; others still need email OTP at login.
+          <h4>Disable Authenticator (Admin only)</h4>
+          Requires current password + email code. Non-admin roles cannot disable — use Change authenticator instead.<br/>
+          Success: Authenticator app disabled. · Admin becomes password-only again.
         </div>
         <div class="block ok">
           <h4>Success</h4>
-          Profile updated successfully. · Password changed successfully. · Authenticator app enabled. · Authenticator app disabled. · Email code sent.
+          Profile updated successfully. · Password changed successfully. · Authenticator app enabled. · Authenticator replaced… · Authenticator app disabled. · Email code sent.
         </div>
         <div class="block err">
           <h4>Errors</h4>
-          Failed to load profile · invalid authenticator code · wrong password · SMTP fail on disable email · weak password rules · Current password is incorrect
+          Failed to load profile · invalid authenticator code · wrong password · SMTP fail on email code · weak password rules · Current password is incorrect · Authenticator is required… cannot be disabled
         </div>
       </div>
 
@@ -434,7 +499,7 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
             <tr><td>Request changes / return to approver</td><td>Requester or Approvers</td></tr>
             <tr><td>Fully paid</td><td>Requester</td></tr>
             <tr><td>Due in 3 days / due tomorrow (daily cron)</td><td>Approvers / Processors</td></tr>
-            <tr><td>Welcome / reset / disable TOTP</td><td>That user</td></tr>
+            <tr><td>Welcome / reset / change TOTP / disable TOTP</td><td>That user</td></tr>
           </table>
         </div>
         <div class="block info">
@@ -503,7 +568,11 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
 
         <figure class="shot">
           <img src="/docs-screenshots/email-requester-03-disable-authenticator.png" alt="Disable authenticator email" loading="lazy" />
-          <figcaption>Disable Authenticator — email code (e.g. after phone reinstall)</figcaption>
+          <figcaption>Disable Authenticator — email code (Admin only)</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/email-requester-11-change-authenticator.png" alt="Change authenticator email" loading="lazy" />
+          <figcaption>Change authenticator — email code (replace flow; old secret deleted on confirm)</figcaption>
         </figure>
       </div>
 
@@ -569,11 +638,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
             <tr><td>Pay / Partial / Reject payout</td><td>—</td><td>—</td><td>Yes</td><td>Yes</td></tr>
             <tr><td>Analytics &amp; Excel</td><td>—</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
             <tr><td>Users / Catalogs</td><td>—</td><td>—</td><td>—</td><td>Yes</td></tr>
-            <tr><td>Profile / TOTP</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td>Profile / change password</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td>Authenticator required</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (optional)</td></tr>
+            <tr><td>Change authenticator (replace)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td>Disable authenticator</td><td>—</td><td>—</td><td>—</td><td>Yes</td></tr>
             <tr><td>Login email OTP</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No*</td></tr>
           </table>
         </div>
-        <p class="meta">*Admin password-only unless Authenticator enabled in Profile.</p>
+        <p class="meta">*Admin password-only unless Authenticator enabled in Profile. Non-admin: Email OTP + required Authenticator after enrollment.</p>
       </div>
 
       <!-- 11 GALLERY -->
@@ -619,6 +691,8 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           Demo walkthrough + test accounts:
           <a href="/demo-guide/"><strong>Live Demo Guide</strong></a>.<br/>
           Refresh screenshots from local app:<br/>
+          <code>node scripts/capture-docs-auth.cjs</code> (password + authenticator)<br/>
+          <code>node scripts/capture-docs-refresh.cjs</code><br/>
           <code>node scripts/capture-docs-screenshots.cjs</code><br/>
           <code>node scripts/capture-docs-screenshots-gaps.cjs</code><br/>
           <code>node scripts/capture-docs-extra.cjs</code>
