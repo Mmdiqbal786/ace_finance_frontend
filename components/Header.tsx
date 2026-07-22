@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { getUser, logout, AuthUser, isAuthenticated } from '../lib/auth';
+import { getUser, logout, AuthUser, isAuthenticated, mustSetupTotp, mustChangePassword } from '../lib/auth';
 import { usePathname } from 'next/navigation';
 import Modal from './Modal';
 import BrandLogo from './BrandLogo';
@@ -78,7 +78,8 @@ export default function Header() {
     path === "/login" ||
     path === "/forgot-password" ||
     path === "/reset-password" ||
-    path === "/set-password";
+    path === "/set-password" ||
+    path === "/setup-authenticator";
   const isGuidePage = path === "/demo-guide" || path === "/docs-guide";
   const showHeaderSignIn = mounted && !user && !isDashboard && !isAuthGuestPage;
   const showMarketingNav = mounted && !user && isHomePage;
@@ -165,14 +166,24 @@ export default function Header() {
               )}
             </div>
           ) : mounted && user ? (
-            <>
+            isAuthGuestPage ? null : (
               <Link
-                href={getDefaultDashboardRoute(user.role)}
+                href={
+                  mustChangePassword()
+                    ? "/set-password/"
+                    : mustSetupTotp()
+                      ? "/setup-authenticator/"
+                      : getDefaultDashboardRoute(user.role)
+                }
                 className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--af-navy)] px-4 text-sm font-bold text-white shadow hover:bg-[var(--af-navy-soft)] transition-colors"
               >
-                Go to Dashboard
+                {mustChangePassword()
+                  ? "Finish setup"
+                  : mustSetupTotp()
+                    ? "Finish setup"
+                    : "Go to Dashboard"}
               </Link>
-            </>
+            )
           ) : showHeaderSignIn ? (
             <Link
               href="/login/"

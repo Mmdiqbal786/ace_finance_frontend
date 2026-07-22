@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getUser, isAuthenticated, authHeaders, AuthUser, mustChangePassword } from "../../lib/auth";
+import { getUser, isAuthenticated, authHeaders, AuthUser, mustChangePassword, mustSetupTotp } from "../../lib/auth";
 import { API_URL } from "../../lib/api";
 import DashboardSidebar from "../DashboardSidebar";
 import {
@@ -64,6 +64,10 @@ export default function DashboardWorkspace() {
     }
     if (mustChangePassword()) {
       window.location.href = "/set-password/";
+      return;
+    }
+    if (mustSetupTotp()) {
+      window.location.href = "/setup-authenticator/";
       return;
     }
     setCurrentUser(getUser());
