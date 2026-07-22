@@ -206,7 +206,7 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/08-submit-expense.png" alt="Submit expense form" loading="lazy" />
           <figcaption>Submit Expense form (real page)</figcaption>
         </figure>
-        <div class="block ok"><h4>Success</h4>Toast: <strong>Expense request submitted.</strong></div>
+        <div class="block ok"><h4>Success</h4>Centered sticky toast: <strong>Expense request submitted.</strong> + Expense ID — stays until Dismiss.</div>
         <div class="block err">
           <h4>Errors</h4>
           Required selects · amount rules · date rules · description ≤500 · PDF/image max 5 MB · Failed to submit…

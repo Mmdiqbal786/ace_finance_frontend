@@ -32,7 +32,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     return subscribeToasts((item) => {
-      setToasts((prev) => [...prev.slice(-4), item]);
+      setToasts((prev) => {
+        // Only one sticky/center toast at a time; keep recent corner toasts.
+        if (item.sticky || item.center) {
+          return [...prev.filter((t) => !t.sticky && !t.center), item];
+        }
+        return [...prev.filter((t) => t.sticky || t.center), ...prev.filter((t) => !t.sticky && !t.center).slice(-4), item];
+      });
     });
   }, []);
 
@@ -40,19 +46,27 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const cornerToasts = toasts.filter((t) => !t.center);
+  const centerToasts = toasts.filter((t) => t.center);
+
   return (
     <>
       {children}
+
       <div
         className="pointer-events-none fixed inset-x-0 top-3 z-[200] flex flex-col items-end gap-2 px-3 sm:top-4 sm:right-4 sm:left-auto sm:w-auto sm:max-w-sm"
         aria-live="polite"
         aria-relevant="additions"
         suppressHydrationWarning
       >
-        {toasts.map((item) => (
+        {cornerToasts.map((item) => (
           <ToastCard key={item.id} toast={item} onDone={() => dismiss(item.id)} />
         ))}
       </div>
+
+      {centerToasts.map((item) => (
+        <CenterToast key={item.id} toast={item} onDone={() => dismiss(item.id)} />
+      ))}
     </>
   );
 }
@@ -67,9 +81,10 @@ function ToastCard({
   const styles = toneStyles(toast.kind);
 
   useEffect(() => {
+    if (toast.sticky) return;
     const timer = window.setTimeout(onDone, TOAST_MS);
     return () => window.clearTimeout(timer);
-  }, [onDone]);
+  }, [onDone, toast.sticky]);
 
   return (
     <div
@@ -81,7 +96,12 @@ function ToastCard({
       >
         {styles.icon}
       </span>
-      <p className="min-w-0 flex-1 text-sm font-semibold leading-snug">{toast.message}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold leading-snug">{toast.message}</p>
+        {toast.detail && (
+          <p className="mt-1 break-all font-mono text-xs font-bold opacity-90">{toast.detail}</p>
+        )}
+      </div>
       <button
         type="button"
         onClick={onDone}
@@ -90,6 +110,58 @@ function ToastCard({
       >
         ×
       </button>
+    </div>
+  );
+}
+
+function CenterToast({
+  toast,
+  onDone,
+}: {
+  toast: ToastItem;
+  onDone: () => void;
+}) {
+  const styles = toneStyles(toast.kind);
+
+  return (
+    <div
+      className="fixed inset-0 z-[210] flex items-center justify-center bg-slate-900/40 p-4 animate-[af-toast-in_0.28s_ease-out]"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby={`toast-title-${toast.id}`}
+      suppressHydrationWarning
+    >
+      <div
+        className={`relative z-10 w-full max-w-md rounded-2xl border px-5 py-5 shadow-2xl shadow-slate-900/20 ${styles.wrap}`}
+      >
+        <div className="flex items-start gap-3">
+          <span
+            className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${styles.mark}`}
+          >
+            {styles.icon}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p id={`toast-title-${toast.id}`} className="text-base font-bold leading-snug">
+              {toast.message}
+            </p>
+            {toast.detail && (
+              <p className="mt-2 rounded-lg border border-current/15 bg-white/60 px-3 py-2 font-mono text-sm font-bold tracking-wide text-slate-900">
+                {toast.detail}
+              </p>
+            )}
+            <p className="mt-2 text-xs font-medium opacity-70">
+              Click Dismiss to continue — this notice stays until you close it.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onDone}
+          className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-[var(--af-navy)] px-4 text-sm font-bold text-white hover:bg-[var(--af-navy-soft)] cursor-pointer"
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
   );
 }
