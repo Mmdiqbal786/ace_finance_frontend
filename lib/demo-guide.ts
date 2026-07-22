@@ -189,7 +189,7 @@ export const DEMO_ROLE_CAPABILITIES = [
   {
     role: "Requester",
     canDo:
-      "Dashboard home · Submit Expense (multi-currency + FX + invoice) · My Requests (track status, paid/remaining) · Edit/resubmit only when Changes Requested · Profile (name, password, optional Authenticator) · cannot delete own requests · Emails: submitted, rejected, changes requested, paid",
+      "Dashboard home · Submit Expense (multi-currency + FX + invoice) · My Requests (track status, paid/remaining) · Edit/resubmit only when Changes Requested · Profile (name, password, required Authenticator + Change authenticator) · cannot delete own requests · Emails: submitted, rejected, changes requested, paid",
   },
   {
     role: "Approver",
@@ -221,8 +221,10 @@ export const DEMO_SECTIONS = [
 
 export const DEMO_SECURITY_FEATURES = [
   "Email OTP at login (non-admin)",
-  "Profile → Authenticator App (optional TOTP)",
-  "Disable authenticator with password + email code (works if phone app was reinstalled)",
+  "Required Authenticator for Requester / Approver / Processor (after welcome email: set password → set authenticator)",
+  "Optional Authenticator for Admin",
+  "Profile → Change authenticator app (password + email code → new QR; old secret deleted)",
+  "Disable authenticator (Admin only) with password + email code",
   "Forgot password / reset password / first-login set password",
 ];
 

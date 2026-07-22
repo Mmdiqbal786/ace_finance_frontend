@@ -64,6 +64,8 @@ function mintToken(user, extra = {}) {
     email: user.email,
     role: user.role,
     mustChangePassword: false,
+    mustSetupTotp: false,
+    totpEnabled: user.role === "ADMIN" ? false : true,
     iat: now,
     exp: now + 60 * 60 * 12,
     ...extra,
@@ -76,6 +78,11 @@ function mintToken(user, extra = {}) {
 }
 
 async function injectAuth(page, user, extra = {}) {
+  const defaults =
+    user.role === "ADMIN"
+      ? { mustChangePassword: false, mustSetupTotp: false, totpEnabled: false }
+      : { mustChangePassword: false, mustSetupTotp: false, totpEnabled: true };
+  const authExtra = { ...defaults, ...extra };
   await page.goto(`${BASE}/login/`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(400);
   await page.evaluate(() => {
@@ -87,7 +94,7 @@ async function injectAuth(page, user, extra = {}) {
       localStorage.setItem("ace_finance_token", token);
       localStorage.setItem("ace_finance_user", JSON.stringify(authUser));
     },
-    [mintToken(user, extra), { ...user, ...extra }]
+    [mintToken(user, authExtra), { ...user, ...authExtra }]
   );
 }
 
@@ -339,6 +346,18 @@ async function main() {
   await injectAuth(page, users.admin, { mustChangePassword: true });
   await openAndCapture(page, "/set-password/", "28-set-password-first-login");
 
+  await injectAuth(page, users.requester, {
+    mustChangePassword: false,
+    mustSetupTotp: true,
+    totpEnabled: false,
+  });
+  await page.goto(`${BASE}/setup-authenticator/`, { waitUntil: "networkidle" }).catch(async () => {
+    await page.goto(`${BASE}/setup-authenticator/`, { waitUntil: "domcontentloaded" });
+  });
+  await page.waitForTimeout(1800);
+  await capture(page, "28c-setup-authenticator-required");
+  await capture(page, "33-totp-setup-qr");
+
   // ===== Requester =====
   await injectAuth(page, users.requester);
   await openAndCapture(page, "/dashboard/", "07-requester-dashboard");
@@ -368,6 +387,14 @@ async function main() {
     await changePw.click();
     await page.waitForTimeout(700);
     await capture(page, "32c-password-validation-errors");
+  }
+
+  await page.goto(`${BASE}/dashboard/profile/`, { waitUntil: "networkidle" });
+  const changeTotp = page.locator("button").filter({ hasText: /change authenticator/i }).first();
+  if (await changeTotp.count()) {
+    await changeTotp.click();
+    await page.waitForTimeout(800);
+    await capture(page, "34-totp-change-authenticator");
   }
 
   const setupTotp = page.locator("button").filter({ hasText: /Set up Authenticator/i }).first();
