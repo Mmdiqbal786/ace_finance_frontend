@@ -7,9 +7,9 @@ import {
   isAuthenticated,
   logout,
   mustChangePassword,
+  getPostAuthDestination,
   setAuth,
 } from "../../lib/auth";
-import { getDefaultDashboardRoute } from "../../lib/dashboard/routes";
 import { API_URL } from "../../lib/api";
 import { useFormValidation } from "../../hooks/useFormValidation";
 import { validatePassword } from "../../lib/validation";
@@ -123,7 +123,7 @@ export default function SetPasswordPage() {
     }
     if (!mustChangePassword()) {
       const user = getUser();
-      window.location.replace(user ? getDefaultDashboardRoute(user.role) : "/dashboard/");
+      window.location.replace(user ? getPostAuthDestination(user) : "/dashboard/");
       return;
     }
     setReady(true);
@@ -160,7 +160,7 @@ export default function SetPasswordPage() {
       }
       const data = await res.json();
       setAuth(data.access_token, data.user);
-      window.location.href = getDefaultDashboardRoute(data.user.role);
+      window.location.href = getPostAuthDestination(data.user);
     } catch (err: any) {
       setError(err.message || "Failed to update password.");
       setLoading(false);

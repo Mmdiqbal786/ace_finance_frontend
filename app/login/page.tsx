@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import FullPageLoader from '../../components/FullPageLoader';
 import { useBlockAuthenticatedGuestPages } from '../../hooks/useBlockAuthenticatedGuestPages';
-import { setAuth } from '../../lib/auth';
+import { setAuth, getPostAuthDestination } from '../../lib/auth';
 import { resolveAccessibleDashboardPath } from '../../lib/dashboard/routes';
 import { API_URL } from '../../lib/api';
 import FormField from '../../components/FormField';
@@ -50,8 +50,11 @@ function LoginForm() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const form = useFormValidation<LoginField>();
 
-  function goAfterLogin(role: Parameters<typeof resolveAccessibleDashboardPath>[0]) {
-    window.location.href = resolveAccessibleDashboardPath(role, nextPath);
+  function goAfterLogin(user: Parameters<typeof getPostAuthDestination>[0]) {
+    window.location.href = getPostAuthDestination(
+      user,
+      resolveAccessibleDashboardPath(user.role, nextPath),
+    );
   }
 
   const showFullPageLoader = !guestAllowed;
@@ -128,11 +131,7 @@ function LoginForm() {
       // Admin without authenticator: signed in immediately
       if (data.access_token && data.user) {
         setAuth(data.access_token, data.user);
-        if (data.user.mustChangePassword) {
-          window.location.href = "/set-password/";
-        } else {
-          goAfterLogin(data.user.role);
-        }
+        goAfterLogin(data.user);
         return;
       }
       if (!data.requires2fa || !data.challengeToken) {
@@ -183,11 +182,7 @@ function LoginForm() {
         );
       }
       setAuth(data.access_token, data.user);
-      if (data.user.mustChangePassword) {
-        window.location.href = "/set-password/";
-      } else {
-        goAfterLogin(data.user.role);
-      }
+      goAfterLogin(data.user);
       return;
     } catch (err: any) {
       setError(loginFetchError(err));

@@ -1,29 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getUser, isAuthenticated, mustChangePassword } from "../lib/auth";
+import { getUser, isAuthenticated, mustChangePassword, mustSetupTotp } from "../lib/auth";
+import { getPostAuthDestination } from "../lib/auth";
 import { resolveAccessibleDashboardPath } from "../lib/dashboard/routes";
 
 /**
- * When the user already has a session, send them to the dashboard
- * so public/guest pages (home, login) are not accessible.
- * Users who still need a password change go to /set-password.
- * Optional `next` is resolved against the signed-in role.
+ * When the user already has a session, send them past guest pages
+ * (home, login) using the same post-auth gate order as login.
  */
 export function useBlockAuthenticatedGuestPages(nextPath?: string | null) {
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated()) {
+      const user = getUser();
+      if (!user) {
+        window.location.replace("/login/");
+        return;
+      }
       if (mustChangePassword()) {
         window.location.replace("/set-password/");
         return;
       }
-      const user = getUser();
+      if (mustSetupTotp()) {
+        window.location.replace("/setup-authenticator/");
+        return;
+      }
       window.location.replace(
-        user
-          ? resolveAccessibleDashboardPath(user.role, nextPath)
-          : "/dashboard/"
+        getPostAuthDestination(
+          user,
+          resolveAccessibleDashboardPath(user.role, nextPath),
+        ),
       );
       return;
     }

@@ -1,4 +1,4 @@
-// Auth utilities for the Aceolution Finance frontend
+import { resolveAccessibleDashboardPath } from './dashboard/routes';
 
 const TOKEN_KEY = 'ace_finance_token';
 const USER_KEY = 'ace_finance_user';
@@ -9,6 +9,8 @@ export interface AuthUser {
   email: string;
   role: 'ADMIN' | 'APPROVER' | 'PROCESSOR' | 'REQUESTER';
   mustChangePassword?: boolean;
+  mustSetupTotp?: boolean;
+  totpEnabled?: boolean;
 }
 
 export function getToken(): string | null {
@@ -68,6 +70,47 @@ export function mustChangePassword(): boolean {
   } catch {
     return false;
   }
+}
+
+/** Non-admin users must enroll authenticator before using the dashboard. */
+export function mustSetupTotp(): boolean {
+  const user = getUser();
+  const token = getToken();
+  let role = user?.role;
+  let totpEnabled = user?.totpEnabled === true;
+  let flagged = user?.mustSetupTotp === true;
+
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      role = role || payload.role;
+      // Either store or JWT saying enabled is enough (avoids stale-flag loops).
+      if (payload.totpEnabled === true) totpEnabled = true;
+      if (payload.mustSetupTotp === true) flagged = true;
+    } catch {
+      // ignore
+    }
+  }
+
+  if (role === 'ADMIN') return false;
+  // Enabled authenticator always wins over a stale mustSetupTotp flag.
+  if (totpEnabled) return false;
+  if (flagged) return true;
+  // Non-admin without confirmed TOTP must enroll
+  return Boolean(role);
+}
+
+/** Post-auth destination: password change → authenticator → dashboard. */
+export function getPostAuthDestination(
+  user: AuthUser,
+  intendedDashboardPath?: string | null,
+): string {
+  if (user.mustChangePassword) return '/set-password/';
+  // Only require setup when authenticator is not actually enabled.
+  if (user.role !== 'ADMIN' && user.totpEnabled !== true) {
+    return '/setup-authenticator/';
+  }
+  return resolveAccessibleDashboardPath(user.role, intendedDashboardPath);
 }
 
 export function authHeaders(): HeadersInit {
