@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { getUser, isAuthenticated } from "../lib/auth";
+import { resolveAccessibleDashboardPath } from "../lib/dashboard/routes";
 
 /* Exact mindustrious-style layout · Aceolution Finance content */
 
@@ -84,6 +86,7 @@ const SERVICES = [
   {
     title: "Expense Requests",
     body: "Submit reimbursements with multi-currency amounts, live FX, invoices, and due dates.",
+    href: "/dashboard/submit-expense/",
     circle: "from-teal-400 to-emerald-500",
     icon: (
       <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
@@ -94,6 +97,7 @@ const SERVICES = [
   {
     title: "Approvals & Changes",
     body: "Managers approve, reject, or request changes. Every note stays in history.",
+    href: "/dashboard/approver/",
     circle: "from-sky-400 to-blue-600",
     icon: (
       <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
@@ -104,6 +108,7 @@ const SERVICES = [
   {
     title: "Disbursements",
     body: "Finance records full or partial payouts with receipts and remaining balances.",
+    href: "/dashboard/processor/",
     circle: "from-violet-400 to-purple-600",
     icon: (
       <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
@@ -114,6 +119,7 @@ const SERVICES = [
   {
     title: "Analytics & Export",
     body: "Open Analytics or Tracker and export multi-sheet Excel for audit reporting.",
+    href: "/dashboard/analytics/",
     circle: "from-orange-400 to-amber-500",
     icon: (
       <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
@@ -122,6 +128,14 @@ const SERVICES = [
     ),
   },
 ] as const;
+
+function capabilityHref(intendedPath: string): string {
+  if (typeof window !== "undefined" && isAuthenticated()) {
+    const user = getUser();
+    if (user) return resolveAccessibleDashboardPath(user.role, intendedPath);
+  }
+  return `/login?next=${encodeURIComponent(intendedPath)}`;
+}
 
 function Reveal({
   children,
@@ -274,6 +288,12 @@ function RocketGraphic() {
 }
 
 export default function HomeLanding() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <div id="home" className="af-landing relative flex flex-1 flex-col overflow-x-hidden bg-white">
       {/* ——— Hero ——— */}
@@ -369,13 +389,16 @@ export default function HomeLanding() {
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {SERVICES.map((item, i) => (
               <Reveal key={item.title} delay={i * 90}>
-                <article className="flex h-full flex-col items-center rounded-2xl border border-slate-100 bg-white px-5 py-8 text-center shadow-[0_10px_40px_rgba(15,23,42,0.07)] transition-transform duration-300 hover:-translate-y-1.5">
-                  <span className={`flex h-[72px] w-[72px] items-center justify-center rounded-full bg-gradient-to-br shadow-md ${item.circle}`}>
+                <Link
+                  href={mounted ? capabilityHref(item.href) : `/login?next=${encodeURIComponent(item.href)}`}
+                  className="group flex h-full flex-col items-center rounded-2xl border border-slate-100 bg-white px-5 py-8 text-center shadow-[0_10px_40px_rgba(15,23,42,0.07)] transition-all duration-300 hover:-translate-y-1.5 hover:border-slate-200 hover:shadow-[0_14px_44px_rgba(15,23,42,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+                >
+                  <span className={`flex h-[72px] w-[72px] items-center justify-center rounded-full bg-gradient-to-br shadow-md transition-transform duration-300 group-hover:scale-105 ${item.circle}`}>
                     {item.icon}
                   </span>
-                  <h3 className="mt-5 text-[15px] font-extrabold text-[#0f172a]">{item.title}</h3>
+                  <h3 className="mt-5 text-[15px] font-extrabold text-[#0f172a] group-hover:text-teal-700">{item.title}</h3>
                   <p className="mt-2.5 text-[13px] leading-relaxed text-slate-500">{item.body}</p>
-                </article>
+                </Link>
               </Reveal>
             ))}
           </div>
