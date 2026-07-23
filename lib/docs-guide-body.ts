@@ -461,6 +461,13 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/44-admin-create-user-modal.png" alt="Create user modal" loading="lazy" />
           <figcaption>Create User modal — welcome email + temp password + force password change</figcaption>
         </figure>
+        <p class="meta">
+          <strong>Project assignment:</strong> When role is Requester or Approver, Admin must assign
+          one or more projects on create/edit. Requesters can submit only those projects; Approvers
+          only see/act on (and receive emails for) expenses in their assigned projects. Admin and
+          Processor are not project-scoped. Existing users with no projects have no project access
+          until Admin assigns them.
+        </p>
         <div class="block ok">
           <h4>Users — Success</h4>
           User created — welcome email… · User updated successfully! · User deleted.
@@ -638,6 +645,7 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
             <tr><td>Pay / Partial / Reject payout</td><td>—</td><td>—</td><td>Yes</td><td>Yes</td></tr>
             <tr><td>Analytics &amp; Excel</td><td>—</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
             <tr><td>Users / Catalogs</td><td>—</td><td>—</td><td>—</td><td>Yes</td></tr>
+            <tr><td>Project-scoped submit / approve</td><td>Assigned only</td><td>Assigned only</td><td>All (pay)</td><td>All</td></tr>
             <tr><td>Profile / change password</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
             <tr><td>Authenticator required</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (optional)</td></tr>
             <tr><td>Change authenticator (replace)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>

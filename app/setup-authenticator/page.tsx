@@ -59,7 +59,17 @@ export default function SetupAuthenticatorPage() {
       setSetup({ secret: data.secret, qrCodeDataUrl: data.qrCodeDataUrl });
       setCode("");
     } catch (err: any) {
-      setError(err.message || "Failed to start authenticator setup.");
+      const msg = err.message || "Failed to start authenticator setup.";
+      setError(msg);
+      // Demo password-only accounts: clear the gate and go to dashboard.
+      if (/demo account|password-only/i.test(msg)) {
+        updateStoredUser({ mustSetupTotp: false, totpEnabled: false });
+        const user = getUser();
+        window.location.replace(
+          user ? getDefaultDashboardRoute(user.role) : "/dashboard/",
+        );
+        return;
+      }
     } finally {
       setBusy(false);
     }
@@ -143,6 +153,21 @@ export default function SetupAuthenticatorPage() {
           >
             {busy ? "Preparing..." : "Generate QR Code"}
           </button>
+          {error && /demo account|password-only/i.test(error) && (
+            <button
+              type="button"
+              onClick={() => {
+                updateStoredUser({ mustSetupTotp: false, totpEnabled: false });
+                const user = getUser();
+                window.location.href = user
+                  ? getDefaultDashboardRoute(user.role)
+                  : "/dashboard/";
+              }}
+              className="w-full rounded-[10px] border border-slate-300 bg-white py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+            >
+              Continue to dashboard →
+            </button>
+          )}
         </div>
       ) : (
         <form onSubmit={handleEnable} className="flex flex-col gap-4" noValidate>

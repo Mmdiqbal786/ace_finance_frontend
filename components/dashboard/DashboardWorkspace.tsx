@@ -2,7 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getUser, isAuthenticated, authHeaders, AuthUser, mustChangePassword, mustSetupTotp } from "../../lib/auth";
+import {
+  getUser,
+  isAuthenticated,
+  authHeaders,
+  AuthUser,
+  mustChangePassword,
+  mustSetupTotp,
+  updateStoredUser,
+} from "../../lib/auth";
 import { API_URL } from "../../lib/api";
 import DashboardSidebar from "../DashboardSidebar";
 import {
@@ -70,7 +78,39 @@ export default function DashboardWorkspace() {
       window.location.href = "/setup-authenticator/";
       return;
     }
-    setCurrentUser(getUser());
+    const cached = getUser();
+    setCurrentUser(cached);
+
+    // Refresh profile so assignedProjects stay current after Admin edits.
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/users/me`, { headers: authHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        const next: AuthUser = {
+          ...(cached || {
+            id: data.id || data._id,
+            name: data.name,
+            email: data.email,
+            role: data.role,
+          }),
+          id: data.id || data._id || cached?.id || "",
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          assignedProjects: Array.isArray(data.assignedProjects)
+            ? data.assignedProjects
+            : [],
+          mustChangePassword: data.mustChangePassword ?? cached?.mustChangePassword,
+          mustSetupTotp: data.mustSetupTotp ?? cached?.mustSetupTotp,
+          totpEnabled: data.totpEnabled ?? cached?.totpEnabled,
+        };
+        updateStoredUser(next);
+        setCurrentUser(next);
+      } catch {
+        // Keep cached user if profile refresh fails.
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -149,13 +189,35 @@ export default function DashboardWorkspace() {
     setActionType(type);
   };
 
-  const pendingApproverList = expenses.filter((e) => e.status === "PENDING_APPROVER");
+  const assignedProjectSet =
+    currentUser?.role === "APPROVER" || currentUser?.role === "REQUESTER"
+      ? new Set(currentUser.assignedProjects || [])
+      : null;
+
+  const pendingApproverList = expenses.filter((e) => {
+    if (e.status !== "PENDING_APPROVER") return false;
+    if (currentUser?.role === "APPROVER" && assignedProjectSet) {
+      return assignedProjectSet.has(e.project);
+    }
+    return true;
+  });
   const approvedApproverList = expenses.filter(
     (e) => e.status === "APPROVED_APPROVER" || e.status === "PARTIALLY_PAID"
   );
 
+  const projectsForSubmit =
+    currentUser?.role === "REQUESTER"
+      ? activeProjects.filter((p) => (currentUser.assignedProjects || []).includes(p.name))
+      : activeProjects;
+
+  const projectsForApproverFilters =
+    currentUser?.role === "APPROVER"
+      ? activeProjects.filter((p) => (currentUser.assignedProjects || []).includes(p.name))
+      : activeProjects;
+
   const categoryFilterOptions = buildCategoryFilterOptions(activeCategories);
   const projectFilterOptions = buildProjectFilterOptions(activeProjects);
+  const approverProjectFilterOptions = buildProjectFilterOptions(projectsForApproverFilters);
   const sectionMeta = SECTION_META[activeSection];
 
   const expenseActions = {
@@ -270,7 +332,7 @@ export default function DashboardWorkspace() {
                 <SubmitExpensePanel
                   currentUser={currentUser}
                   categories={activeCategories}
-                  projects={activeProjects}
+                  projects={projectsForSubmit}
                   countries={activeCountries}
                   catalogLoading={catalogLoading}
                   onSubmitted={fetchData}
@@ -291,14 +353,18 @@ export default function DashboardWorkspace() {
                   variant="approver"
                   expenses={pendingApproverList}
                   categoryFilterOptions={categoryFilterOptions}
-                  projectFilterOptions={projectFilterOptions}
+                  projectFilterOptions={approverProjectFilterOptions}
                   headerText={(count) =>
                     `Showing ${count} expenses awaiting your sign-off`
                   }
                   emptyInbox={{
                     emoji: "🎉",
                     title: "Inbox is clear!",
-                    subtitle: "No public expense requests are currently pending review.",
+                    subtitle:
+                      currentUser?.role === "APPROVER" &&
+                      !(currentUser.assignedProjects || []).length
+                        ? "No projects assigned yet — ask an Admin to assign projects in User Management."
+                        : "No expense requests are currently pending review for your projects.",
                   }}
                   getExtraActions={(e) => [
                     {
@@ -420,7 +486,7 @@ export default function DashboardWorkspace() {
           />
 
           {activeSection === "user-management" && currentUser?.role === "ADMIN" && (
-            <UsersPanel currentUser={currentUser} />
+            <UsersPanel currentUser={currentUser} projects={activeProjects} />
           )}
 
           {activeSection === "categories" && currentUser?.role === "ADMIN" && (

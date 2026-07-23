@@ -183,6 +183,10 @@ export default function DemoGuideContent() {
 
               <section id="accounts" className="scroll-mt-28 space-y-4">
                 <h2 className="text-xl font-extrabold text-slate-900">1) Test accounts</h2>
+                <p className="text-sm text-slate-600">
+                  Primary accounts use real Gmail inboxes for Email OTP. Requester/Approver are
+                  project-scoped — pick a project both share (Media pair below).
+                </p>
                 <div className="af-table-wrap rounded-2xl border border-slate-200">
                   <table className="af-table min-w-full text-sm">
                     <thead>
@@ -191,6 +195,7 @@ export default function DemoGuideContent() {
                         <th className="px-3 py-3 text-left">Email</th>
                         <th className="px-3 py-3 text-left">Password</th>
                         <th className="px-3 py-3 text-left">Role</th>
+                        <th className="px-3 py-3 text-left">Assigned projects</th>
                         <th className="px-3 py-3 text-left">Login 2FA</th>
                       </tr>
                     </thead>
@@ -203,6 +208,9 @@ export default function DemoGuideContent() {
                           <td className="px-3 py-3 font-mono text-xs">{account.email}</td>
                           <td className="px-3 py-3 font-mono text-xs">{account.password}</td>
                           <td className="px-3 py-3 text-slate-700">{account.role}</td>
+                          <td className="px-3 py-3 text-xs text-slate-700 max-w-[220px]">
+                            {account.projects}
+                          </td>
                           <td className="px-3 py-3 text-slate-700">{account.login2fa}</td>
                         </tr>
                       ))}
@@ -214,7 +222,14 @@ export default function DemoGuideContent() {
                   Profile.
                 </p>
 
-                <h3 className="text-base font-extrabold text-slate-900">Optional extra staff</h3>
+                <h3 className="text-base font-extrabold text-slate-900">
+                  Project-scoped demo users (seeded)
+                </h3>
+                <p className="text-sm text-slate-600">
+                  Different Requesters and Approvers for different project groups. These
+                  accounts are <strong>password-only</strong> (no Email OTP, no Authenticator)
+                  so you can switch personas quickly during demos.
+                </p>
                 <div className="af-table-wrap rounded-2xl border border-slate-200">
                   <table className="af-table min-w-full text-sm">
                     <thead>
@@ -223,6 +238,8 @@ export default function DemoGuideContent() {
                         <th className="px-3 py-3 text-left">Email</th>
                         <th className="px-3 py-3 text-left">Password</th>
                         <th className="px-3 py-3 text-left">Role</th>
+                        <th className="px-3 py-3 text-left">Assigned projects</th>
+                        <th className="px-3 py-3 text-left">Login</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -232,10 +249,19 @@ export default function DemoGuideContent() {
                           <td className="px-3 py-3 font-mono text-xs">{staff.email}</td>
                           <td className="px-3 py-3 font-mono text-xs">{staff.password}</td>
                           <td className="px-3 py-3 text-slate-700">{staff.role}</td>
+                          <td className="px-3 py-3 text-xs text-slate-700 max-w-[280px]">
+                            {staff.projects}
+                          </td>
+                          <td className="px-3 py-3 text-xs text-slate-700">{staff.login2fa}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950">
+                  <strong>Pairing tip:</strong> Requester News ↔ Approver Media (GNL/GNP) ·
+                  Requester Systems ↔ Approver Systems · Requester Ops ↔ Approver Ops · Requester
+                  GAC ↔ Approver Media.
                 </div>
               </section>
 

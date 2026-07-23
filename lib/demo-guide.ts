@@ -10,6 +10,7 @@ export type DemoAccount = {
   password: string;
   role: string;
   login2fa: string;
+  projects: string;
 };
 
 export type DemoStaff = {
@@ -17,6 +18,8 @@ export type DemoStaff = {
   email: string;
   password: string;
   role: string;
+  projects: string;
+  login2fa: string;
 };
 
 export type DemoFlowStep = {
@@ -27,27 +30,32 @@ export type DemoFlowStep = {
   tip?: string;
 };
 
+/** Keep in sync with ace_finance_backend/src/users/demo-users.seed.ts */
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   {
-    label: "Requester",
+    label: "Requester (Media)",
     email: "iqbal.ace786@gmail.com",
     password: "Aceolution_2024",
-    role: "Submit & track expenses",
+    role: "Submit & track — GAC + GNL only",
     login2fa: "Email OTP",
+    projects: "Google Art and culture (GAC); Google News Lab (GNL)",
   },
   {
-    label: "Approver",
+    label: "Approver (Media)",
     email: "iqbal.dev98@gmail.com",
     password: "Approver@1234",
-    role: "Approve / reject / request changes",
+    role: "Approve — GAC + GNL + GNP",
     login2fa: "Email OTP",
+    projects:
+      "Google Art and culture (GAC); Google News Lab (GNL); Google News Program (GNP)",
   },
   {
     label: "Processor",
     email: "mmdiqbal786@gmail.com",
     password: "Processor@1234",
-    role: "Pay / partial pay / request changes",
+    role: "Pay / partial pay (all projects)",
     login2fa: "Email OTP",
+    projects: "All projects",
   },
   {
     label: "Admin",
@@ -55,37 +63,92 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     password: "Admin@1234",
     role: "Users, catalogs, full access",
     login2fa: "Password only*",
+    projects: "All projects",
   },
 ];
 
+/** Project-scoped demo users (seeded on backend boot). Password-only — no OTP/authenticator. */
 export const DEMO_EXTRA_STAFF: DemoStaff[] = [
   {
-    name: "Sarah Johnson",
-    email: "sarah.approver@acefinance.com",
-    password: "Approver@1234",
-    role: "APPROVER",
+    name: "Requester GAC",
+    email: "requester.gac@acefinance.com",
+    password: "Requester@1234",
+    role: "REQUESTER",
+    projects: "Google Art and culture (GAC)",
+    login2fa: "Password only (demo)",
   },
   {
-    name: "David Lee",
-    email: "david.approver@acefinance.com",
+    name: "Requester News",
+    email: "requester.news@acefinance.com",
+    password: "Requester@1234",
+    role: "REQUESTER",
+    projects: "Google News Lab (GNL); Google News Program (GNP)",
+    login2fa: "Password only (demo)",
+  },
+  {
+    name: "Requester Systems",
+    email: "requester.systems@acefinance.com",
+    password: "Requester@1234",
+    role: "REQUESTER",
+    projects:
+      "Google Information system (GIS) - Bothel; GDO - Google ops (location); Google for Education - Chrome",
+    login2fa: "Password only (demo)",
+  },
+  {
+    name: "Requester Ops",
+    email: "requester.ops@acefinance.com",
+    password: "Requester@1234",
+    role: "REQUESTER",
+    projects:
+      "SV Warehouse - ID & JP; Reimbursements - revenue; Field data collection (FDR) - Global logic; One-time fee (project)",
+    login2fa: "Password only (demo)",
+  },
+  {
+    name: "Approver Media",
+    email: "approver.media@acefinance.com",
     password: "Approver@1234",
     role: "APPROVER",
+    projects:
+      "Google Art and culture (GAC); Google News Lab (GNL); Google News Program (GNP)",
+    login2fa: "Password only (demo)",
+  },
+  {
+    name: "Approver Systems",
+    email: "approver.systems@acefinance.com",
+    password: "Approver@1234",
+    role: "APPROVER",
+    projects:
+      "Google Information system (GIS) - Bothel; GDO - Google ops (location); Google for Education - Chrome",
+    login2fa: "Password only (demo)",
+  },
+  {
+    name: "Approver Ops",
+    email: "approver.ops@acefinance.com",
+    password: "Approver@1234",
+    role: "APPROVER",
+    projects:
+      "SV Warehouse - ID & JP; Reimbursements - revenue; Field data collection (FDR) - Global logic; One-time fee (project)",
+    login2fa: "Password only (demo)",
   },
   {
     name: "Priya Sharma",
     email: "priya.processor@acefinance.com",
     password: "Processor@1234",
     role: "PROCESSOR",
+    projects: "All projects",
+    login2fa: "Password only (demo)",
   },
 ];
 
 export const DEMO_SIGN_IN_STEPS = [
   "Open the Frontend → click Dashboard Login / Sign In",
   "Enter email + password for a test account",
-  "Requester / Approver / Processor: after password is accepted, the app sends a 6-digit verification code to that user’s email. Enter the code to finish sign-in (2FA). Use Resend if needed.",
+  "Primary Gmail Requester / Approver / Processor: after password is accepted, enter the 6-digit Email OTP (and set Authenticator on first use if prompted).",
+  "Project-scoped @acefinance.com demo users: password only — no Email OTP and no Authenticator (seeded for easy project demos).",
   "Admin: password only (no email OTP by default). Admin can optionally enable an Authenticator app later in Profile.",
   "You land on /dashboard/ (home). Use the sidebar for your role pages.",
   "Always Sign Out before switching to another role account.",
+  "Project scoping: each Requester/Approver only sees their assigned projects. Match requester + approver pairs that share a project (e.g. Requester Systems → Approver Systems).",
 ];
 
 export const DEMO_FLOW_A_STEPS: DemoFlowStep[] = [
@@ -93,12 +156,14 @@ export const DEMO_FLOW_A_STEPS: DemoFlowStep[] = [
     id: "A1",
     title: "Requester creates expense",
     body: [
-      "Login as Requester → Submit Expense",
+      "Login as Requester (Media) → Submit Expense",
+      "Project dropdown shows only assigned projects (GAC / GNL for the primary Media requester)",
       "Fill: Country (auto currency) · Project · Category · Local amount · Due date · Description · Invoice file (invoice number/date optional)",
       "Submit → system stores USD amount + FX rate + date",
-      "Status becomes Pending Approver",
+      "Status becomes Pending Approver — only Approvers assigned to that project get the email",
       "Check My Requests and confirmation email",
     ],
+    tip: "To demo Systems/Ops projects, use the matching Requester + Approver accounts from the project-scoped table (or change their emails to real inboxes for OTP).",
   },
   {
     id: "A2",
@@ -189,12 +254,12 @@ export const DEMO_ROLE_CAPABILITIES = [
   {
     role: "Requester",
     canDo:
-      "Dashboard home · Submit Expense (multi-currency + FX + invoice) · My Requests (track status, paid/remaining) · Edit/resubmit only when Changes Requested · Profile (name, password, required Authenticator + Change authenticator) · cannot delete own requests · Emails: submitted, rejected, changes requested, paid",
+      "Dashboard home · Submit Expense (only Admin-assigned projects; multi-currency + FX + invoice) · My Requests (track status, paid/remaining) · Edit/resubmit only when Changes Requested · Profile (name, password, required Authenticator + Change authenticator) · cannot delete own requests · Emails: submitted, rejected, changes requested, paid",
   },
   {
     role: "Approver",
     canDo:
-      "Approver queue (pending count) · Approve / Reject / Request Changes · view invoice, FX, notes, history · Analytics & Excel export · Due-soon reminder emails (3-day and 1-day before due)",
+      "Approver queue filtered to assigned projects · Approve / Reject / Request Changes only for those projects · view invoice, FX, notes, history · Analytics & Excel export · Due-soon reminder emails (3-day and 1-day before due) for assigned projects",
   },
   {
     role: "Processor",
@@ -204,7 +269,7 @@ export const DEMO_ROLE_CAPABILITIES = [
   {
     role: "Admin",
     canDo:
-      "Everything above (approver + processor views) · User Management: create users (welcome email + temp password + force password change), edit role/active, delete · Categories / Projects / Countries (with currencies) · Full analytics & export",
+      "Everything above (approver + processor views, all projects) · User Management: create users (welcome email + temp password + force password change), assign one or more projects for Requester/Approver, edit role/active, delete · Categories / Projects / Countries (with currencies) · Full analytics & export",
   },
 ];
 
@@ -226,6 +291,7 @@ export const DEMO_SECURITY_FEATURES = [
   "Profile → Change authenticator app (password + email code → new QR; old secret deleted)",
   "Disable authenticator (Admin only) with password + email code",
   "Forgot password / reset password / first-login set password",
+  "Project scoping: Requester/Approver only submit/approve/email for Admin-assigned projects (Admin/Processor see all)",
 ];
 
 export const DEMO_UI_CHECKS = [
@@ -272,7 +338,7 @@ export function buildShareInviteText(): string {
 }
 
 export function buildAccountsCopyText(): string {
-  const lines = ["Test accounts", ""];
+  const lines = ["Test accounts (primary — real inbox OTP)", ""];
   for (const account of DEMO_ACCOUNTS) {
     lines.push(
       account.label,
@@ -280,12 +346,21 @@ export function buildAccountsCopyText(): string {
       `Password: ${account.password}`,
       `Login 2FA: ${account.login2fa.replace("*", "")}`,
       `Role: ${account.role}`,
+      `Projects: ${account.projects}`,
       ""
     );
   }
-  lines.push("Optional extra staff", "");
+  lines.push(
+    "Project-scoped demo users (seeded; password-only — no OTP / authenticator)",
+    ""
+  );
   for (const staff of DEMO_EXTRA_STAFF) {
-    lines.push(`${staff.name} — ${staff.email} — ${staff.password} — ${staff.role}`);
+    lines.push(
+      `${staff.name} — ${staff.email} — ${staff.password} — ${staff.role}`,
+      `Login: ${staff.login2fa}`,
+      `Projects: ${staff.projects}`,
+      ""
+    );
   }
   return lines.join("\n");
 }
