@@ -51,7 +51,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   },
   {
     label: "Admin",
-    email: "admin@acefinance.com",
+    email: "finance@aceolution.com",
     password: "Admin@1234",
     role: "Users, catalogs, full access",
     login2fa: "Password only*",

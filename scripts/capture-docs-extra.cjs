@@ -34,7 +34,7 @@ const requester = {
 const admin = {
   id: "6a50db2fa55b28bc2cbeae9e",
   name: "Admin",
-  email: "admin@acefinance.com",
+  email: "finance@aceolution.com",
   role: "ADMIN",
 };
 
@@ -125,7 +125,7 @@ const admin = {
 
   await page.goto(`${BASE}/forgot-password/`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(800);
-  await page.fill('input[type="email"]', "admin@acefinance.com");
+  await page.fill('input[type="email"]', "finance@aceolution.com");
   await page.click('button[type="submit"]');
   await page.waitForTimeout(2500);
   await shot("46-forgot-password-success");

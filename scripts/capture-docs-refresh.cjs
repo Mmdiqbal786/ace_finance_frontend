@@ -46,7 +46,7 @@ const users = {
   admin: {
     id: "6a50db2fa55b28bc2cbeae9e",
     name: "Admin",
-    email: "admin@acefinance.com",
+    email: "finance@aceolution.com",
     role: "ADMIN",
   },
 };
@@ -304,14 +304,14 @@ async function main() {
   await capture(page, "01-landing");
 
   await openAndCapture(page, "/login/", "02-login-password");
-  await page.fill("#login-email", "admin@acefinance.com");
+  await page.fill("#login-email", "finance@aceolution.com");
   await page.fill("#login-password", "WrongPass123");
   await page.click("#login-submit");
   await page.waitForTimeout(1200);
   await capture(page, "03-login-error-invalid", false);
 
   await page.goto(`${BASE}/login/`, { waitUntil: "networkidle" });
-  await page.fill("#login-email", "admin@acefinance.com");
+  await page.fill("#login-email", "finance@aceolution.com");
   await page.fill("#login-password", "Admin@1234");
   await page.click("#login-submit");
   await page.waitForURL(/\/dashboard/, { timeout: 25000 });

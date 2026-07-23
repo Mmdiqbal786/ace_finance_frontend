@@ -12,7 +12,7 @@ import {
 import "./docs-guide.css";
 
 /** Bump when screenshots are refreshed so browsers skip stale cached PNGs. */
-const SCREENSHOT_CACHE_BUST = "20260722c";
+const SCREENSHOT_CACHE_BUST = "20260723a";
 
 const docsBodyHtml = DOCS_GUIDE_BODY_HTML.replace(
   /src="(\/docs-screenshots\/[^"?]+\.png)(?:\?[^"]*)?"/g,
