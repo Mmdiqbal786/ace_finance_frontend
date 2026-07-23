@@ -117,6 +117,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
   const [totpLoading, setTotpLoading] = useState(true);
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [totpRequired, setTotpRequired] = useState(false);
+  const [totpAvailable, setTotpAvailable] = useState(true);
   const [totpCanDisable, setTotpCanDisable] = useState(false);
   const [totpCanReplace, setTotpCanReplace] = useState(false);
   const [totpBusy, setTotpBusy] = useState(false);
@@ -159,12 +160,22 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
           role: data.role,
         });
         setEditName(data.name);
-        updateStoredUser({ name: data.name, email: data.email, role: data.role });
+        updateStoredUser({
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          assignedProjects: Array.isArray(data.assignedProjects)
+            ? data.assignedProjects
+            : [],
+        });
         onProfileUpdated?.({
           ...currentUser,
           name: data.name,
           email: data.email,
           role: data.role,
+          assignedProjects: Array.isArray(data.assignedProjects)
+            ? data.assignedProjects
+            : [],
         });
       } catch (err: any) {
         if (!cancelled) toast.error(err.message || "Failed to load profile.");
@@ -187,6 +198,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
         if (!cancelled) {
           setTotpEnabled(Boolean(data.enabled));
           setTotpRequired(Boolean(data.required));
+          setTotpAvailable(data.available !== false);
           setTotpCanDisable(Boolean(data.canDisable));
           setTotpCanReplace(Boolean(data.canReplace ?? data.enabled));
         }
@@ -704,18 +716,30 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
       <div className="portal-card rounded-2xl p-6 sm:p-8 lg:col-span-2">
           <div className="border-b border-slate-200 pb-4">
             <h2 className="text-lg font-bold text-slate-900">
-              Authenticator App {totpRequired ? "(required)" : "(optional)"}
+              Authenticator App{" "}
+              {!totpAvailable
+                ? "(not used)"
+                : totpRequired
+                  ? "(required)"
+                  : "(optional)"}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              {currentUser.role === "ADMIN"
-                ? "Admins are not required to use email verification. Optionally enable an authenticator app for sign-in."
-                : "Authenticator app setup is required for your role. You also receive an email verification code at sign-in."}
+              {!totpAvailable
+                ? "This demo account uses password-only sign-in (no Email OTP or Authenticator)."
+                : currentUser.role === "ADMIN"
+                  ? "Admins are not required to use email verification. Optionally enable an authenticator app for sign-in."
+                  : "Authenticator app setup is required for your role. You also receive an email verification code at sign-in."}
             </p>
           </div>
 
           <div className="mt-5 space-y-4">
             {totpLoading ? (
               <p className="text-sm text-slate-600">Loading security settings...</p>
+            ) : !totpAvailable ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                Authenticator setup is skipped for this demo persona so you can switch accounts
+                quickly during project-scoped demos.
+              </div>
             ) : totpSetup ? (
               <>
                 <p className="text-sm text-slate-600">

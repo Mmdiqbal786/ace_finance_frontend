@@ -34,7 +34,7 @@ const users = {
   admin: {
     id: "6a50db2fa55b28bc2cbeae9e",
     name: "Admin",
-    email: "admin@acefinance.com",
+    email: "finance@aceolution.com",
     role: "ADMIN",
   },
 };

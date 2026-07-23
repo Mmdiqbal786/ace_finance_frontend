@@ -30,19 +30,27 @@ interface ManagedUser {
   email: string;
   role: UserRole;
   isActive: boolean;
+  assignedProjects?: string[];
+  isDemo?: boolean;
 }
 
-type CreateUserField = "name" | "email" | "role";
-type EditUserField = "name" | "role" | "password";
+type CreateUserField = "name" | "email" | "role" | "assignedProjects";
+type EditUserField = "name" | "role" | "password" | "assignedProjects";
+
+function roleNeedsProjects(role: UserRole): boolean {
+  return role === "REQUESTER" || role === "APPROVER";
+}
 
 interface UsersPanelProps {
   currentUser: AuthUser;
   openCreateSignal?: number;
+  projects?: Array<{ name: string; isActive?: boolean }>;
 }
 
 export default function UsersPanel({
   currentUser,
   openCreateSignal = 0,
+  projects = [],
 }: UsersPanelProps) {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,11 +62,13 @@ export default function UsersPanel({
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<UserRole>("APPROVER");
+  const [newProjects, setNewProjects] = useState<string[]>([]);
 
   const [editName, setEditName] = useState("");
   const [editRole, setEditRole] = useState<UserRole>("APPROVER");
   const [editActive, setEditActive] = useState(true);
   const [editPassword, setEditPassword] = useState("");
+  const [editProjects, setEditProjects] = useState<string[]>([]);
 
   const createForm = useFormValidation<CreateUserField>();
   const editForm = useFormValidation<EditUserField>();
@@ -67,6 +77,20 @@ export default function UsersPanel({
     initialFilters: { role: "ALL", status: "ALL" },
   });
 
+  const activeProjectNames = projects
+    .filter((p) => p.isActive !== false)
+    .map((p) => p.name)
+    .sort((a, b) => a.localeCompare(b));
+
+  const toggleProject = (
+    list: string[],
+    setList: React.Dispatch<React.SetStateAction<string[]>>,
+    name: string,
+  ) => {
+    setList((prev) =>
+      prev.includes(name) ? prev.filter((p) => p !== name) : [...prev, name],
+    );
+  };
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -95,6 +119,7 @@ export default function UsersPanel({
     setNewName("");
     setNewEmail("");
     setNewRole("APPROVER");
+    setNewProjects([]);
     createForm.clearAll();
   };
 
@@ -104,6 +129,10 @@ export default function UsersPanel({
       name: () => validatePersonName(newName, "Full name"),
       email: () => validateEmail(newEmail),
       role: () => (newRole ? "" : "Role is required."),
+      assignedProjects: () =>
+        roleNeedsProjects(newRole) && newProjects.length === 0
+          ? "Assign at least one project."
+          : "",
     });
     if (!ok) {
       createForm.focusFirstInvalid();
@@ -117,6 +146,7 @@ export default function UsersPanel({
           name: newName.trim(),
           email: newEmail.trim().toLowerCase(),
           role: newRole,
+          assignedProjects: roleNeedsProjects(newRole) ? newProjects : [],
         }),
       });
       if (!res.ok) throw new Error(await readApiError(res, "Failed to create user"));
@@ -175,6 +205,7 @@ export default function UsersPanel({
     setEditRole(user.role);
     setEditActive(user.isActive);
     setEditPassword("");
+    setEditProjects(Array.isArray(user.assignedProjects) ? [...user.assignedProjects] : []);
     editForm.clearAll();
   };
 
@@ -186,6 +217,10 @@ export default function UsersPanel({
       name: () => validatePersonName(editName, "Full name"),
       role: () => (editRole ? "" : "Role is required."),
       password: () => validatePassword(editPassword, { required: false }),
+      assignedProjects: () =>
+        roleNeedsProjects(editRole) && editProjects.length === 0
+          ? "Assign at least one project."
+          : "",
     });
     if (!ok) {
       editForm.focusFirstInvalid();
@@ -196,6 +231,7 @@ export default function UsersPanel({
         name: editName.trim(),
         role: editRole,
         isActive: editActive,
+        assignedProjects: roleNeedsProjects(editRole) ? editProjects : [],
       };
       if (editPassword.trim()) {
         body.password = editPassword;
@@ -294,6 +330,8 @@ export default function UsersPanel({
                       <th className="py-3 px-4">Name</th>
                       <th className="py-3 px-4">Email</th>
                       <th className="py-3 px-4">Role</th>
+                      <th className="py-3 px-4">Projects</th>
+                      <th className="py-3 px-4">Demo</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Actions</th>
                     </tr>
@@ -324,6 +362,22 @@ export default function UsersPanel({
                                   : "💳"}{" "}
                             {u.role}
                           </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-700 text-xs max-w-[220px]">
+                          {roleNeedsProjects(u.role)
+                            ? u.assignedProjects?.length
+                              ? u.assignedProjects.join(", ")
+                              : "None assigned"
+                            : "—"}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {u.isDemo ? (
+                            <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800 ring-1 ring-amber-300">
+                              Demo
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-500">—</span>
+                          )}
                         </td>
                         <td className="py-3.5 px-4">
                           <StatusToggle isActive={u.isActive} onToggle={() => handleToggle(u)} />
@@ -399,8 +453,11 @@ export default function UsersPanel({
             <select
               value={newRole}
               onChange={(e) => {
-                setNewRole(e.target.value as UserRole);
+                const role = e.target.value as UserRole;
+                setNewRole(role);
+                if (!roleNeedsProjects(role)) setNewProjects([]);
                 createForm.clearError("role");
+                createForm.clearError("assignedProjects");
               }}
               className={createForm.fieldClass("af-select", "role")}
             >
@@ -410,9 +467,53 @@ export default function UsersPanel({
               <option value="ADMIN">ADMIN — Full access + user management</option>
             </select>
           </FormField>
+          {roleNeedsProjects(newRole) && (
+            <div className="sm:col-span-2">
+              <FormField
+                label="Assigned projects"
+                required
+                error={createForm.errors.assignedProjects}
+              >
+                <div
+                  className={`max-h-40 overflow-y-auto rounded-lg border bg-white p-2 space-y-1 ${
+                    createForm.errors.assignedProjects
+                      ? "border-rose-400"
+                      : "border-slate-200"
+                  }`}
+                >
+                  {activeProjectNames.length === 0 ? (
+                    <p className="text-xs text-slate-600 px-1 py-2">
+                      No active projects in the catalog. Add projects first.
+                    </p>
+                  ) : (
+                    activeProjectNames.map((name) => (
+                      <label
+                        key={name}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 text-sm text-slate-800 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={newProjects.includes(name)}
+                          onChange={() => {
+                            toggleProject(newProjects, setNewProjects, name);
+                            createForm.clearError("assignedProjects");
+                          }}
+                          className="rounded border-slate-300"
+                        />
+                        <span>{name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </FormField>
+            </div>
+          )}
           <p className="sm:col-span-2 text-xs text-slate-600 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
             A temporary password is generated automatically and emailed to the user. They must set a
             new password on first login.
+            {roleNeedsProjects(newRole)
+              ? " Requesters and Approvers can only work with the projects you assign here."
+              : ""}
           </p>
           <div className="sm:col-span-2">
             <FormActionButtons onCancel={closeCreate} submitLabel="Create User" />
@@ -447,6 +548,22 @@ export default function UsersPanel({
               <span className="text-slate-700">Status</span>
               <span className={selected.isActive ? "text-emerald-600" : "text-rose-600"}>
                 {selected.isActive ? "Active" : "Inactive"}
+              </span>
+            </div>
+            {roleNeedsProjects(selected.role) && (
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-700 shrink-0">Projects</span>
+                <span className="font-semibold text-slate-900 text-right">
+                  {selected.assignedProjects?.length
+                    ? selected.assignedProjects.join(", ")
+                    : "None assigned"}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-700">Demo account</span>
+              <span className={selected.isDemo ? "text-amber-700 font-semibold" : "text-slate-600"}>
+                {selected.isDemo ? "Yes (password-only login)" : "No"}
               </span>
             </div>
             <div className="flex justify-end pt-2">
@@ -496,8 +613,11 @@ export default function UsersPanel({
               <select
                 value={editRole}
                 onChange={(e) => {
-                  setEditRole(e.target.value as UserRole);
+                  const role = e.target.value as UserRole;
+                  setEditRole(role);
+                  if (!roleNeedsProjects(role)) setEditProjects([]);
                   editForm.clearError("role");
+                  editForm.clearError("assignedProjects");
                 }}
                 className={editForm.fieldClass("af-select", "role")}
               >
@@ -507,6 +627,45 @@ export default function UsersPanel({
                 <option value="ADMIN">ADMIN</option>
               </select>
             </FormField>
+            {roleNeedsProjects(editRole) && (
+              <FormField
+                label="Assigned projects"
+                required
+                error={editForm.errors.assignedProjects}
+              >
+                <div
+                  className={`max-h-40 overflow-y-auto rounded-lg border bg-white p-2 space-y-1 ${
+                    editForm.errors.assignedProjects
+                      ? "border-rose-400"
+                      : "border-slate-200"
+                  }`}
+                >
+                  {activeProjectNames.length === 0 ? (
+                    <p className="text-xs text-slate-600 px-1 py-2">
+                      No active projects in the catalog. Add projects first.
+                    </p>
+                  ) : (
+                    activeProjectNames.map((name) => (
+                      <label
+                        key={name}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 text-sm text-slate-800 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={editProjects.includes(name)}
+                          onChange={() => {
+                            toggleProject(editProjects, setEditProjects, name);
+                            editForm.clearError("assignedProjects");
+                          }}
+                          className="rounded border-slate-300"
+                        />
+                        <span>{name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </FormField>
+            )}
             <FormField label="Status">
               <select
                 value={editActive ? "ACTIVE" : "INACTIVE"}

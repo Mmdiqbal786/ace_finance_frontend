@@ -11,6 +11,8 @@ export interface AuthUser {
   mustChangePassword?: boolean;
   mustSetupTotp?: boolean;
   totpEnabled?: boolean;
+  assignedProjects?: string[];
+  isDemo?: boolean;
 }
 
 export function getToken(): string | null {
@@ -78,7 +80,9 @@ export function mustSetupTotp(): boolean {
   const token = getToken();
   let role = user?.role;
   let totpEnabled = user?.totpEnabled === true;
-  let flagged = user?.mustSetupTotp === true;
+  // undefined = unknown; false = server said not required (isDemo)
+  let mustSetup: boolean | undefined =
+    typeof user?.mustSetupTotp === 'boolean' ? user.mustSetupTotp : undefined;
 
   if (token) {
     try {
@@ -86,7 +90,9 @@ export function mustSetupTotp(): boolean {
       role = role || payload.role;
       // Either store or JWT saying enabled is enough (avoids stale-flag loops).
       if (payload.totpEnabled === true) totpEnabled = true;
-      if (payload.mustSetupTotp === true) flagged = true;
+      if (typeof payload.mustSetupTotp === 'boolean') {
+        mustSetup = payload.mustSetupTotp;
+      }
     } catch {
       // ignore
     }
@@ -95,7 +101,9 @@ export function mustSetupTotp(): boolean {
   if (role === 'ADMIN') return false;
   // Enabled authenticator always wins over a stale mustSetupTotp flag.
   if (totpEnabled) return false;
-  if (flagged) return true;
+  // Explicit server false (password-only demo accounts)
+  if (mustSetup === false) return false;
+  if (mustSetup === true) return true;
   // Non-admin without confirmed TOTP must enroll
   return Boolean(role);
 }
@@ -106,8 +114,12 @@ export function getPostAuthDestination(
   intendedDashboardPath?: string | null,
 ): string {
   if (user.mustChangePassword) return '/set-password/';
-  // Only require setup when authenticator is not actually enabled.
-  if (user.role !== 'ADMIN' && user.totpEnabled !== true) {
+  // Respect mustSetupTotp: false for isDemo / already waived accounts.
+  const needsTotp =
+    user.role !== 'ADMIN' &&
+    user.totpEnabled !== true &&
+    user.mustSetupTotp !== false;
+  if (needsTotp) {
     return '/setup-authenticator/';
   }
   return resolveAccessibleDashboardPath(user.role, intendedDashboardPath);

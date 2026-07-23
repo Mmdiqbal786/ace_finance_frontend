@@ -166,6 +166,10 @@ export default function SubmitExpensePanel({
   const catalogError =
     !catalogLoading && (categories.length === 0 || projects.length === 0 || countries.length === 0);
 
+  const noAssignedProjects =
+    currentUser.role === "REQUESTER" &&
+    !(currentUser.assignedProjects && currentUser.assignedProjects.length > 0);
+
   return (
     <div className="portal-card rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 max-w-3xl">
       <div className="mb-5 pb-4 border-b border-slate-200">
@@ -174,7 +178,14 @@ export default function SubmitExpensePanel({
         </h3>
       </div>
 
-      {catalogError && (
+      {noAssignedProjects && (
+        <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+          You have no projects assigned. Contact an administrator to assign projects before you can
+          submit expenses.
+        </div>
+      )}
+
+      {catalogError && !noAssignedProjects && (
         <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
           Form options are incomplete — contact an admin if country, project, or category lists are
           empty.
@@ -216,7 +227,7 @@ export default function SubmitExpensePanel({
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,application/pdf,image/*"
             onChange={handleInvoiceChange}
-            disabled={submitting}
+            disabled={submitting || noAssignedProjects}
             className={`af-input${invoiceError ? " is-invalid" : ""} file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200`}
             aria-invalid={Boolean(invoiceError)}
           />
@@ -229,7 +240,7 @@ export default function SubmitExpensePanel({
 
         <button
           type="submit"
-          disabled={submitting || catalogError}
+          disabled={submitting || catalogError || noAssignedProjects}
           className="w-full h-11 rounded-xl bg-[var(--af-navy)] hover:bg-[var(--af-navy-soft)] text-sm font-bold text-white shadow transition-colors cursor-pointer disabled:opacity-50"
         >
           {submitting ? "Submitting..." : "Submit Expense Request"}
