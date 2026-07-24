@@ -2,8 +2,12 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import DemoGuideContent from "../../components/demo-guide/DemoGuideContent";
+import FullPageLoader from "../../components/FullPageLoader";
+import {
+  isDemoGuideUnlocked,
+  unlockDemoGuideAccess,
+} from "../../lib/demo-guide";
 
-const GATE_KEY = "ace_demo_guide_unlocked";
 const PASSWORD_HASH =
   "8585d94dbcfb942496f2a594b59221254add41dd39f68de8b9b1c3551ef82fa9";
 
@@ -23,13 +27,7 @@ export default function DemoGuideGatePage() {
   const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(GATE_KEY) === "1") {
-        setUnlocked(true);
-      }
-    } catch {
-      // ignore
-    }
+    setUnlocked(isDemoGuideUnlocked());
     setChecking(false);
   }, []);
 
@@ -41,20 +39,12 @@ export default function DemoGuideGatePage() {
       setError("Incorrect access password. Please try again.");
       return;
     }
-    try {
-      sessionStorage.setItem(GATE_KEY, "1");
-    } catch {
-      // ignore
-    }
+    unlockDemoGuideAccess();
     setUnlocked(true);
   }
 
   if (checking) {
-    return (
-      <div className="portal-page relative flex min-h-[70vh] flex-1 items-center justify-center p-4">
-        <p className="text-sm font-semibold text-slate-600">Loading…</p>
-      </div>
-    );
+    return <FullPageLoader message="Loading Aceolution Finance..." />;
   }
 
   if (unlocked) {
@@ -62,7 +52,10 @@ export default function DemoGuideGatePage() {
   }
 
   return (
-    <div className="portal-page relative flex flex-1 items-center justify-center p-4 py-8">
+    <div
+      className="portal-page relative flex flex-1 items-center justify-center p-4 py-8"
+      suppressHydrationWarning
+    >
       <div className="relative z-10 w-full max-w-[440px]">
         <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-6 shadow-lg sm:p-8">
           <div className="mb-4 flex items-center gap-3">

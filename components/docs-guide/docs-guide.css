@@ -3,6 +3,17 @@
   line-height: 1.6;
 }
 
+.docs-guide-body .pad-sm[id],
+.docs-guide-body [id] {
+  scroll-margin-top: var(--guide-scroll-margin, 8.5rem);
+}
+
+.docs-guide-body [data-guide-jump-active="1"] {
+  outline: 2px solid #70bcfc;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
 .docs-guide-body a {
   color: #1850a8;
   word-break: break-all;
@@ -45,16 +56,168 @@
   color: #334155;
 }
 
-.docs-guide-body .toc a {
-  font-weight: 700;
-  text-decoration: none;
+.docs-guide-body .toc > strong {
+  display: block;
+  margin-bottom: 6px;
 }
 
-.docs-guide-body .section-title {
-  font-size: clamp(18px, 2vw, 22px);
+.docs-guide-body .toc a {
+  display: inline-block;
+  font-weight: 700;
+  text-decoration: none;
+  word-break: normal;
+  overflow-wrap: normal;
+  color: #1850a8;
+  border-radius: 6px;
+  padding: 1px 4px;
+  margin-left: -4px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.docs-guide-body .toc a:hover {
+  background: #e0f2fe;
+  text-decoration: underline;
+  color: #0c4a6e;
+}
+
+.docs-guide-body .toc a:focus-visible {
+  outline: 2px solid #1850a8;
+  outline-offset: 2px;
+}
+
+.guide-jumpbar {
+  top: var(--guide-topbar-h, 4.25rem);
+}
+
+.guide-jumpchip {
+  white-space: nowrap;
+}
+
+.docs-guide-body .guide-section {
+  margin: 14px 12px 24px;
+  padding: 0 !important;
+  border: 1px solid #94a3b8;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.docs-guide-body .guide-section > .section-title,
+.docs-guide-body .guide-section > .meta,
+.docs-guide-body .guide-section > .block,
+.docs-guide-body .guide-section > .scroll-x,
+.docs-guide-body .guide-section > .status-box,
+.docs-guide-body .guide-section > .shot,
+.docs-guide-body .guide-section > p,
+.docs-guide-body .guide-section > figure,
+.docs-guide-body .guide-section > h3,
+.docs-guide-body .guide-section > ol,
+.docs-guide-body .guide-section > ul,
+.docs-guide-body .guide-section > pre,
+.docs-guide-body .guide-section > table {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+
+.docs-guide-body .guide-section > .section-title {
+  margin-top: 14px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.docs-guide-body .sec-mark {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  font-size: 11px;
   font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.docs-guide-body .sec-mark--start {
+  background: #203c62;
+  color: #7dd3fc;
+  border-bottom: 1px solid #355a8a;
+}
+
+.docs-guide-body .sec-mark--end {
+  background: #0f172a;
+  color: #94a3b8;
+  border-top: 1px solid #334155;
+  margin-top: 12px;
+}
+
+.docs-guide-body .sec-mark__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  background: rgba(125, 211, 252, 0.18);
+  color: #e0f2fe;
+  flex-shrink: 0;
+}
+
+.docs-guide-body .sec-mark--end .sec-mark__tag {
+  background: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+}
+
+.docs-guide-body .sec-mark__title {
+  color: #f8fafc;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 800;
+}
+
+.docs-guide-body .sec-mark--end .sec-mark__title {
+  color: #e2e8f0;
+}
+
+.docs-guide-body .guide-section > .sec-mark--start + .section-title {
+  margin-top: 14px;
+}
+
+@media (min-width: 640px) {
+  .docs-guide-body .guide-section {
+    margin: 16px 20px 28px;
+  }
+
+  .docs-guide-body .guide-section > .section-title,
+  .docs-guide-body .guide-section > .meta,
+  .docs-guide-body .guide-section > .block,
+  .docs-guide-body .guide-section > .scroll-x,
+  .docs-guide-body .guide-section > .status-box,
+  .docs-guide-body .guide-section > .shot,
+  .docs-guide-body .guide-section > p,
+  .docs-guide-body .guide-section > figure {
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .docs-guide-body .guide-section {
+    margin: 18px 32px 32px;
+  }
+
+  .docs-guide-body .guide-section > .section-title,
+  .docs-guide-body .guide-section > .meta,
+  .docs-guide-body .guide-section > .block,
+  .docs-guide-body .guide-section > .scroll-x,
+  .docs-guide-body .guide-section > .status-box,
+  .docs-guide-body .guide-section > .shot,
+  .docs-guide-body .guide-section > p,
+  .docs-guide-body .guide-section > figure {
+    margin-left: 32px;
+    margin-right: 32px;
+  }
 }
 
 .docs-guide-body .meta {

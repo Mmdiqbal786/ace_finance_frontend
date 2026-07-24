@@ -1,3 +1,5 @@
+"use client";
+
 function LoaderSpinner({ className = "h-5 w-5 text-white" }: { className?: string }) {
   return (
     <svg className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -18,9 +20,14 @@ export default function FullPageLoader({ message }: { message: string }) {
       role="status"
       aria-live="polite"
       aria-busy="true"
+      suppressHydrationWarning
     >
-      <div className="relative z-10 flex flex-col items-center gap-5 text-center">
+      <div
+        className="relative z-10 flex flex-col items-center gap-5 text-center"
+        suppressHydrationWarning
+      >
         <span className="inline-flex h-14 w-14 items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/Ace_logo_small_light.png"
             alt="Aceolution"
@@ -30,7 +37,7 @@ export default function FullPageLoader({ message }: { message: string }) {
           />
         </span>
         <LoaderSpinner className="h-10 w-10 text-[var(--af-accent)]" />
-        <div>
+        <div suppressHydrationWarning>
           <p className="text-base font-semibold text-slate-900">{message}</p>
           <p className="mt-1 text-sm text-slate-600">Please wait a moment...</p>
         </div>

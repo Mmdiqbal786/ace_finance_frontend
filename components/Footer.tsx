@@ -1,16 +1,30 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { DEMO_GUIDE_GATE_EVENT, isDemoGuideUnlocked } from "../lib/demo-guide";
 
 export default function Footer() {
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith("/dashboard");
   const path = pathname?.replace(/\/$/, "") || "";
   const isHome = path === "" || path === "/";
-  const isGuidePage = path === "/demo-guide" || path === "/docs-guide";
+  const isGuidePage =
+    path === "/demo-guide" || path === "/docs-guide" || path.startsWith("/docs-guide/");
+  const isPresentPage = path.startsWith("/docs-guide/present");
+  const [guideUnlocked, setGuideUnlocked] = useState(false);
 
-  if (isDashboard || isGuidePage) return null;
+  useEffect(() => {
+    function syncGate() {
+      setGuideUnlocked(isDemoGuideUnlocked());
+    }
+    syncGate();
+    window.addEventListener(DEMO_GUIDE_GATE_EVENT, syncGate);
+    return () => window.removeEventListener(DEMO_GUIDE_GATE_EVENT, syncGate);
+  }, [pathname]);
+
+  if (isDashboard || isPresentPage || (isGuidePage && guideUnlocked)) return null;
 
   if (isHome) {
     return (
