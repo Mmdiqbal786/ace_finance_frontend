@@ -4,20 +4,10 @@ import { FormEvent, useEffect, useState } from "react";
 import DemoGuideContent from "../../components/demo-guide/DemoGuideContent";
 import FullPageLoader from "../../components/FullPageLoader";
 import {
+  DEMO_ACCESS_CODE,
   isDemoGuideUnlocked,
   unlockDemoGuideAccess,
 } from "../../lib/demo-guide";
-
-const PASSWORD_HASH =
-  "8585d94dbcfb942496f2a594b59221254add41dd39f68de8b9b1c3551ef82fa9";
-
-async function sha256Hex(value: string): Promise<string> {
-  const data = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
 
 export default function DemoGuideGatePage() {
   const [password, setPassword] = useState("");
@@ -34,8 +24,14 @@ export default function DemoGuideGatePage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    const hash = await sha256Hex(password.trim());
-    if (hash !== PASSWORD_HASH) {
+    const expected = DEMO_ACCESS_CODE;
+    if (!expected) {
+      setError(
+        "Demo access password is not configured. Set NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD in the environment."
+      );
+      return;
+    }
+    if (password.trim() !== expected) {
       setError("Incorrect access password. Please try again.");
       return;
     }

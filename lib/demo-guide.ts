@@ -1,7 +1,9 @@
 export const DEMO_APP_URL = "https://ace-finance-frontend.onrender.com/";
 export const DEMO_API_URL = "https://ace-finance-backend.onrender.com/";
 export const DEMO_GUIDE_URL = "https://ace-finance-frontend.onrender.com/demo-guide/";
-export const DEMO_ACCESS_CODE = "Aceolution_2024";
+/** Demo guide unlock password — set via NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD (not committed). */
+export const DEMO_ACCESS_CODE =
+  process.env.NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD?.trim() || "";
 export const DEMO_DOCS_URL = "/docs-guide/";
 /** Session unlock flag after access password (demo + docs + present). */
 export const DEMO_GUIDE_GATE_KEY = "ace_demo_guide_unlocked";
@@ -371,7 +373,7 @@ export function buildShareInviteText(): string {
     DEMO_GUIDE_URL,
     "",
     "4) Access code (enter on the guide page):",
-    DEMO_ACCESS_CODE,
+    DEMO_ACCESS_CODE || "(ask the Aceolution Finance team for the access password)",
     "",
     "After unlock you will see test accounts and the full walkthrough.",
     "",
