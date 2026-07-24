@@ -80,7 +80,8 @@ export default function Header() {
     path === "/reset-password" ||
     path === "/set-password" ||
     path === "/setup-authenticator";
-  const isGuidePage = path === "/demo-guide" || path === "/docs-guide";
+  const isGuidePage =
+    path === "/demo-guide" || path === "/docs-guide" || path.startsWith("/docs-guide/");
   const showHeaderSignIn = mounted && !user && !isDashboard && !isAuthGuestPage;
   const showMarketingNav = mounted && !user && isHomePage;
 

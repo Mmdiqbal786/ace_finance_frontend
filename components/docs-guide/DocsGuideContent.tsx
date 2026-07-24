@@ -9,6 +9,7 @@ import {
   DOCS_DEMO_GUIDE_URL,
   normalizeDocsPlainText,
 } from "../../lib/docs-guide";
+import { downloadSopPptx } from "../../lib/build-sop-pptx";
 import "./docs-guide.css";
 
 /** Bump when screenshots are refreshed so browsers skip stale cached PNGs. */
@@ -22,6 +23,7 @@ const docsBodyHtml = DOCS_GUIDE_BODY_HTML.replace(
 export default function DocsGuideContent() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [copying, setCopying] = useState(false);
+  const [buildingPptx, setBuildingPptx] = useState(false);
 
   async function handleCopy() {
     setCopying(true);
@@ -37,6 +39,18 @@ export default function DocsGuideContent() {
     }
   }
 
+  async function handleDownloadPptx() {
+    setBuildingPptx(true);
+    try {
+      await downloadSopPptx();
+      toast.success("Full SOP PowerPoint downloaded — Aceolution-Finance-SOP.pptx");
+    } catch {
+      toast.error("PowerPoint download failed — try again (large deck may need a moment)");
+    } finally {
+      setBuildingPptx(false);
+    }
+  }
+
   return (
     <div className="relative min-w-0 flex-1 overflow-x-hidden bg-[#e8edf4]">
       <div className="sticky top-0 z-40 border-b border-slate-600 bg-slate-900/95 shadow-sm backdrop-blur-md">
@@ -48,6 +62,20 @@ export default function DocsGuideContent() {
             className="col-span-2 inline-flex min-h-10 items-center justify-center rounded-[10px] bg-sky-300 px-3 py-2 text-center text-xs font-extrabold text-slate-900 hover:bg-sky-200 disabled:opacity-60 sm:col-auto sm:px-4 sm:text-[13px]"
           >
             {copying ? "Copying…" : "Copy documentation (Teams text)"}
+          </button>
+          <a
+            href="/docs-guide/present/"
+            className="inline-flex min-h-10 items-center justify-center rounded-[10px] bg-indigo-300 px-3 py-2 text-center text-xs font-extrabold text-slate-900 hover:bg-indigo-200 sm:px-4 sm:text-[13px]"
+          >
+            Present SOP
+          </a>
+          <button
+            type="button"
+            onClick={handleDownloadPptx}
+            disabled={buildingPptx}
+            className="inline-flex min-h-10 items-center justify-center rounded-[10px] bg-emerald-300 px-3 py-2 text-center text-xs font-extrabold text-slate-900 hover:bg-emerald-200 disabled:opacity-60 sm:px-4 sm:text-[13px]"
+          >
+            {buildingPptx ? "Building full SOP PPTX…" : "Download PowerPoint"}
           </button>
           <a
             href={DOCS_DEMO_GUIDE_URL}
