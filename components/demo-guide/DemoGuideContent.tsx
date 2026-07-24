@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "../../lib/toast";
 import {
   DEMO_ACCOUNTS,
@@ -19,10 +19,71 @@ import {
   buildFullGuideCopyText,
   buildShareInviteText,
   copyPlainText,
+  lockDemoGuideAccess,
 } from "../../lib/demo-guide";
+import GuideJumpBar, { useGuideHashJumps } from "../guide/GuideJumpBar";
+import "../docs-guide/docs-guide.css";
+
+const DEMO_JUMP_CHIPS = DEMO_SECTIONS.map((s) => ({
+  href: `#${s.id}`,
+  label: s.label,
+}));
+
+function SectionMark({ kind, title }: { kind: "start" | "end"; title: string }) {
+  return (
+    <div className={`sec-mark sec-mark--${kind}`}>
+      <span className="sec-mark__tag">{kind === "start" ? "Section start" : "Section end"}</span>
+      <span className="sec-mark__title">{title}</span>
+    </div>
+  );
+}
+
+function GuideSection({
+  id,
+  title,
+  children,
+}: {
+  id?: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="pad-sm guide-section" id={id}>
+      <SectionMark kind="start" title={title} />
+      {children}
+      <SectionMark kind="end" title={title} />
+    </div>
+  );
+}
 
 export default function DemoGuideContent() {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const topBarRef = useRef<HTMLDivElement>(null);
   const [copying, setCopying] = useState<string | null>(null);
+  const [topBarH, setTopBarH] = useState(68);
+
+  useGuideHashJumps(contentRef);
+
+  function handleExitAccess() {
+    lockDemoGuideAccess();
+    window.location.assign("/demo-guide/");
+  }
+
+  useEffect(() => {
+    function measure() {
+      const h = topBarRef.current?.offsetHeight || 68;
+      setTopBarH(h);
+      const topEdge = topBarRef.current?.getBoundingClientRect().bottom || h;
+      document.documentElement.style.setProperty("--guide-topbar-h", `${topEdge}px`);
+    }
+    measure();
+    const raf = requestAnimationFrame(measure);
+    window.addEventListener("resize", measure);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
 
   async function handleCopy(kind: "invite" | "guide" | "accounts") {
     setCopying(kind);
@@ -49,14 +110,18 @@ export default function DemoGuideContent() {
   }
 
   return (
-    <div className="portal-page relative min-w-0 flex-1 overflow-x-hidden">
-      <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md">
-        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-2 gap-2 px-3 py-3 sm:flex sm:flex-wrap sm:px-6 lg:px-8">
+    <div className="relative min-w-0 flex-1 bg-[#e8edf4]">
+      <div
+        ref={topBarRef}
+        className="guide-topbar fixed inset-x-0 z-40 border-b border-slate-600 bg-slate-900/95 shadow-sm backdrop-blur-md"
+        style={{ top: "var(--af-site-header-h, 0px)" }}
+      >
+        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-2 gap-2 px-3 py-3 sm:flex sm:flex-wrap sm:justify-center sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => handleCopy("invite")}
             disabled={Boolean(copying)}
-            className="col-span-2 inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--af-navy)] px-3 py-2 text-center text-xs font-bold text-white shadow hover:bg-[var(--af-navy-soft)] disabled:opacity-60 sm:col-auto sm:px-4"
+            className="col-span-2 inline-flex min-h-10 items-center justify-center rounded-[10px] bg-sky-300 px-3 py-2 text-center text-xs font-extrabold text-slate-900 hover:bg-sky-200 disabled:opacity-60 sm:col-auto sm:px-4 sm:text-[13px]"
           >
             {copying === "invite" ? "Copying…" : "Share access invite"}
           </button>
@@ -64,7 +129,7 @@ export default function DemoGuideContent() {
             type="button"
             onClick={() => handleCopy("guide")}
             disabled={Boolean(copying)}
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-center text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60 sm:px-4"
+            className="inline-flex min-h-10 items-center justify-center rounded-[10px] bg-indigo-300 px-3 py-2 text-center text-xs font-extrabold text-slate-900 hover:bg-indigo-200 disabled:opacity-60 sm:px-4 sm:text-[13px]"
           >
             {copying === "guide" ? "Copying…" : "Copy full guide"}
           </button>
@@ -72,379 +137,432 @@ export default function DemoGuideContent() {
             type="button"
             onClick={() => handleCopy("accounts")}
             disabled={Boolean(copying)}
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-center text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60 sm:px-4"
+            className="inline-flex min-h-10 items-center justify-center rounded-[10px] bg-emerald-300 px-3 py-2 text-center text-xs font-extrabold text-slate-900 hover:bg-emerald-200 disabled:opacity-60 sm:px-4 sm:text-[13px]"
           >
             {copying === "accounts" ? "Copying…" : "Copy accounts only"}
           </button>
           <a
             href={DEMO_DOCS_URL}
-            className="col-span-2 inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-center text-xs font-bold text-slate-700 hover:bg-slate-50 sm:col-auto sm:px-4"
+            className="inline-flex min-h-10 items-center justify-center rounded-[10px] border-[1.5px] border-slate-400 px-3 py-2 text-center text-xs font-extrabold text-slate-200 hover:bg-slate-400/20 sm:px-4 sm:text-[13px]"
           >
             Open full documentation
           </a>
+          <a
+            href={DEMO_APP_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-10 items-center justify-center rounded-[10px] border-[1.5px] border-slate-400 px-3 py-2 text-center text-xs font-extrabold text-slate-200 hover:bg-slate-400/20 sm:px-4 sm:text-[13px]"
+          >
+            Open App
+          </a>
+          <button
+            type="button"
+            onClick={handleExitAccess}
+            title="Lock guide access and return to the password screen"
+            className="inline-flex min-h-10 items-center justify-center rounded-[10px] border-[1.5px] border-rose-400/80 bg-rose-500/20 px-3 py-2 text-center text-xs font-extrabold text-rose-100 hover:bg-rose-500/35 sm:px-4 sm:text-[13px]"
+          >
+            Exit access
+          </button>
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-6 sm:py-7 lg:px-8">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:rounded-3xl">
-          <div className="bg-[var(--af-navy)] px-5 py-7 sm:px-8 sm:py-10">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-sky-300">
-                  Expense Approval & Tracking
-                </p>
-                <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
-                  Full Live <span className="text-sky-300">Demo Guide</span>
-                </h1>
-                <p className="mt-3 text-sm leading-relaxed text-sky-100 sm:text-base">
-                  Sign-in → every role → end-to-end expense cycle. Covers login security, FX
-                  submission, approver decisions, change requests, processor payments with
-                  receipts, and full audit/export.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                <a
-                  href={DEMO_APP_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-bold text-[var(--af-navy)] shadow sm:px-5"
+      <GuideJumpBar items={DEMO_JUMP_CHIPS} />
+
+      <div style={{ height: topBarH + 44 }} aria-hidden />
+
+      <div className="mx-auto w-full max-w-[1600px] px-2.5 py-3 sm:px-6 sm:py-7 lg:px-8">
+        <div
+          ref={contentRef}
+          className="docs-guide-body min-w-0 overflow-x-clip rounded-xl border border-slate-400 bg-white shadow-xl sm:rounded-2xl"
+        >
+          {/* Brand header — matches docs-guide */}
+          <div className="pad" style={{ background: "#203c62" }}>
+            <div className="brand-row">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/Ace_logo_small_light.png"
+                alt=""
+                width={44}
+                height={44}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: "#0b1a2e",
+                  objectFit: "contain",
+                }}
+              />
+              <div>
+                <div className="brand-title">
+                  Aceolution <span style={{ color: "#70bcfc" }}>Finance</span>
+                </div>
+                <div
+                  style={{
+                    marginTop: 2,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: "0.04em",
+                    color: "#93c5fd",
+                    textTransform: "uppercase",
+                  }}
                 >
-                  Open App →
-                </a>
-                <a
-                  href={DEMO_API_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/40 px-4 text-center text-sm font-bold text-white hover:bg-white/10 sm:px-5"
-                >
-                  Wake Backend API
-                </a>
+                  Full Live Demo Guide · Expense Approval &amp; Tracking
+                </div>
               </div>
+            </div>
+            <div style={{ fontSize: 14, color: "#dbeafe", fontWeight: 600, lineHeight: 1.45 }}>
+              Sign-in → every role → end-to-end expense cycle · login security · FX · approvals ·
+              payments · audit &amp; Excel
+            </div>
+            <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <a
+                href={DEMO_APP_URL}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  minHeight: 40,
+                  padding: "0 14px",
+                  borderRadius: 10,
+                  background: "#fff",
+                  color: "#203c62",
+                  fontWeight: 800,
+                  fontSize: 13,
+                  textDecoration: "none",
+                }}
+              >
+                Open App →
+              </a>
+              <a
+                href={DEMO_API_URL}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  minHeight: 40,
+                  padding: "0 14px",
+                  borderRadius: 10,
+                  border: "1.5px solid rgba(255,255,255,0.45)",
+                  color: "#fff",
+                  fontWeight: 800,
+                  fontSize: 13,
+                  textDecoration: "none",
+                }}
+              >
+                Wake Backend API
+              </a>
             </div>
           </div>
 
-          <div className="grid min-w-0 gap-0 lg:grid-cols-[240px_minmax(0,1fr)]">
-            <aside className="hidden border-r border-slate-200 bg-slate-50/80 p-5 lg:block">
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                On this page
-              </p>
-              <nav className="mt-3 space-y-1">
-                {DEMO_SECTIONS.map((section) => (
-                  <a
-                    key={section.id}
-                    href={`#${section.id}`}
-                    className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-white hover:text-[var(--af-accent)]"
-                  >
-                    {section.label}
-                  </a>
-                ))}
-              </nav>
-            </aside>
+          <div className="pad">
+            <p style={{ margin: "0 0 12px", fontSize: 15, lineHeight: 1.65, color: "#334155" }}>
+              Use this guide for live demos. For page-by-page screenshots and every success/error
+              path, open the{" "}
+              <a href={DEMO_DOCS_URL}>
+                <strong>Full App Documentation</strong>
+              </a>
+              .
+            </p>
 
-            <div className="min-w-0 space-y-8 p-4 sm:p-7 lg:p-8">
-              <section className="space-y-4">
-                <div>
-                  <h2 className="text-lg font-extrabold text-slate-900">Live URLs</h2>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Frontend (App)
-                      </p>
-                      <a
-                        href={DEMO_APP_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 break-all text-sm font-semibold text-[var(--af-accent)] hover:underline"
-                      >
+            <div className="toc">
+              <strong style={{ color: "#0f172a" }}>Contents · click any item to jump</strong>
+              <br />
+              {DEMO_SECTIONS.map((section, i) => (
+                <span key={section.id}>
+                  <a href={`#${section.id}`}>
+                    {i + 1}. {section.label}
+                  </a>
+                  <br />
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Live URLs */}
+          <GuideSection title="Live URLs">
+            <div className="section-title">Live URLs</div>
+            <div className="scroll-x">
+              <table>
+                <tbody>
+                  <tr>
+                    <th style={{ width: "28%" }}>Frontend (App)</th>
+                    <td>
+                      <a href={DEMO_APP_URL} target="_blank" rel="noreferrer">
                         {DEMO_APP_URL}
                       </a>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Backend (API)
-                      </p>
-                      <a
-                        href={DEMO_API_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 break-all text-sm font-semibold text-[var(--af-accent)] hover:underline"
-                      >
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Backend (API)</th>
+                    <td>
+                      <a href={DEMO_API_URL} target="_blank" rel="noreferrer">
                         {DEMO_API_URL}
                       </a>
-                    </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="block ex">
+              <h4>Note</h4>
+              The backend is on Render’s free tier and may sleep after inactivity. Open the Backend
+              URL once first (wait until it loads — up to ~50 seconds), then use the Frontend.
+            </div>
+          </GuideSection>
+
+          {/* 1 Accounts */}
+          <GuideSection id="accounts" title="1) Test accounts">
+            <div className="section-title">1) Test accounts</div>
+            <p className="meta">
+              Primary accounts use real Gmail inboxes for Email OTP. Requester/Approver are
+              project-scoped — pick a project both share (Media pair below).
+            </p>
+            <div className="scroll-x">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Use as</th>
+                    <th>Email</th>
+                    <th>Password</th>
+                    <th>Role</th>
+                    <th>Assigned projects</th>
+                    <th>Login 2FA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <tr key={account.email}>
+                      <td>
+                        <strong>{account.label}</strong>
+                      </td>
+                      <td>
+                        <code>{account.email}</code>
+                      </td>
+                      <td>
+                        <code>{account.password}</code>
+                      </td>
+                      <td>{account.role}</td>
+                      <td>{account.projects}</td>
+                      <td>{account.login2fa}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="meta">
+              *Admin has no email OTP by default. Optional Authenticator app can be enabled in
+              Profile.
+            </p>
+
+            <div className="block info">
+              <h4>Project-scoped demo users (seeded)</h4>
+              Different Requesters and Approvers for different project groups. These accounts are{" "}
+              <strong>password-only</strong> (no Email OTP, no Authenticator) so you can switch
+              personas quickly during demos.
+            </div>
+            <div className="scroll-x">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Password</th>
+                    <th>Role</th>
+                    <th>Assigned projects</th>
+                    <th>Login</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {DEMO_EXTRA_STAFF.map((staff) => (
+                    <tr key={staff.email}>
+                      <td>
+                        <strong>{staff.name}</strong>
+                      </td>
+                      <td>
+                        <code>{staff.email}</code>
+                      </td>
+                      <td>
+                        <code>{staff.password}</code>
+                      </td>
+                      <td>{staff.role}</td>
+                      <td>{staff.projects}</td>
+                      <td>{staff.login2fa}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="block ok">
+              <h4>Pairing tip</h4>
+              Requester News ↔ Approver Media (GNL/GNP) · Requester Systems ↔ Approver Systems ·
+              Requester Ops ↔ Approver Ops · Requester GAC ↔ Approver Media.
+            </div>
+          </GuideSection>
+
+          {/* 2 Sign in */}
+          <GuideSection id="sign-in" title="2) How to sign in">
+            <div className="section-title">2) How to sign in</div>
+            <div className="block info">
+              <h4>Steps</h4>
+              <ol style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.55 }}>
+                {DEMO_SIGN_IN_STEPS.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          </GuideSection>
+
+          {/* 3 Workflow */}
+          <GuideSection id="workflow" title="3) Complete business flow">
+            <div className="section-title">3) Complete business flow</div>
+            <p className="meta">This is the proper path that exercises every major function.</p>
+            <div className="block ex">
+              <h4>FLOW A — Happy path with partial payment</h4>
+            </div>
+            {DEMO_FLOW_A_STEPS.map((step) => (
+              <div key={step.id} className="block info" style={{ marginBottom: 12 }}>
+                <h4>
+                  {step.id} — {step.title}
+                </h4>
+                <ul style={{ margin: "0 0 8px", paddingLeft: "1.2rem", lineHeight: 1.55 }}>
+                  {step.body.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+                {step.actions ? (
+                  <div className="scroll-x" style={{ marginBottom: 0 }}>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Action</th>
+                          <th>Result</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {step.actions.map((action) => (
+                          <tr key={action.action}>
+                            <td>
+                              <strong>{action.action}</strong>
+                            </td>
+                            <td>{action.result}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                </div>
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                  <strong>Note:</strong> The backend is on Render’s free tier and may sleep after
-                  inactivity. Open the Backend URL once first (wait until it loads — up to ~50
-                  seconds), then use the Frontend.
-                </div>
-              </section>
+                ) : null}
+                {step.tip ? (
+                  <div className="block ex" style={{ marginTop: 8, marginBottom: 0 }}>
+                    <h4>Tip</h4>
+                    {step.tip}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+            <div className="block ok">
+              <h4>FLOW B — Quick reject path (optional second test)</h4>
+              Submit another expense as Requester → Approver <strong>Reject</strong> (reason
+              required) → status Rejected by Approver · requester notified. Or approve then
+              Processor <strong>Reject Payout</strong> → Rejected by Processor.
+            </div>
+          </GuideSection>
 
-              <section id="accounts" className="scroll-mt-28 space-y-4">
-                <h2 className="text-xl font-extrabold text-slate-900">1) Test accounts</h2>
-                <p className="text-sm text-slate-600">
-                  Primary accounts use real Gmail inboxes for Email OTP. Requester/Approver are
-                  project-scoped — pick a project both share (Media pair below).
-                </p>
-                <div className="af-table-wrap rounded-2xl border border-slate-200">
-                  <table className="af-table min-w-full text-sm">
-                    <thead>
-                      <tr className="bg-[var(--af-navy)] text-white">
-                        <th className="px-3 py-3 text-left">Use as</th>
-                        <th className="px-3 py-3 text-left">Email</th>
-                        <th className="px-3 py-3 text-left">Password</th>
-                        <th className="px-3 py-3 text-left">Role</th>
-                        <th className="px-3 py-3 text-left">Assigned projects</th>
-                        <th className="px-3 py-3 text-left">Login 2FA</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {DEMO_ACCOUNTS.map((account) => (
-                        <tr key={account.email} className="border-t border-slate-100">
-                          <td className="px-3 py-3 font-bold text-[var(--af-accent)]">
-                            {account.label}
-                          </td>
-                          <td className="px-3 py-3 font-mono text-xs">{account.email}</td>
-                          <td className="px-3 py-3 font-mono text-xs">{account.password}</td>
-                          <td className="px-3 py-3 text-slate-700">{account.role}</td>
-                          <td className="px-3 py-3 text-xs text-slate-700 max-w-[220px]">
-                            {account.projects}
-                          </td>
-                          <td className="px-3 py-3 text-slate-700">{account.login2fa}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-xs text-slate-500">
-                  *Admin has no email OTP by default. Optional Authenticator app can be enabled in
-                  Profile.
-                </p>
+          {/* 4 Audit */}
+          <GuideSection id="audit" title="4) Verify audit trail">
+            <div className="section-title">4) Verify audit trail</div>
+            <div className="block info">
+              <h4>Expense Details &amp; Audit</h4>
+              Open the paid request and confirm:
+              <ul style={{ margin: "8px 0 0", paddingLeft: "1.2rem", lineHeight: 1.55 }}>
+                {DEMO_AUDIT_CHECKS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="block ok">
+              <h4>Excel export</h4>
+              Analytics / Tracker → Export Excel — sheets: Expense Report · Change Requests ·
+              Workflow History · Payment History
+            </div>
+          </GuideSection>
 
-                <h3 className="text-base font-extrabold text-slate-900">
-                  Project-scoped demo users (seeded)
-                </h3>
-                <p className="text-sm text-slate-600">
-                  Different Requesters and Approvers for different project groups. These
-                  accounts are <strong>password-only</strong> (no Email OTP, no Authenticator)
-                  so you can switch personas quickly during demos.
-                </p>
-                <div className="af-table-wrap rounded-2xl border border-slate-200">
-                  <table className="af-table min-w-full text-sm">
-                    <thead>
-                      <tr className="bg-slate-700 text-white">
-                        <th className="px-3 py-3 text-left">Name</th>
-                        <th className="px-3 py-3 text-left">Email</th>
-                        <th className="px-3 py-3 text-left">Password</th>
-                        <th className="px-3 py-3 text-left">Role</th>
-                        <th className="px-3 py-3 text-left">Assigned projects</th>
-                        <th className="px-3 py-3 text-left">Login</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {DEMO_EXTRA_STAFF.map((staff) => (
-                        <tr key={staff.email} className="border-t border-slate-100">
-                          <td className="px-3 py-3 font-semibold text-slate-900">{staff.name}</td>
-                          <td className="px-3 py-3 font-mono text-xs">{staff.email}</td>
-                          <td className="px-3 py-3 font-mono text-xs">{staff.password}</td>
-                          <td className="px-3 py-3 text-slate-700">{staff.role}</td>
-                          <td className="px-3 py-3 text-xs text-slate-700 max-w-[280px]">
-                            {staff.projects}
-                          </td>
-                          <td className="px-3 py-3 text-xs text-slate-700">{staff.login2fa}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950">
-                  <strong>Pairing tip:</strong> Requester News ↔ Approver Media (GNL/GNP) ·
-                  Requester Systems ↔ Approver Systems · Requester Ops ↔ Approver Ops · Requester
-                  GAC ↔ Approver Media.
-                </div>
-              </section>
+          {/* 5 Roles */}
+          <GuideSection id="roles" title="5) Role capabilities">
+            <div className="section-title">5) Role capabilities</div>
+            {DEMO_ROLE_CAPABILITIES.map((role) => (
+              <div key={role.role} className="block info">
+                <h4>{role.role}</h4>
+                {role.canDo}
+              </div>
+            ))}
+          </GuideSection>
 
-              <section id="sign-in" className="scroll-mt-28 space-y-3">
-                <h2 className="text-xl font-extrabold text-slate-900">2) How to sign in</h2>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <ol className="space-y-3">
-                    {DEMO_SIGN_IN_STEPS.map((step, index) => (
-                      <li key={step} className="flex gap-3 text-sm leading-relaxed text-slate-700">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--af-navy)] text-xs font-bold text-white">
-                          {String.fromCharCode(65 + index)}
-                        </span>
-                        <span>{step}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </section>
-
-              <section id="workflow" className="scroll-mt-28 space-y-5">
-                <div>
-                  <h2 className="text-xl font-extrabold text-slate-900">
-                    3) Complete business flow
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    This is the proper path that exercises every major function.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
-                  <p className="text-sm font-extrabold text-[var(--af-accent)]">
-                    FLOW A — Happy path with partial payment
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {DEMO_FLOW_A_STEPS.map((step) => (
-                    <article
-                      key={step.id}
-                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-                    >
-                      <div className="flex flex-col sm:flex-row">
-                        <div className="flex items-center justify-center bg-[var(--af-navy)] px-4 py-4 text-sm font-extrabold text-white sm:w-16 sm:flex-col">
-                          {step.id}
-                        </div>
-                        <div className="flex-1 p-4 sm:p-5">
-                          <h3 className="text-base font-extrabold text-slate-900">{step.title}</h3>
-                          <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-slate-600">
-                            {step.body.map((line) => (
-                              <li key={line}>• {line}</li>
-                            ))}
-                          </ul>
-                          {step.actions && (
-                            <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
-                              <table className="min-w-full text-xs">
-                                <thead>
-                                  <tr className="bg-slate-100 text-left text-slate-700">
-                                    <th className="px-3 py-2">Action</th>
-                                    <th className="px-3 py-2">Result</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {step.actions.map((action) => (
-                                    <tr key={action.action} className="border-t border-slate-100">
-                                      <td className="px-3 py-2 font-bold text-slate-900">
-                                        {action.action}
-                                      </td>
-                                      <td className="px-3 py-2 text-slate-600">{action.result}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
-                          {step.tip && (
-                            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-                              {step.tip}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-                  <p className="text-sm font-extrabold text-emerald-800">
-                    FLOW B — Quick reject path (optional second test)
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-emerald-900/80">
-                    Submit another expense as Requester → Approver <strong>Reject</strong> (reason
-                    required) → status Rejected by Approver · requester notified. Or approve then
-                    Processor <strong>Reject Payout</strong> → Rejected by Processor.
-                  </p>
-                </div>
-              </section>
-
-              <section id="audit" className="scroll-mt-28 space-y-3">
-                <h2 className="text-xl font-extrabold text-slate-900">4) Verify audit trail</h2>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm leading-relaxed text-slate-700">
-                  <p className="font-semibold text-slate-900">
-                    Open the paid request → Expense Details & Audit and confirm:
-                  </p>
-                  <ul className="mt-3 space-y-2">
-                    {DEMO_AUDIT_CHECKS.map((item) => (
-                      <li key={item}>✓ {item}</li>
-                    ))}
-                  </ul>
-                  <p className="mt-4">
-                    Then open <strong>Analytics / Tracker</strong> → <strong>Export Excel</strong>{" "}
-                    and open all sheets: Expense Report · Change Requests · Workflow History ·
-                    Payment History
-                  </p>
-                </div>
-              </section>
-
-              <section id="roles" className="scroll-mt-28 space-y-3">
-                <h2 className="text-xl font-extrabold text-slate-900">5) Role capabilities</h2>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {DEMO_ROLE_CAPABILITIES.map((role) => (
-                    <article
-                      key={role.role}
-                      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                    >
-                      <h3 className="text-sm font-extrabold text-[var(--af-accent)]">{role.role}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-slate-600">{role.canDo}</p>
-                    </article>
-                  ))}
-                </div>
-              </section>
-
-              <section id="status" className="scroll-mt-28 space-y-3">
-                <h2 className="text-xl font-extrabold text-slate-900">6) Typical status flow</h2>
-                <pre className="overflow-x-auto rounded-2xl bg-slate-900 p-5 text-xs leading-relaxed text-slate-100 sm:text-sm">
-                  {`Submitted (Pending Approver)
+          {/* 6 Status */}
+          <GuideSection id="status" title="6) Typical status flow">
+            <div className="section-title">6) Typical status flow</div>
+            <div className="status-box">{`Submitted (Pending Approver)
 → optional Changes Requested → edit → resubmit
 → Approved (Pending Processing)
 → optional Partially Paid
 → Processed & Paid
-(or Rejected by Approver / Rejected by Processor)`}
-                </pre>
-              </section>
+(or Rejected by Approver / Rejected by Processor)`}</div>
+          </GuideSection>
 
-              <section id="security" className="scroll-mt-28 space-y-3">
-                <h2 className="text-xl font-extrabold text-slate-900">7) Security features to try</h2>
-                <ul className="space-y-2 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
-                  {DEMO_SECURITY_FEATURES.map((item) => (
-                    <li key={item}>• {item}</li>
-                  ))}
-                </ul>
-              </section>
-
-              <section id="ui-checks" className="scroll-mt-28 space-y-3">
-                <h2 className="text-xl font-extrabold text-slate-900">8) What to watch for in the UI</h2>
-                <ul className="space-y-2 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
-                  {DEMO_UI_CHECKS.map((item) => (
-                    <li key={item}>• {item}</li>
-                  ))}
-                </ul>
-              </section>
-
-              <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
-                <p className="text-sm leading-relaxed text-slate-700">
-                  Please try the full path above (<strong>FLOW A: A1→A7</strong>), verify audit +
-                  Excel export, and share feedback (bugs, UX, missing fields, email delays, etc.).
-                  For page-by-page success/error reference, open the{" "}
-                  <a href={DEMO_DOCS_URL} className="font-bold text-[var(--af-accent)] hover:underline">
-                    Full App Documentation
-                  </a>
-                  .
-                </p>
-                <p className="mt-4 text-sm text-slate-900">
-                  Thanks,
-                  <br />
-                  <strong className="text-[var(--af-navy)]">Aceolution Finance</strong>
-                </p>
-              </section>
+          {/* 7 Security */}
+          <GuideSection id="security" title="7) Security features to try">
+            <div className="section-title">7) Security features to try</div>
+            <div className="block info">
+              <h4>Checklist</h4>
+              <ul style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.55 }}>
+                {DEMO_SECURITY_FEATURES.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
             </div>
+          </GuideSection>
+
+          {/* 8 UI */}
+          <GuideSection id="ui-checks" title="8) What to watch for in the UI">
+            <div className="section-title">8) What to watch for in the UI</div>
+            <div className="block info">
+              <h4>UI checks</h4>
+              <ul style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.55 }}>
+                {DEMO_UI_CHECKS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </GuideSection>
+
+          <div className="pad-footer">
+            <p style={{ margin: "0 0 10px", fontSize: 14, color: "#334155", lineHeight: 1.6 }}>
+              Please try the full path above (<strong>FLOW A: A1→A7</strong>), verify audit + Excel
+              export, and share feedback. For page-by-page success/error reference, open the{" "}
+              <a href={DEMO_DOCS_URL}>
+                <strong>Full App Documentation</strong>
+              </a>
+              .
+            </p>
+            <p style={{ margin: 0, fontSize: 15, color: "#0f172a" }}>
+              Thanks,
+              <br />
+              <strong style={{ color: "#203c62" }}>Aceolution Finance</strong>
+            </p>
           </div>
 
-          <div className="border-t border-slate-800 bg-[var(--af-navy)] px-6 py-4 text-center text-xs leading-relaxed text-sky-200">
-            Secure internal expense requests, multi-currency FX, approvals, disbursements, audit
-            history, and payment tracking.
+          <div
+            style={{
+              background: "#203c62",
+              padding: "14px 16px",
+              textAlign: "center",
+              fontSize: 12,
+              color: "#93c5fd",
+            }}
+          >
+            Secure internal expense requests · multi-currency FX · approvals · disbursements · audit
+            · payment tracking
           </div>
         </div>
       </div>

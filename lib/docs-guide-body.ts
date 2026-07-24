@@ -22,7 +22,7 @@ export const DOCS_GUIDE_BODY_HTML = `
           Each section lists path, who can access, example steps, success toast, and errors.
         </p>
         <div class="toc">
-          <strong style="color:#0f172a;">Contents</strong><br/>
+          <strong style="color:#0f172a;">Contents · click any item to jump</strong><br/>
           <a href="#status">1. Status legend &amp; flow</a><br/>
           <a href="#login">2. All login possibilities</a><br/>
           <a href="#login-2fa-methods" style="padding-left:12px;">2a. After password — Email code + Authenticator</a><br/>
@@ -44,7 +44,9 @@ export const DOCS_GUIDE_BODY_HTML = `
       </div>
 
       <!-- 1 STATUS -->
-      <div class="pad-sm" id="status">
+      <div class="pad-sm guide-section" id="status">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">1) Status legend &amp; flow</span></div>
+        
         <div class="section-title">1) Status legend &amp; flow</div>
         <div class="scroll-x">
           <table>
@@ -64,10 +66,14 @@ export const DOCS_GUIDE_BODY_HTML = `
 → PARTIALLY_PAID (optional)
 → PROCESSED
 or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">1) Status legend &amp; flow</span></div>
       </div>
 
       <!-- 2 LOGIN -->
-      <div class="pad-sm" id="login">
+      <div class="pad-sm guide-section" id="login">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">2) All login possibilities</span></div>
+        
         <div class="section-title">2) All login possibilities</div>
         <p class="meta">Path: <code>/login/</code> · Related: <code>/forgot-password/</code> · <code>/reset-password/</code> · <code>/set-password/</code> · <code>/setup-authenticator/</code></p>
 
@@ -185,10 +191,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           Success: “Your password has been updated…” / password changed → post-auth destination (authenticator setup if still required).<br/>
           Errors: invalid/expired link · password &lt; 8 chars · need letter+number · passwords do not match · current password incorrect · Enter the temporary password…
         </div>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">2) All login possibilities</span></div>
       </div>
 
       <!-- 3 REQUESTER -->
-      <div class="pad-sm" id="requester">
+      <div class="pad-sm guide-section" id="requester">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">3) Requester pages</span></div>
+        
         <div class="section-title">3) Requester pages</div>
         <p class="meta">
           Access: <strong>Requester only</strong> · Login: Email OTP + Authenticator (real accounts) ·
@@ -283,10 +293,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         </figure>
         <div class="block ok"><h4>Success (resubmit)</h4>Toast: <strong>Changes saved — request resubmitted for approval.</strong></div>
         <div class="block err"><h4>Errors</h4>You can only edit after staff requested changes · same field validations · Failed to update / replace invoice</div>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">3) Requester pages</span></div>
       </div>
 
       <!-- 4 APPROVER -->
-      <div class="pad-sm" id="approver">
+      <div class="pad-sm guide-section" id="approver">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">4) Approver — every possible action</span></div>
+        
         <div class="section-title">4) Approver — every possible action</div>
         <p class="meta">
           Path: <code>/dashboard/approver/</code> · Access: Approver + Admin · Login: Email OTP (Approver) ·
@@ -346,10 +360,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <h4>Errors</h4>
           Rejection/change notes required (≥5, ≤500) · Cannot approve/reject when status is wrong · Action failed
         </div>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">4) Approver — every possible action</span></div>
       </div>
 
       <!-- 5 PROCESSOR -->
-      <div class="pad-sm" id="processor">
+      <div class="pad-sm guide-section" id="processor">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">5) Processor — every possible action</span></div>
+        
         <div class="section-title">5) Processor — every possible action</div>
         <p class="meta">Path: <code>/dashboard/processor/</code> · Access: Processor + Admin · Login: Email OTP (Processor)</p>
 
@@ -394,10 +412,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <h4>Errors</h4>
           Payment receipt required · amount &gt; 0 and ≤ remaining · Cannot request changes after a partial payment · wrong status · Partial payment failed / Action failed
         </div>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">5) Processor — every possible action</span></div>
       </div>
 
       <!-- 6 ANALYTICS -->
-      <div class="pad-sm" id="analytics">
+      <div class="pad-sm guide-section" id="analytics">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">6) Analytics &amp; Excel export</span></div>
+        
         <div class="section-title">6) Analytics &amp; Excel export</div>
         <p class="meta">Path: <code>/dashboard/analytics/</code> · Approver + Processor + Admin</p>
         <figure class="shot">
@@ -426,10 +448,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           Sheets: Expense Report · Change Requests · Workflow History · Payment History
         </div>
         <div class="block err"><h4>Errors</h4>No data available to export. · Failed to open/download invoice or receipt</div>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">6) Analytics &amp; Excel export</span></div>
       </div>
 
       <!-- 7 PROFILE -->
-      <div class="pad-sm" id="profile">
+      <div class="pad-sm guide-section" id="profile">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">7) Profile, password &amp; Authenticator</span></div>
+        
         <div class="section-title">7) Profile, password &amp; Authenticator</div>
         <p class="meta">Path: <code>/dashboard/profile/</code> · All roles · Authenticator <strong>required</strong> for Requester / Approver / Processor · <strong>optional</strong> for Admin</p>
         <figure class="shot">
@@ -494,10 +520,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <h4>Errors</h4>
           Failed to load profile · invalid authenticator code · wrong password · SMTP fail on email code · weak password rules · Current password is incorrect · Authenticator is required… cannot be disabled
         </div>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">7) Profile, password &amp; Authenticator</span></div>
       </div>
 
       <!-- 8 ADMIN -->
-      <div class="pad-sm" id="admin">
+      <div class="pad-sm guide-section" id="admin">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">8) Admin pages</span></div>
+        
         <div class="section-title">8) Admin pages</div>
         <p class="meta">Access: <strong>Admin only</strong> · Login: password only (or TOTP if enabled)</p>
 
@@ -541,10 +571,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <figcaption>Countries / currencies (drives FX)</figcaption>
         </figure>
         <div class="block ok"><h4>Catalogs — Success</h4>{Singular} created/updated successfully! · {Singular} deleted.</div>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">8) Admin pages</span></div>
       </div>
 
       <!-- 9 EMAILS -->
-      <div class="pad-sm" id="emails">
+      <div class="pad-sm guide-section" id="emails">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">9) Emails &amp; attachments</span></div>
+        
         <div class="section-title">9) Emails &amp; attachments</div>
         <div class="scroll-x">
           <table>
@@ -563,10 +597,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <h4>Attachments</h4>
           Invoice + payment receipts: PDF / JPG / PNG / WEBP / GIF · max <strong>5 MB</strong>. Partial payments do not email until fully paid.
         </div>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">9) Emails &amp; attachments</span></div>
       </div>
 
       <!-- 9a REQUESTER EMAILS -->
-      <div class="pad-sm" id="email-requester">
+      <div class="pad-sm guide-section" id="email-requester">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">9a) Requester emails — real Gmail screenshots</span></div>
+        
         <div class="section-title">9a) Requester emails — real Gmail screenshots</div>
         <p class="meta">
           Real inbox screenshots for the <strong>Requester</strong> role.
@@ -631,10 +669,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/email-requester-11-change-authenticator.png" alt="Change authenticator email" loading="lazy" />
           <figcaption>Change authenticator — email code (replace flow; old secret deleted on confirm)</figcaption>
         </figure>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">9a) Requester emails — real Gmail screenshots</span></div>
       </div>
 
       <!-- 9b APPROVER EMAILS -->
-      <div class="pad-sm" id="email-approver">
+      <div class="pad-sm guide-section" id="email-approver">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">9b) Approver emails — real Gmail screenshots</span></div>
+        
         <div class="section-title">9b) Approver emails — real Gmail screenshots</div>
         <p class="meta">
           Real inbox screenshots for the <strong>Approver</strong> role.
@@ -659,10 +701,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/email-approver-03-due-tomorrow-reminder.png" alt="Due tomorrow reminder email" loading="lazy" />
           <figcaption>Reminder: expense due tomorrow — still awaiting approval (1 day left)</figcaption>
         </figure>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">9b) Approver emails — real Gmail screenshots</span></div>
       </div>
 
       <!-- 9c PROCESSOR EMAILS -->
-      <div class="pad-sm" id="email-processor">
+      <div class="pad-sm guide-section" id="email-processor">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">9c) Processor emails — real Gmail screenshots</span></div>
+        
         <div class="section-title">9c) Processor emails — real Gmail screenshots</div>
         <p class="meta">
           Real inbox screenshots for the <strong>Processor</strong> role.
@@ -682,10 +728,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/email-processor-02-due-tomorrow-reminder.png" alt="Processor due tomorrow reminder" loading="lazy" />
           <figcaption>Reminder: approved expense due tomorrow — still awaiting payment (1 day left)</figcaption>
         </figure>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">9c) Processor emails — real Gmail screenshots</span></div>
       </div>
 
       <!-- 10 ROLES -->
-      <div class="pad-sm" id="roles">
+      <div class="pad-sm guide-section" id="roles">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">10) Role capability matrix</span></div>
+        
         <div class="section-title">10) Role capability matrix</div>
         <div class="scroll-x">
           <table>
@@ -704,10 +754,14 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           </table>
         </div>
         <p class="meta">*Admin password-only unless Authenticator enabled in Profile. Non-admin: Email OTP + required Authenticator after enrollment.</p>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">10) Role capability matrix</span></div>
       </div>
 
       <!-- 11 GALLERY -->
-      <div class="pad-sm" id="errors-gallery">
+      <div class="pad-sm guide-section" id="errors-gallery">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">11) Validation &amp; toast gallery (extra)</span></div>
+        
         <div class="section-title">11) Validation &amp; toast gallery (extra)</div>
         <p class="meta">Quick visual reference for common success/error UI from the real app.</p>
         <figure class="shot">
@@ -742,6 +796,8 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/43-processor-menu-all-actions.png" alt="Processor all actions" loading="lazy" />
           <figcaption>Processor — all row actions visible</figcaption>
         </figure>
+      
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">11) Validation &amp; toast gallery (extra)</span></div>
       </div>
 
       <div class="pad-footer">

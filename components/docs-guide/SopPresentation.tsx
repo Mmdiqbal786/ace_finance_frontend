@@ -8,12 +8,18 @@ import {
   type SopSlide,
   type SopSlideKind,
 } from "../../lib/sop-presentation-slides";
+import {
+  buildSlideNarration,
+  speakSopNarration,
+  stopSopSpeech,
+} from "../../lib/sop-narration";
+import { lockDemoGuideAccess } from "../../lib/demo-guide";
 import "./sop-presentation.css";
 
 const LOGO_LIGHT = "/Ace_logo_small_light.png";
 const LOGO_DARK = "/Ace_logo_small.png";
+const VOICE_KEY = "ace_sop_auto_voice";
 
-/** Screen-change effects — rotated by slide + direction so each change feels different. */
 const FX_FORWARD = ["slide-left", "fade-up", "zoom-in", "wipe-right", "flip-in", "scale-fade"] as const;
 const FX_BACK = ["slide-right", "fade-down", "zoom-out", "wipe-left", "flip-out", "scale-fade"] as const;
 
@@ -111,10 +117,73 @@ export default function SopPresentation() {
   const [index, setIndex] = useState(0);
   const [fx, setFx] = useState<FxName>("zoom-in");
   const [animKey, setAnimKey] = useState(0);
+  const [autoVoice, setAutoVoice] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const autoVoiceRef = useRef(false);
   const total = SOP_SLIDES.length;
   const slide = SOP_SLIDES[index];
   const sectionOptions = useMemo(() => SECTION_JUMPS, []);
+  const narration = useMemo(
+    () => buildSlideNarration(slide, index + 1, total),
+    [slide, index, total]
+  );
+
+  useEffect(() => {
+    autoVoiceRef.current = autoVoice;
+  }, [autoVoice]);
+
+  useEffect(() => {
+    try {
+      setAutoVoice(sessionStorage.getItem(VOICE_KEY) === "1");
+    } catch {
+      // ignore
+    }
+    const warm = () => {
+      try {
+        window.speechSynthesis?.getVoices();
+      } catch {
+        // ignore
+      }
+    };
+    warm();
+    window.speechSynthesis?.addEventListener?.("voiceschanged", warm);
+    return () => {
+      stopSopSpeech();
+      window.speechSynthesis?.removeEventListener?.("voiceschanged", warm);
+    };
+  }, []);
+
+  const speakCurrent = useCallback(() => {
+    const script = buildSlideNarration(SOP_SLIDES[index], index + 1, total);
+    const ok = speakSopNarration(script, {
+      onEnd: () => setSpeaking(false),
+      onError: () => setSpeaking(false),
+    });
+    setSpeaking(ok);
+    return ok;
+  }, [index, total]);
+
+  const stopVoice = useCallback(() => {
+    stopSopSpeech();
+    setSpeaking(false);
+  }, []);
+
+  const toggleAutoVoice = useCallback(() => {
+    setAutoVoice((on) => {
+      const next = !on;
+      try {
+        sessionStorage.setItem(VOICE_KEY, next ? "1" : "0");
+      } catch {
+        // ignore
+      }
+      if (!next) {
+        stopSopSpeech();
+        setSpeaking(false);
+      }
+      return next;
+    });
+  }, []);
 
   const goTo = useCallback(
     (next: number, dirHint?: 1 | -1) => {
@@ -122,6 +191,8 @@ export default function SopPresentation() {
       if (clamped === index) return;
       const dir: 1 | -1 = dirHint ?? (clamped > index ? 1 : -1);
       const target = SOP_SLIDES[clamped];
+      stopSopSpeech();
+      setSpeaking(false);
       setFx(pickFx(clamped, target.kind, dir));
       setAnimKey((k) => k + 1);
       setIndex(clamped);
@@ -136,12 +207,36 @@ export default function SopPresentation() {
     [goTo, index]
   );
 
+  useEffect(() => {
+    if (!autoVoice) return;
+    const t = window.setTimeout(() => {
+      if (!autoVoiceRef.current) return;
+      const script = buildSlideNarration(SOP_SLIDES[index], index + 1, total);
+      const ok = speakSopNarration(script, {
+        onEnd: () => setSpeaking(false),
+        onError: () => setSpeaking(false),
+      });
+      setSpeaking(ok);
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [index, autoVoice, total, animKey]);
+
   const exit = useCallback(() => {
+    stopSopSpeech();
     if (document.fullscreenElement) {
       void document.exitFullscreen().catch(() => {});
     }
     router.push("/docs-guide/");
   }, [router]);
+
+  const exitAccess = useCallback(() => {
+    stopSopSpeech();
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => {});
+    }
+    lockDemoGuideAccess();
+    window.location.assign("/demo-guide/");
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     const root = document.documentElement;
@@ -174,11 +269,20 @@ export default function SopPresentation() {
       } else if (e.key === "f" || e.key === "F") {
         e.preventDefault();
         toggleFullscreen();
+      } else if (e.key === "v" || e.key === "V") {
+        e.preventDefault();
+        toggleAutoVoice();
+      } else if (e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        speakCurrent();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        stopVoice();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [exit, go, goTo, toggleFullscreen, total]);
+  }, [exit, go, goTo, speakCurrent, stopVoice, toggleAutoVoice, toggleFullscreen, total]);
 
   function onTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.changedTouches[0]?.clientX ?? null;
@@ -211,6 +315,7 @@ export default function SopPresentation() {
           <span className="sop-present__counter">
             {index + 1} / {total}
           </span>
+          {speaking ? <span className="sop-present__speaking">Speaking…</span> : null}
         </div>
         <div className="sop-present__bar-actions">
           <label className="sop-present__jump">
@@ -230,6 +335,31 @@ export default function SopPresentation() {
               ))}
             </select>
           </label>
+          <button
+            type="button"
+            className={`sop-present__btn ${autoVoice ? "sop-present__btn--voice-on" : "sop-present__btn--voice"}`}
+            onClick={toggleAutoVoice}
+            title="Auto AI voice on each slide (V)"
+          >
+            {autoVoice ? "Voice ON" : "Voice OFF"}
+          </button>
+          <button
+            type="button"
+            className="sop-present__btn sop-present__btn--voice"
+            onClick={() => speakCurrent()}
+            title="Speak this slide (S)"
+          >
+            Speak
+          </button>
+          <button
+            type="button"
+            className="sop-present__btn sop-present__btn--ghost"
+            onClick={stopVoice}
+            disabled={!speaking}
+            title="Stop voice (M)"
+          >
+            Stop
+          </button>
           <button type="button" className="sop-present__btn" onClick={() => go(-1)} disabled={index === 0}>
             Prev
           </button>
@@ -247,6 +377,14 @@ export default function SopPresentation() {
           <button type="button" className="sop-present__btn sop-present__btn--ghost" onClick={exit}>
             Exit
           </button>
+          <button
+            type="button"
+            className="sop-present__btn sop-present__btn--ghost"
+            onClick={exitAccess}
+            title="Lock guide access and return to the password screen"
+          >
+            Exit access
+          </button>
         </div>
       </header>
 
@@ -256,16 +394,19 @@ export default function SopPresentation() {
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        <div
-          key={animKey}
-          className={`sop-present__anim sop-fx-${fx}`}
-        >
+        <div key={animKey} className={`sop-present__anim sop-fx-${fx}`}>
           <SlideBody slide={slide} />
         </div>
       </main>
 
       <footer className="sop-present__hint">
-        ← → / swipe · Space · F fullscreen · Esc exit
+        ← → / swipe · V auto voice · S speak · M stop · F fullscreen · Esc exit
+        {autoVoice || speaking ? (
+          <span className="sop-present__script" title={narration}>
+            {" "}
+            · Narrating slide details
+          </span>
+        ) : null}
       </footer>
     </div>
   );

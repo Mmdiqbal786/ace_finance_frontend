@@ -8,6 +8,7 @@ import {
   SOP_SLIDES,
   type SopSlide,
 } from "./sop-presentation-slides";
+import { buildSlideNarration } from "./sop-narration";
 
 const NAVY = "203C62";
 const SKY = "70BCFC";
@@ -36,13 +37,9 @@ async function imageToDataUrl(path: string): Promise<string | null> {
 }
 
 type LogoPair = { light: string | null; dark: string | null };
+type PptxSlide = ReturnType<PptxGenJS["addSlide"]>;
 
-function stampLogo(
-  _pptx: PptxGenJS,
-  s: ReturnType<PptxGenJS["addSlide"]>,
-  logos: LogoPair,
-  onDark: boolean
-) {
+function stampLogo(_pptx: PptxGenJS, s: PptxSlide, logos: LogoPair, onDark: boolean) {
   const data = onDark ? logos.light : logos.dark;
   if (data) {
     s.addImage({
@@ -64,7 +61,20 @@ function stampLogo(
   });
 }
 
-function addTitleSlide(pptx: PptxGenJS, slide: SopSlide, logos: LogoPair) {
+function addNotes(s: PptxSlide, slide: SopSlide, slideNumber: number, total: number) {
+  const script = buildSlideNarration(slide, slideNumber, total);
+  if (typeof s.addNotes === "function") {
+    s.addNotes(script);
+  }
+}
+
+function addTitleSlide(
+  pptx: PptxGenJS,
+  slide: SopSlide,
+  logos: LogoPair,
+  slideNumber: number,
+  total: number
+) {
   const s = pptx.addSlide();
   s.addShape(pptx.ShapeType.rect, {
     x: 0,
@@ -120,9 +130,16 @@ function addTitleSlide(pptx: PptxGenJS, slide: SopSlide, logos: LogoPair) {
       }
     );
   }
+  addNotes(s, slide, slideNumber, total);
 }
 
-function addSectionSlide(pptx: PptxGenJS, slide: SopSlide, logos: LogoPair) {
+function addSectionSlide(
+  pptx: PptxGenJS,
+  slide: SopSlide,
+  logos: LogoPair,
+  slideNumber: number,
+  total: number
+) {
   const s = pptx.addSlide();
   s.addShape(pptx.ShapeType.rect, {
     x: 0,
@@ -151,9 +168,16 @@ function addSectionSlide(pptx: PptxGenJS, slide: SopSlide, logos: LogoPair) {
       color: "BFDBFE",
     });
   }
+  addNotes(s, slide, slideNumber, total);
 }
 
-function addAgendaOrTextSlide(pptx: PptxGenJS, slide: SopSlide, logos: LogoPair) {
+function addAgendaOrTextSlide(
+  pptx: PptxGenJS,
+  slide: SopSlide,
+  logos: LogoPair,
+  slideNumber: number,
+  total: number
+) {
   const s = pptx.addSlide();
   s.background = { color: STAGE };
   s.addShape(pptx.ShapeType.rect, {
@@ -210,13 +234,16 @@ function addAgendaOrTextSlide(pptx: PptxGenJS, slide: SopSlide, logos: LogoPair)
       }
     );
   }
+  addNotes(s, slide, slideNumber, total);
 }
 
 async function addContentSlide(
   pptx: PptxGenJS,
   slide: SopSlide,
   imageCache: Map<string, string | null>,
-  logos: LogoPair
+  logos: LogoPair,
+  slideNumber: number,
+  total: number
 ) {
   const s = pptx.addSlide();
   s.background = { color: STAGE };
@@ -285,6 +312,7 @@ async function addContentSlide(
       });
     }
   }
+  addNotes(s, slide, slideNumber, total);
 }
 
 export async function downloadSopPptx(): Promise<void> {
@@ -300,16 +328,19 @@ export async function downloadSopPptx(): Promise<void> {
     light: await imageToDataUrl(LOGO_LIGHT),
     dark: await imageToDataUrl(LOGO_DARK),
   };
+  const total = SOP_SLIDES.length;
 
-  for (const slide of SOP_SLIDES) {
+  for (let i = 0; i < SOP_SLIDES.length; i++) {
+    const slide = SOP_SLIDES[i];
+    const n = i + 1;
     if (slide.kind === "title") {
-      addTitleSlide(pptx, slide, logos);
+      addTitleSlide(pptx, slide, logos, n, total);
     } else if (slide.kind === "section") {
-      addSectionSlide(pptx, slide, logos);
+      addSectionSlide(pptx, slide, logos, n, total);
     } else if (slide.kind === "agenda") {
-      addAgendaOrTextSlide(pptx, slide, logos);
+      addAgendaOrTextSlide(pptx, slide, logos, n, total);
     } else {
-      await addContentSlide(pptx, slide, imageCache, logos);
+      await addContentSlide(pptx, slide, imageCache, logos, n, total);
     }
   }
 

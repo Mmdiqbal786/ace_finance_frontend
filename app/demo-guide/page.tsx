@@ -2,8 +2,11 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import DemoGuideContent from "../../components/demo-guide/DemoGuideContent";
+import {
+  isDemoGuideUnlocked,
+  unlockDemoGuideAccess,
+} from "../../lib/demo-guide";
 
-const GATE_KEY = "ace_demo_guide_unlocked";
 const PASSWORD_HASH =
   "8585d94dbcfb942496f2a594b59221254add41dd39f68de8b9b1c3551ef82fa9";
 
@@ -23,13 +26,7 @@ export default function DemoGuideGatePage() {
   const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(GATE_KEY) === "1") {
-        setUnlocked(true);
-      }
-    } catch {
-      // ignore
-    }
+    setUnlocked(isDemoGuideUnlocked());
     setChecking(false);
   }, []);
 
@@ -41,11 +38,7 @@ export default function DemoGuideGatePage() {
       setError("Incorrect access password. Please try again.");
       return;
     }
-    try {
-      sessionStorage.setItem(GATE_KEY, "1");
-    } catch {
-      // ignore
-    }
+    unlockDemoGuideAccess();
     setUnlocked(true);
   }
 

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import Modal from './Modal';
 import BrandLogo from './BrandLogo';
 import { DASHBOARD_ROUTES, getDefaultDashboardRoute } from '../lib/dashboard/routes';
+import { DEMO_GUIDE_GATE_EVENT, isDemoGuideUnlocked } from '../lib/demo-guide';
 
 const roleBadgeClass: Record<string, string> = {
   ADMIN: 'bg-amber-100 text-amber-800 border-amber-300',
@@ -33,11 +34,13 @@ function getInitials(name: string): string {
 export default function Header() {
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith('/dashboard');
+  const headerRef = useRef<HTMLElement>(null);
 
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [guideUnlocked, setGuideUnlocked] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,6 +51,15 @@ export default function Header() {
       setUser(null);
     }
   }, [isDashboard, pathname]);
+
+  useEffect(() => {
+    function syncGate() {
+      setGuideUnlocked(isDemoGuideUnlocked());
+    }
+    syncGate();
+    window.addEventListener(DEMO_GUIDE_GATE_EVENT, syncGate);
+    return () => window.removeEventListener(DEMO_GUIDE_GATE_EVENT, syncGate);
+  }, [pathname]);
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -82,13 +94,37 @@ export default function Header() {
     path === "/setup-authenticator";
   const isGuidePage =
     path === "/demo-guide" || path === "/docs-guide" || path.startsWith("/docs-guide/");
-  const showHeaderSignIn = mounted && !user && !isDashboard && !isAuthGuestPage;
+  const isPresentPage = path.startsWith("/docs-guide/present");
+  /** Site chrome on password gate only — hide once the guide is unlocked (own toolbar). */
+  const hideGuideChrome = isPresentPage || (isGuidePage && guideUnlocked);
+  const showHeaderSignIn = mounted && !user && !isDashboard && !isAuthGuestPage && !(isGuidePage && !guideUnlocked);
   const showMarketingNav = mounted && !user && isHomePage;
 
-  if (isGuidePage) return null;
+  useEffect(() => {
+    if (hideGuideChrome) {
+      document.documentElement.style.setProperty("--af-site-header-h", "0px");
+      return;
+    }
+    function measure() {
+      const h = headerRef.current?.offsetHeight || 0;
+      document.documentElement.style.setProperty("--af-site-header-h", `${h}px`);
+    }
+    measure();
+    requestAnimationFrame(measure);
+    window.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      document.documentElement.style.setProperty("--af-site-header-h", "0px");
+    };
+  }, [hideGuideChrome, pathname, user, mounted]);
+
+  if (hideGuideChrome) return null;
 
   return (
-    <header className={`sticky top-0 z-50 shrink-0 w-full border-b border-slate-200 bg-white ${isDashboard ? "" : "bg-white/90 backdrop-blur-md"}`}>
+    <header
+      ref={headerRef}
+      className={`sticky top-0 z-50 shrink-0 w-full border-b border-slate-200 bg-white ${isDashboard ? "" : "bg-white/90 backdrop-blur-md"}`}
+    >
       <div
         suppressHydrationWarning
         className="flex min-h-14 w-full items-center justify-between gap-2 px-4 py-2 sm:min-h-16 sm:gap-3 sm:px-6 lg:px-8"

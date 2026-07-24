@@ -3,6 +3,44 @@ export const DEMO_API_URL = "https://ace-finance-backend.onrender.com/";
 export const DEMO_GUIDE_URL = "https://ace-finance-frontend.onrender.com/demo-guide/";
 export const DEMO_ACCESS_CODE = "Aceolution_2024";
 export const DEMO_DOCS_URL = "/docs-guide/";
+/** Session unlock flag after access password (demo + docs + present). */
+export const DEMO_GUIDE_GATE_KEY = "ace_demo_guide_unlocked";
+export const DEMO_GUIDE_GATE_EVENT = "ace-demo-guide-gate";
+
+function notifyDemoGuideGateChange(): void {
+  try {
+    window.dispatchEvent(new Event(DEMO_GUIDE_GATE_EVENT));
+  } catch {
+    // ignore
+  }
+}
+
+export function isDemoGuideUnlocked(): boolean {
+  try {
+    return sessionStorage.getItem(DEMO_GUIDE_GATE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function unlockDemoGuideAccess(): void {
+  try {
+    sessionStorage.setItem(DEMO_GUIDE_GATE_KEY, "1");
+  } catch {
+    // ignore
+  }
+  notifyDemoGuideGateChange();
+}
+
+/** Clear guide access — requires access password again. */
+export function lockDemoGuideAccess(): void {
+  try {
+    sessionStorage.removeItem(DEMO_GUIDE_GATE_KEY);
+  } catch {
+    // ignore
+  }
+  notifyDemoGuideGateChange();
+}
 
 export type DemoAccount = {
   label: string;

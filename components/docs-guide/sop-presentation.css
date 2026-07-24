@@ -57,11 +57,43 @@
   max-width: min(42vw, 320px);
 }
 
-.sop-present__counter {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--sop-sky);
-  flex-shrink: 0;
+.sop-present__speaking {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #86efac;
+  animation: sopPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes sopPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.sop-present__btn--voice {
+  background: #c4b5fd;
+  color: #1e1b4b;
+}
+
+.sop-present__btn--voice:hover:not(:disabled) {
+  background: #ddd6fe;
+}
+
+.sop-present__btn--voice-on {
+  background: #4ade80;
+  color: #052e16;
+}
+
+.sop-present__btn--voice-on:hover:not(:disabled) {
+  background: #86efac;
+}
+
+.sop-present__script {
+  color: #86efac;
 }
 
 .sop-present__bar-actions {

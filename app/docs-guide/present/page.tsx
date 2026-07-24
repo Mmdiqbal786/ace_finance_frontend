@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SopPresentation from "../../../components/docs-guide/SopPresentation";
-
-const GATE_KEY = "ace_demo_guide_unlocked";
+import { isDemoGuideUnlocked } from "../../../lib/demo-guide";
 
 export default function DocsGuidePresentPage() {
   const router = useRouter();
@@ -12,14 +11,10 @@ export default function DocsGuidePresentPage() {
   const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(GATE_KEY) === "1") {
-        setUnlocked(true);
-        setChecking(false);
-        return;
-      }
-    } catch {
-      // ignore
+    if (isDemoGuideUnlocked()) {
+      setUnlocked(true);
+      setChecking(false);
+      return;
     }
     router.replace("/demo-guide/");
   }, [router]);
