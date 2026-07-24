@@ -159,11 +159,13 @@ export const DEMO_FLOW_A_STEPS: DemoFlowStep[] = [
       "Login as Requester (Media) → Submit Expense",
       "Project dropdown shows only assigned projects (GAC / GNL for the primary Media requester)",
       "Fill: Country (auto currency) · Project · Category · Local amount · Due date · Description · Invoice file (invoice number/date optional)",
-      "Submit → system stores USD amount + FX rate + date",
+      "Attachment shows PDF/image preview under the field",
+      "Submit → Confirm submission modal (review all details + attachment) → Confirm & Submit",
+      "System stores USD amount + FX rate + date",
       "Status becomes Pending Approver — only Approvers assigned to that project get the email",
       "Check My Requests and confirmation email",
     ],
-    tip: "To demo Systems/Ops projects, use the matching Requester + Approver accounts from the project-scoped table (or change their emails to real inboxes for OTP).",
+    tip: "To demo Systems/Ops projects, use the matching Requester + Approver accounts from the project-scoped table (password-only @acefinance.com demos).",
   },
   {
     id: "A2",
@@ -299,6 +301,9 @@ export const DEMO_UI_CHECKS = [
   "Change Request History lists all back-and-forth commands (not only the latest)",
   "Payment receipts listed separately with view/download",
   "Excel Change Requests sheet matches the UI history",
+  "Submit: attachment preview (PDF/image) under the field, then Confirm submission modal before create",
+  "Edit (Changes Requested): Replace attachment optional + Confirm changes before save/resubmit",
+  "Project-scoped demo users (@acefinance.com) login password-only (isDemo)",
 ];
 
 export const DEMO_AUDIT_CHECKS = [

@@ -190,7 +190,10 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
       <!-- 3 REQUESTER -->
       <div class="pad-sm" id="requester">
         <div class="section-title">3) Requester pages</div>
-        <p class="meta">Access: <strong>Requester only</strong> · Login: Email OTP</p>
+        <p class="meta">
+          Access: <strong>Requester only</strong> · Login: Email OTP + Authenticator (real accounts) ·
+          Project-scoped demo users (<code>isDemo</code>): password only
+        </p>
 
         <figure class="shot">
           <img src="/docs-screenshots/07-requester-dashboard.png" alt="Requester dashboard" loading="lazy" />
@@ -198,18 +201,41 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         </figure>
 
         <div class="block info">
+          <h4>Project scoping</h4>
+          Requesters only see <strong>assigned projects</strong> in the Project dropdown.
+          If none are assigned, Submit shows a message to contact Admin. Approvers only receive /
+          act on expenses for their assigned projects (reminders included).
+        </div>
+
+        <div class="block info">
           <h4>Submit Expense · <code>/dashboard/submit-expense/</code></h4>
-          Country (currency) · Project · Category · optional invoice number/date · Due Date · Amount · description · attachment → Submit.<br/>
-          System stores USD + FX rate/date → status Pending Approver.
+          <ol style="margin:0;padding-left:1.2rem;line-height:1.55">
+            <li>Fill Country (sets currency) · Project · Category · optional invoice number/date · Due Date · Amount · Description.</li>
+            <li><strong>Attachment</strong> (required): PDF or image (JPG/PNG/WEBP/GIF), max 5 MB. After you choose a file, an <strong>inline preview</strong> appears under the field (image thumbnail or embedded PDF viewer).</li>
+            <li>Click <strong>Submit Expense Request</strong> → client validation runs first.</li>
+            <li><strong>Confirm submission</strong> modal opens with a full summary of every field + attachment preview (image or PDF) and the question: “Are you sure you want to submit?”</li>
+            <li><strong>Cancel</strong> returns to the form · <strong>Confirm &amp; Submit</strong> creates the request.</li>
+          </ol>
+          System stores local amount + USD + FX rate/date → status <strong>Pending Approver</strong>.
+          Only Approvers assigned to that project get the email / queue item.
         </div>
         <figure class="shot">
           <img src="/docs-screenshots/08-submit-expense.png" alt="Submit expense form" loading="lazy" />
-          <figcaption>Submit Expense form (real page)</figcaption>
+          <figcaption>Submit Expense form — filled fields + attachment area</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/08b-submit-attachment-preview.png" alt="Attachment preview on submit form" loading="lazy" />
+          <figcaption>After choosing a file — PDF/image preview under Attachment (before submit)</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/08c-submit-confirm-modal.png" alt="Confirm submission modal" loading="lazy" />
+          <figcaption>Confirm submission — review all details + attachment preview · Cancel or Confirm &amp; Submit</figcaption>
         </figure>
         <div class="block ok"><h4>Success</h4>Centered sticky toast: <strong>Expense request submitted.</strong> + Expense ID — stays until Dismiss.</div>
         <div class="block err">
           <h4>Errors</h4>
-          Required selects · amount rules · date rules · description ≤500 · PDF/image max 5 MB · Failed to submit…
+          Required selects · amount rules · date rules · description ≤500 · PDF/image max 5 MB ·
+          no projects assigned · Failed to submit…
         </div>
         <figure class="shot">
           <img src="/docs-screenshots/41-submit-validation-errors.png" alt="Submit validation errors" loading="lazy" />
@@ -232,18 +258,40 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <img src="/docs-screenshots/31a-edit-menu-open.png" alt="Edit menu" loading="lazy" />
           <figcaption>Open row menu → Edit (only for Changes Requested)</figcaption>
         </figure>
+
+        <div class="block info">
+          <h4>Edit &amp; resubmit (Changes Requested)</h4>
+          <ol style="margin:0;padding-left:1.2rem;line-height:1.55">
+            <li>Open Edit — change any allowed fields (email stays locked to the login account for Requesters).</li>
+            <li><strong>Current invoice</strong>: View / Download the existing file.</li>
+            <li><strong>Replace attachment</strong> (optional): choose a new PDF/image → inline preview. Leave empty to keep the current file. Use Clear new file to discard a replacement.</li>
+            <li>Click <strong>Save Changes</strong> → validation → <strong>Confirm changes</strong> screen with full summary + attachment (new file marked as replacement, or “keeping existing”).</li>
+            <li><strong>Cancel</strong> returns to the edit form · <strong>Confirm &amp; Resubmit</strong> saves and sets status back to Pending Approver.</li>
+          </ol>
+        </div>
         <figure class="shot">
           <img src="/docs-screenshots/31-edit-resubmit-modal.png" alt="Edit and resubmit modal" loading="lazy" />
-          <figcaption>Edit Expense Request modal — save/resubmit after changes</figcaption>
+          <figcaption>Edit Expense Request — fields + Current invoice + Replace attachment</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/31b-edit-replace-preview.png" alt="Replace attachment preview" loading="lazy" />
+          <figcaption>Replace attachment chosen — PDF/image preview on the edit form</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/31c-edit-confirm-modal.png" alt="Confirm edit changes" loading="lazy" />
+          <figcaption>Confirm changes — review summary + attachment · Cancel or Confirm &amp; Resubmit</figcaption>
         </figure>
         <div class="block ok"><h4>Success (resubmit)</h4>Toast: <strong>Changes saved — request resubmitted for approval.</strong></div>
-        <div class="block err"><h4>Errors</h4>You can only edit after staff requested changes · same field validations · Failed to update expense</div>
+        <div class="block err"><h4>Errors</h4>You can only edit after staff requested changes · same field validations · Failed to update / replace invoice</div>
       </div>
 
       <!-- 4 APPROVER -->
       <div class="pad-sm" id="approver">
         <div class="section-title">4) Approver — every possible action</div>
-        <p class="meta">Path: <code>/dashboard/approver/</code> · Access: Approver + Admin · Login: Email OTP (Approver)</p>
+        <p class="meta">
+          Path: <code>/dashboard/approver/</code> · Access: Approver + Admin · Login: Email OTP (Approver) ·
+          Queue / emails / due-soon reminders are <strong>filtered to assigned projects</strong>
+        </p>
 
         <figure class="shot">
           <img src="/docs-screenshots/10-approver-queue.png" alt="Approver queue" loading="lazy" />
@@ -464,9 +512,11 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         <p class="meta">
           <strong>Project assignment:</strong> When role is Requester or Approver, Admin must assign
           one or more projects on create/edit. Requesters can submit only those projects; Approvers
-          only see/act on (and receive emails for) expenses in their assigned projects. Admin and
-          Processor are not project-scoped. Existing users with no projects have no project access
-          until Admin assigns them.
+          only see/act on (and receive emails / due-soon reminders for) expenses in their assigned
+          projects. Admin and Processor are not project-scoped. Existing users with no projects have
+          no project access until Admin assigns them.<br/>
+          <strong>Demo badge (<code>isDemo</code>):</strong> Seeded <code>@acefinance.com</code>
+          personas show as Demo in User Management — password-only login (no Email OTP / Authenticator).
         </p>
         <div class="block ok">
           <h4>Users — Success</h4>

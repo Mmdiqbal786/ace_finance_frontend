@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import Modal from "../Modal";
 import TimelineView from "../TimelineView";
@@ -89,6 +89,8 @@ const ALLOWED_RECEIPT_TYPES = [
   "image/gif",
 ];
 const MAX_RECEIPT_BYTES = 5 * 1024 * 1024;
+const ALLOWED_INVOICE_TYPES = ALLOWED_RECEIPT_TYPES;
+const MAX_INVOICE_BYTES = MAX_RECEIPT_BYTES;
 
 function validateReceiptFile(file: File | null): string {
   if (!file) return "Please attach a payment receipt.";
@@ -99,6 +101,23 @@ function validateReceiptFile(file: File | null): string {
     return "Receipt file must be 5 MB or smaller.";
   }
   return "";
+}
+
+function validateOptionalInvoiceReplace(file: File | null): string {
+  if (!file) return "";
+  if (!ALLOWED_INVOICE_TYPES.includes(file.type)) {
+    return "Invoice must be a PDF or image (JPG, PNG, WEBP, GIF).";
+  }
+  if (file.size > MAX_INVOICE_BYTES) {
+    return "Invoice file must be 5 MB or smaller.";
+  }
+  return "";
+}
+
+function formatFileBytes(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 const emptyEditValues = (): ExpenseRequestValues => ({
@@ -142,6 +161,9 @@ export default function ExpenseActionModal({
   const [receiptError, setReceiptError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [editValues, setEditValues] = useState<ExpenseRequestValues>(emptyEditValues);
+  const [editConfirmOpen, setEditConfirmOpen] = useState(false);
+  const [replaceInvoiceFile, setReplaceInvoiceFile] = useState<File | null>(null);
+  const [replaceInvoiceError, setReplaceInvoiceError] = useState("");
   const [attachmentPreview, setAttachmentPreview] = useState<AttachmentPreview | null>(null);
   const [attachmentBusy, setAttachmentBusy] = useState(false);
   const [changeTarget, setChangeTarget] = useState<"requester" | "approver">("requester");
@@ -245,6 +267,9 @@ export default function ExpenseActionModal({
     editForm.clearAll();
     partialPayForm.clearAll();
     closeAttachmentPreview();
+    setEditConfirmOpen(false);
+    setReplaceInvoiceFile(null);
+    setReplaceInvoiceError("");
 
     if (actionType === "edit") {
       setEditValues({
@@ -268,6 +293,9 @@ export default function ExpenseActionModal({
     setPaymentAmount("");
     setReceiptFile(null);
     setReceiptError("");
+    setEditConfirmOpen(false);
+    setReplaceInvoiceFile(null);
+    setReplaceInvoiceError("");
     actionNotesForm.clearAll();
     editForm.clearAll();
     partialPayForm.clearAll();
@@ -281,6 +309,104 @@ export default function ExpenseActionModal({
   ) => {
     if (lockRequesterEmail && field === "requesterEmail") return;
     setEditValues((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const formatEditDisplayDate = (iso: string) => {
+    if (!iso) return "—";
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+    if (!m) return iso;
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  };
+
+  const editCurrency = (
+    activeCountries.find((c) => c.name === editValues.country)?.currency || "USD"
+  ).toUpperCase();
+
+  const replaceInvoicePreviewUrl = useMemo(() => {
+    if (!replaceInvoiceFile) return null;
+    const isImage = replaceInvoiceFile.type.startsWith("image/");
+    const isPdf =
+      replaceInvoiceFile.type === "application/pdf" ||
+      /\.pdf$/i.test(replaceInvoiceFile.name);
+    if (!isImage && !isPdf) return null;
+    return URL.createObjectURL(replaceInvoiceFile);
+  }, [replaceInvoiceFile]);
+
+  useEffect(() => {
+    return () => {
+      if (replaceInvoicePreviewUrl) URL.revokeObjectURL(replaceInvoicePreviewUrl);
+    };
+  }, [replaceInvoicePreviewUrl]);
+
+  const confirmAndSaveEdit = async () => {
+    if (!expense) return;
+
+    const invoiceMsg = validateOptionalInvoiceReplace(replaceInvoiceFile);
+    if (invoiceMsg) {
+      setReplaceInvoiceError(invoiceMsg);
+      setEditConfirmOpen(false);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const token = getToken();
+
+      // Replace invoice first (optional), then update fields via JSON.
+      if (replaceInvoiceFile) {
+        const invoiceData = new FormData();
+        invoiceData.append("invoice", replaceInvoiceFile);
+        const invoiceRes = await fetch(`${API_URL}/expenses/${expense.id}/invoice`, {
+          method: "PATCH",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          body: invoiceData,
+        });
+        if (!invoiceRes.ok) {
+          throw new Error(await readApiError(invoiceRes, "Failed to replace invoice attachment."));
+        }
+      }
+
+      const response = await fetch(`${API_URL}/expenses/${expense.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          requesterName: editValues.requesterName.trim(),
+          requesterEmail: lockRequesterEmail
+            ? expense.requesterEmail.trim().toLowerCase()
+            : editValues.requesterEmail.trim().toLowerCase(),
+          originalAmount: parseFloat(editValues.amount),
+          country: editValues.country,
+          category: editValues.category,
+          project: editValues.project,
+          description: editValues.description.trim(),
+          date: editValues.date,
+          dueDate: editValues.dueDate,
+          invoiceNumber: editValues.invoiceNumber.trim() || "",
+          invoiceDate: editValues.invoiceDate || "",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "Failed to update expense."));
+      }
+
+      const wasChangesRequested = expense.status === "CHANGES_REQUESTED";
+      handleClose();
+      toast.success(
+        wasChangesRequested
+          ? "Changes saved — request resubmitted for approval."
+          : "Expense updated successfully!"
+      );
+      onCompleted();
+    } catch (err: any) {
+      setEditConfirmOpen(false);
+      toast.error(err.message || "Failed to update expense");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleActionSubmit = async (e: React.FormEvent) => {
@@ -307,44 +433,11 @@ export default function ExpenseActionModal({
         return;
       }
 
-      setSubmitting(true);
-      try {
-        const response = await fetch(`${API_URL}/expenses/${expense.id}`, {
-          method: "PUT",
-          headers: authHeaders() as HeadersInit,
-          body: JSON.stringify({
-            requesterName: editValues.requesterName.trim(),
-            requesterEmail: lockRequesterEmail
-              ? expense.requesterEmail.trim().toLowerCase()
-              : editValues.requesterEmail.trim().toLowerCase(),
-            originalAmount: parseFloat(editValues.amount),
-            country: editValues.country,
-            category: editValues.category,
-            project: editValues.project,
-            description: editValues.description.trim(),
-            date: editValues.date,
-            dueDate: editValues.dueDate,
-            invoiceNumber: editValues.invoiceNumber.trim() || "",
-            invoiceDate: editValues.invoiceDate || "",
-          }),
-        });
+      const invoiceMsg = validateOptionalInvoiceReplace(replaceInvoiceFile);
+      setReplaceInvoiceError(invoiceMsg);
+      if (invoiceMsg) return;
 
-        if (!response.ok) {
-          throw new Error(await readApiError(response, "Failed to update expense."));
-        }
-
-        handleClose();
-        toast.success(
-          expense.status === "CHANGES_REQUESTED"
-            ? "Changes saved — request resubmitted for approval."
-            : "Expense updated successfully!"
-        );
-        onCompleted();
-      } catch (err: any) {
-        toast.error(err.message || "Failed to update expense");
-      } finally {
-        setSubmitting(false);
-      }
+      setEditConfirmOpen(true);
       return;
     }
 
@@ -547,7 +640,9 @@ export default function ExpenseActionModal({
     ) : actionType === "view" ? (
       <span className="text-slate-600">📄 Expense Details & Audit</span>
     ) : actionType === "edit" ? (
-      <span className="text-[var(--af-accent)]">✏️ Edit Expense Request</span>
+      <span className="text-[var(--af-accent)]">
+        {editConfirmOpen ? "Confirm changes" : "✏️ Edit Expense Request"}
+      </span>
     ) : actionType === "delete" ? (
       <span className="text-rose-500">⚠️ Confirm Deletion</span>
     ) : null;
@@ -777,6 +872,150 @@ export default function ExpenseActionModal({
           )}
 
           {actionType === "edit" ? (
+            editConfirmOpen ? (
+              <div className="space-y-4">
+                <p className="text-sm text-slate-700">
+                  Please review the details below. Are you sure you want to save
+                  {expense.status === "CHANGES_REQUESTED"
+                    ? " and resubmit this request for approval?"
+                    : " these changes?"}
+                </p>
+
+                <div className="max-h-[45vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/80 px-4 text-sm">
+                  {(
+                    [
+                      ["Name", editValues.requesterName.trim() || "—"],
+                      [
+                        "Email",
+                        lockRequesterEmail
+                          ? expense.requesterEmail
+                          : editValues.requesterEmail.trim() || "—",
+                      ],
+                      ["Country", editValues.country || "—"],
+                      ["Project", editValues.project || "—"],
+                      ["Category", editValues.category || "—"],
+                      ["Invoice number", editValues.invoiceNumber.trim() || "—"],
+                      ["Invoice date", formatEditDisplayDate(editValues.invoiceDate)],
+                      ["Expense date", formatEditDisplayDate(editValues.date)],
+                      ["Due date", formatEditDisplayDate(editValues.dueDate)],
+                      [
+                        `Amount (${editCurrency})`,
+                        editValues.amount
+                          ? `${Number(editValues.amount).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })} ${editCurrency}`
+                          : "—",
+                      ],
+                    ] as [string, string][]
+                  ).map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="flex justify-between gap-4 border-b border-slate-100 py-2.5 last:border-0"
+                    >
+                      <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {label}
+                      </span>
+                      <span className="text-right font-semibold text-slate-900 break-words">
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between gap-4 border-b border-slate-100 py-2.5">
+                    <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Description
+                    </span>
+                    <span className="text-right font-semibold text-slate-900 whitespace-pre-wrap break-words max-w-[65%]">
+                      {editValues.description.trim() || "—"}
+                    </span>
+                  </div>
+                  <div className="py-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Attachment
+                    </p>
+                    {replaceInvoiceFile ? (
+                      <div className="rounded-lg border border-slate-200 bg-white p-3">
+                        <p className="text-xs font-bold text-emerald-700">New file (will replace current)</p>
+                        <p className="mt-1 font-semibold text-slate-900 break-all">
+                          {replaceInvoiceFile.name}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-600">
+                          {replaceInvoiceFile.type || "file"} · {formatFileBytes(replaceInvoiceFile.size)}
+                        </p>
+                        {replaceInvoicePreviewUrl &&
+                          replaceInvoiceFile.type.startsWith("image/") && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={replaceInvoicePreviewUrl}
+                              alt="New invoice preview"
+                              className="mt-3 max-h-48 w-full rounded-lg border border-slate-200 object-contain bg-slate-50"
+                            />
+                          )}
+                        {replaceInvoicePreviewUrl &&
+                          (replaceInvoiceFile.type === "application/pdf" ||
+                            /\.pdf$/i.test(replaceInvoiceFile.name)) && (
+                            <iframe
+                              title="New PDF invoice preview"
+                              src={replaceInvoicePreviewUrl}
+                              className="mt-3 h-56 w-full rounded-lg border border-slate-200 bg-slate-50"
+                            />
+                          )}
+                      </div>
+                    ) : expense.invoiceOriginalName || expense.invoiceFileName ? (
+                      <div className="rounded-lg border border-slate-200 bg-white p-3">
+                        <p className="font-semibold text-slate-900 break-all">
+                          {expense.invoiceOriginalName || "Invoice file"}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-600">Keeping existing attachment</p>
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={handleViewInvoice}
+                            disabled={attachmentBusy || submitting}
+                            className="text-xs font-semibold text-[var(--af-accent)] hover:underline cursor-pointer disabled:opacity-50"
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDownloadInvoice}
+                            disabled={attachmentBusy || submitting}
+                            className="text-xs font-semibold text-slate-600 hover:underline cursor-pointer disabled:opacity-50"
+                          >
+                            Download
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-600">No attachment on file</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setEditConfirmOpen(false)}
+                    disabled={submitting}
+                    className="h-10 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmAndSaveEdit}
+                    disabled={submitting}
+                    className="h-10 rounded-xl bg-[var(--af-navy)] px-5 text-sm font-bold text-white hover:bg-[var(--af-navy-soft)] disabled:opacity-50 cursor-pointer"
+                  >
+                    {submitting
+                      ? "Saving..."
+                      : expense.status === "CHANGES_REQUESTED"
+                        ? "Confirm & Resubmit"
+                        : "Confirm & Save"}
+                  </button>
+                </div>
+              </div>
+            ) : (
             <form onSubmit={handleActionSubmit} noValidate className="space-y-4">
               <ExpenseRequestFields
                 values={editValues}
@@ -794,43 +1033,110 @@ export default function ExpenseActionModal({
                 emailReadOnly={lockRequesterEmail}
               />
 
-              {(expense.invoiceOriginalName || expense.invoiceFileName) && (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Attached invoice
-                  </span>
-                  <div className="mt-1 flex items-center justify-between gap-3">
-                    <span className="truncate font-medium text-slate-800">
-                      {expense.invoiceOriginalName || "Invoice file"}
+              <div className="space-y-3">
+                {(expense.invoiceOriginalName || expense.invoiceFileName) && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm">
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Current invoice
                     </span>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleViewInvoice}
-                        disabled={attachmentBusy}
-                        className="text-xs font-semibold text-[var(--af-accent)] hover:underline cursor-pointer disabled:opacity-50"
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDownloadInvoice}
-                        disabled={attachmentBusy}
-                        className="text-xs font-semibold text-slate-600 hover:text-slate-900 hover:underline cursor-pointer disabled:opacity-50"
-                      >
-                        Download
-                      </button>
+                    <div className="mt-1 flex items-center justify-between gap-3">
+                      <span className="truncate font-medium text-slate-800">
+                        {expense.invoiceOriginalName || "Invoice file"}
+                      </span>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleViewInvoice}
+                          disabled={attachmentBusy}
+                          className="text-xs font-semibold text-[var(--af-accent)] hover:underline cursor-pointer disabled:opacity-50"
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDownloadInvoice}
+                          disabled={attachmentBusy}
+                          className="text-xs font-semibold text-slate-600 hover:text-slate-900 hover:underline cursor-pointer disabled:opacity-50"
+                        >
+                          Download
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                <FormField
+                  label="Replace attachment"
+                  htmlFor="edit-replace-invoice"
+                  error={replaceInvoiceError}
+                  hint="Optional — PDF or image (JPG, PNG, WEBP, GIF), max 5 MB. Leave empty to keep the current file."
+                >
+                  <input
+                    id="edit-replace-invoice"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,application/pdf,image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setReplaceInvoiceFile(file);
+                      setReplaceInvoiceError(validateOptionalInvoiceReplace(file));
+                    }}
+                    disabled={submitting}
+                    className={`af-input${replaceInvoiceError ? " is-invalid" : ""} file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200`}
+                  />
+                  {replaceInvoiceFile && !replaceInvoiceError && (
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+                      <p className="text-xs text-slate-600">
+                        New file:{" "}
+                        <span className="font-semibold text-slate-800 break-all">
+                          {replaceInvoiceFile.name}
+                        </span>
+                        {" · "}
+                        {formatFileBytes(replaceInvoiceFile.size)}
+                      </p>
+                      {replaceInvoicePreviewUrl &&
+                        replaceInvoiceFile.type.startsWith("image/") && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={replaceInvoicePreviewUrl}
+                            alt="New invoice preview"
+                            className="mt-3 max-h-48 w-full rounded-lg border border-slate-200 object-contain bg-slate-50"
+                          />
+                        )}
+                      {replaceInvoicePreviewUrl &&
+                        (replaceInvoiceFile.type === "application/pdf" ||
+                          /\.pdf$/i.test(replaceInvoiceFile.name)) && (
+                          <iframe
+                            title="New PDF invoice preview"
+                            src={replaceInvoicePreviewUrl}
+                            className="mt-3 h-56 w-full rounded-lg border border-slate-200 bg-slate-50"
+                          />
+                        )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplaceInvoiceFile(null);
+                          setReplaceInvoiceError("");
+                          const input = document.getElementById(
+                            "edit-replace-invoice",
+                          ) as HTMLInputElement | null;
+                          if (input) input.value = "";
+                        }}
+                        className="mt-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:underline cursor-pointer"
+                      >
+                        Clear new file
+                      </button>
+                    </div>
+                  )}
+                </FormField>
+              </div>
 
               <FormActionButtons
                 onCancel={handleClose}
-                submitLabel={submitting ? "Saving..." : "Save Changes"}
+                submitLabel="Save Changes"
                 submitting={submitting}
               />
             </form>
+            )
           ) : actionType === "delete" ? (
             <div className="space-y-4">
               <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-slate-900 flex items-start gap-3">

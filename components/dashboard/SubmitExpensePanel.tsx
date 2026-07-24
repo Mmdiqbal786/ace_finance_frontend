@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ExpenseRequestFields, {
   ExpenseRequestField,
   ExpenseRequestValues,
   validatorsForExpenseRequest,
 } from "../expense/ExpenseRequestFields";
 import FormField from "../FormField";
+import Modal from "../Modal";
 import { useFormValidation } from "../../hooks/useFormValidation";
 import { API_URL } from "../../lib/api";
 import { AuthUser } from "../../lib/auth";
@@ -60,6 +61,30 @@ function validateInvoiceFile(file: File | null): string {
   return "";
 }
 
+function formatBytes(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function formatDisplayDate(iso: string): string {
+  if (!iso) return "—";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex justify-between gap-4 border-b border-slate-100 py-2.5 last:border-0">
+      <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {label}
+      </span>
+      <span className="text-right text-sm font-semibold text-slate-900 break-words">{value}</span>
+    </div>
+  );
+}
+
 export default function SubmitExpensePanel({
   currentUser,
   categories,
@@ -74,6 +99,7 @@ export default function SubmitExpensePanel({
   const [invoiceError, setInvoiceError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     setValues((prev) => ({
@@ -86,6 +112,35 @@ export default function SubmitExpensePanel({
       country: countries.length === 1 && !prev.country ? countries[0].name : prev.country,
     }));
   }, [currentUser, categories, projects, countries]);
+
+  const currency = useMemo(() => {
+    const selected = countries.find((c) => c.name === values.country);
+    return (selected?.currency || "USD").toUpperCase();
+  }, [countries, values.country]);
+
+  const attachmentPreviewUrl = useMemo(() => {
+    if (!invoiceFile) return null;
+    const isImage = invoiceFile.type.startsWith("image/");
+    const isPdf =
+      invoiceFile.type === "application/pdf" || /\.pdf$/i.test(invoiceFile.name);
+    if (!isImage && !isPdf) return null;
+    return URL.createObjectURL(invoiceFile);
+  }, [invoiceFile]);
+
+  const attachmentIsPdf = Boolean(
+    invoiceFile &&
+      (invoiceFile.type === "application/pdf" || /\.pdf$/i.test(invoiceFile.name)),
+  );
+
+  const attachmentIsImage = Boolean(
+    invoiceFile && invoiceFile.type.startsWith("image/"),
+  );
+
+  useEffect(() => {
+    return () => {
+      if (attachmentPreviewUrl) URL.revokeObjectURL(attachmentPreviewUrl);
+    };
+  }, [attachmentPreviewUrl]);
 
   const handleFieldChange = <K extends keyof ExpenseRequestValues>(
     field: K,
@@ -103,11 +158,15 @@ export default function SubmitExpensePanel({
     if (submitError) setSubmitError("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmitClick = (e: React.FormEvent) => {
     e.preventDefault();
     const expenseDate = todayIso();
     const submitValues = { ...values, date: expenseDate };
-    const validators = validatorsForExpenseRequest(submitValues, { categories, projects, countries });
+    const validators = validatorsForExpenseRequest(submitValues, {
+      categories,
+      projects,
+      countries,
+    });
     const fieldsOk = form.validateAll(validators);
     const invoiceMsg = validateInvoiceFile(invoiceFile);
     setInvoiceError(invoiceMsg);
@@ -118,9 +177,22 @@ export default function SubmitExpensePanel({
       return;
     }
 
+    setSubmitError("");
+    setConfirmOpen(true);
+  };
+
+  const closeConfirm = () => {
+    if (submitting) return;
+    setConfirmOpen(false);
+  };
+
+  const confirmAndSubmit = async () => {
+    if (!invoiceFile) return;
+
     setSubmitting(true);
     setSubmitError("");
     try {
+      const expenseDate = todayIso();
       const formData = new FormData();
       formData.append("requesterName", values.requesterName.trim());
       formData.append("requesterEmail", currentUser.email.trim().toLowerCase());
@@ -131,9 +203,11 @@ export default function SubmitExpensePanel({
       formData.append("description", values.description.trim());
       formData.append("date", expenseDate);
       formData.append("dueDate", values.dueDate);
-      if (values.invoiceNumber.trim()) formData.append("invoiceNumber", values.invoiceNumber.trim());
+      if (values.invoiceNumber.trim()) {
+        formData.append("invoiceNumber", values.invoiceNumber.trim());
+      }
       if (values.invoiceDate) formData.append("invoiceDate", values.invoiceDate);
-      formData.append("invoice", invoiceFile as File);
+      formData.append("invoice", invoiceFile);
 
       const response = await fetch(`${API_URL}/expenses`, {
         method: "POST",
@@ -145,6 +219,7 @@ export default function SubmitExpensePanel({
       }
 
       const result = (await response.json()) as Expense;
+      setConfirmOpen(false);
       setValues(emptyValues(currentUser));
       setInvoiceFile(null);
       setInvoiceError("");
@@ -156,6 +231,7 @@ export default function SubmitExpensePanel({
       });
       onSubmitted?.();
     } catch (err: any) {
+      setConfirmOpen(false);
       setSubmitError(err.message || "Failed to submit expense request.");
       toast.error(err.message || "Failed to submit expense request.");
     } finally {
@@ -198,7 +274,7 @@ export default function SubmitExpensePanel({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+      <form onSubmit={handleSubmitClick} noValidate className="space-y-4">
         <ExpenseRequestFields
           values={values}
           onChange={handleFieldChange}
@@ -232,9 +308,29 @@ export default function SubmitExpensePanel({
             aria-invalid={Boolean(invoiceError)}
           />
           {invoiceFile && !invoiceError && (
-            <p className="mt-1.5 text-xs text-slate-600">
-              Selected: <span className="font-semibold text-slate-800">{invoiceFile.name}</span>
-            </p>
+            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs text-slate-600">
+                Selected:{" "}
+                <span className="font-semibold text-slate-800 break-all">{invoiceFile.name}</span>
+                {" · "}
+                {formatBytes(invoiceFile.size)}
+              </p>
+              {attachmentPreviewUrl && attachmentIsImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={attachmentPreviewUrl}
+                  alt="Attachment preview"
+                  className="mt-3 max-h-56 w-full rounded-lg border border-slate-200 object-contain bg-white"
+                />
+              )}
+              {attachmentPreviewUrl && attachmentIsPdf && (
+                <iframe
+                  title="PDF attachment preview"
+                  src={attachmentPreviewUrl}
+                  className="mt-3 h-64 w-full rounded-lg border border-slate-200 bg-white"
+                />
+              )}
+            </div>
           )}
         </FormField>
 
@@ -243,9 +339,105 @@ export default function SubmitExpensePanel({
           disabled={submitting || catalogError || noAssignedProjects}
           className="w-full h-11 rounded-xl bg-[var(--af-navy)] hover:bg-[var(--af-navy-soft)] text-sm font-bold text-white shadow transition-colors cursor-pointer disabled:opacity-50"
         >
-          {submitting ? "Submitting..." : "Submit Expense Request"}
+          Submit Expense Request
         </button>
       </form>
+
+      <Modal
+        isOpen={confirmOpen}
+        onClose={closeConfirm}
+        title="Confirm submission"
+        maxWidthClass="max-w-xl"
+      >
+        <p className="mb-4 text-sm text-slate-700">
+          Please review the details below. Are you sure you want to submit this expense request?
+        </p>
+
+        <div className="max-h-[50vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/80 px-4">
+          <SummaryRow label="Name" value={values.requesterName.trim() || "—"} />
+          <SummaryRow label="Email" value={currentUser.email} />
+          <SummaryRow label="Country" value={values.country || "—"} />
+          <SummaryRow label="Project" value={values.project || "—"} />
+          <SummaryRow label="Category" value={values.category || "—"} />
+          <SummaryRow
+            label="Invoice number"
+            value={values.invoiceNumber.trim() || "—"}
+          />
+          <SummaryRow
+            label="Invoice date"
+            value={formatDisplayDate(values.invoiceDate)}
+          />
+          <SummaryRow label="Due date" value={formatDisplayDate(values.dueDate)} />
+          <SummaryRow
+            label={`Amount (${currency})`}
+            value={
+              values.amount
+                ? `${Number(values.amount).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })} ${currency}`
+                : "—"
+            }
+          />
+          <SummaryRow
+            label="Description"
+            value={
+              <span className="whitespace-pre-wrap">{values.description.trim() || "—"}</span>
+            }
+          />
+          <div className="py-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Attachment
+            </p>
+            {invoiceFile ? (
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <p className="text-sm font-semibold text-slate-900 break-all">
+                  {invoiceFile.name}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-600">
+                  {invoiceFile.type || "file"} · {formatBytes(invoiceFile.size)}
+                </p>
+                {attachmentPreviewUrl && attachmentIsImage && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={attachmentPreviewUrl}
+                    alt="Invoice preview"
+                    className="mt-3 max-h-56 w-full rounded-lg border border-slate-200 object-contain bg-slate-50"
+                  />
+                )}
+                {attachmentPreviewUrl && attachmentIsPdf && (
+                  <iframe
+                    title="PDF invoice preview"
+                    src={attachmentPreviewUrl}
+                    className="mt-3 h-64 w-full rounded-lg border border-slate-200 bg-slate-50"
+                  />
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-rose-700">No attachment</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={closeConfirm}
+            disabled={submitting}
+            className="h-10 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={confirmAndSubmit}
+            disabled={submitting}
+            className="h-10 rounded-xl bg-[var(--af-navy)] px-5 text-sm font-bold text-white hover:bg-[var(--af-navy-soft)] disabled:opacity-50 cursor-pointer"
+          >
+            {submitting ? "Submitting..." : "Confirm & Submit"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
