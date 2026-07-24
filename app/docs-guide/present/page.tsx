@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SopPresentation from "../../../components/docs-guide/SopPresentation";
+import FullPageLoader from "../../../components/FullPageLoader";
 import { isDemoGuideUnlocked } from "../../../lib/demo-guide";
 
 export default function DocsGuidePresentPage() {
@@ -20,11 +21,7 @@ export default function DocsGuidePresentPage() {
   }, [router]);
 
   if (checking || !unlocked) {
-    return (
-      <div className="relative flex min-h-[70vh] flex-1 items-center justify-center p-4">
-        <p className="text-sm font-semibold text-slate-600">Loading…</p>
-      </div>
-    );
+    return <FullPageLoader message="Loading Aceolution Finance..." />;
   }
 
   return <SopPresentation />;

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DocsGuideContent from "../../components/docs-guide/DocsGuideContent";
+import FullPageLoader from "../../components/FullPageLoader";
 import { isDemoGuideUnlocked } from "../../lib/demo-guide";
 
 export default function DocsGuidePage() {
@@ -20,11 +21,7 @@ export default function DocsGuidePage() {
   }, [router]);
 
   if (checking || !unlocked) {
-    return (
-      <div className="portal-page relative flex min-h-[70vh] flex-1 items-center justify-center p-4">
-        <p className="text-sm font-semibold text-slate-600">Loading…</p>
-      </div>
-    );
+    return <FullPageLoader message="Loading Aceolution Finance..." />;
   }
 
   return <DocsGuideContent />;

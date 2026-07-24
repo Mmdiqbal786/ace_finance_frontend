@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import DemoGuideContent from "../../components/demo-guide/DemoGuideContent";
+import FullPageLoader from "../../components/FullPageLoader";
 import {
   isDemoGuideUnlocked,
   unlockDemoGuideAccess,
@@ -43,11 +44,7 @@ export default function DemoGuideGatePage() {
   }
 
   if (checking) {
-    return (
-      <div className="portal-page relative flex min-h-[70vh] flex-1 items-center justify-center p-4">
-        <p className="text-sm font-semibold text-slate-600">Loading…</p>
-      </div>
-    );
+    return <FullPageLoader message="Loading Aceolution Finance..." />;
   }
 
   if (unlocked) {
@@ -55,7 +52,10 @@ export default function DemoGuideGatePage() {
   }
 
   return (
-    <div className="portal-page relative flex flex-1 items-center justify-center p-4 py-8">
+    <div
+      className="portal-page relative flex flex-1 items-center justify-center p-4 py-8"
+      suppressHydrationWarning
+    >
       <div className="relative z-10 w-full max-w-[440px]">
         <div className="portal-card rounded-[20px] border-[1.5px] border-slate-500 p-6 shadow-lg sm:p-8">
           <div className="mb-4 flex items-center gap-3">

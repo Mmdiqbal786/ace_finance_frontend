@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "../../lib/toast";
 import {
   DEMO_ACCOUNTS,
@@ -21,6 +21,7 @@ import {
   copyPlainText,
   lockDemoGuideAccess,
 } from "../../lib/demo-guide";
+import GuideActionBar, { type GuideActionItem } from "../guide/GuideActionBar";
 import GuideJumpBar, { useGuideHashJumps } from "../guide/GuideJumpBar";
 import "../docs-guide/docs-guide.css";
 
@@ -69,21 +70,22 @@ export default function DemoGuideContent() {
     window.location.assign("/demo-guide/");
   }
 
+  const measureTopBar = useCallback(() => {
+    const h = topBarRef.current?.offsetHeight || 68;
+    setTopBarH(h);
+    const topEdge = topBarRef.current?.getBoundingClientRect().bottom || h;
+    document.documentElement.style.setProperty("--guide-topbar-h", `${topEdge}px`);
+  }, []);
+
   useEffect(() => {
-    function measure() {
-      const h = topBarRef.current?.offsetHeight || 68;
-      setTopBarH(h);
-      const topEdge = topBarRef.current?.getBoundingClientRect().bottom || h;
-      document.documentElement.style.setProperty("--guide-topbar-h", `${topEdge}px`);
-    }
-    measure();
-    const raf = requestAnimationFrame(measure);
-    window.addEventListener("resize", measure);
+    measureTopBar();
+    const raf = requestAnimationFrame(measureTopBar);
+    window.addEventListener("resize", measureTopBar);
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", measureTopBar);
     };
-  }, []);
+  }, [measureTopBar]);
 
   async function handleCopy(kind: "invite" | "guide" | "accounts") {
     setCopying(kind);
@@ -109,62 +111,63 @@ export default function DemoGuideContent() {
     }
   }
 
+  const actions: GuideActionItem[] = [
+    {
+      id: "invite",
+      label: "Share access invite",
+      busyLabel: "Copying…",
+      busy: copying === "invite",
+      disabled: Boolean(copying),
+      onClick: () => void handleCopy("invite"),
+      tone: "sky",
+    },
+    {
+      id: "copy-guide",
+      label: "Copy full guide",
+      busyLabel: "Copying…",
+      busy: copying === "guide",
+      disabled: Boolean(copying),
+      onClick: () => void handleCopy("guide"),
+      tone: "indigo",
+    },
+    {
+      id: "copy-accounts",
+      label: "Copy accounts only",
+      busyLabel: "Copying…",
+      busy: copying === "accounts",
+      disabled: Boolean(copying),
+      onClick: () => void handleCopy("accounts"),
+      tone: "emerald",
+    },
+    {
+      id: "docs",
+      label: "Open full documentation",
+      href: DEMO_DOCS_URL,
+      tone: "outline",
+    },
+    {
+      id: "app",
+      label: "Open App",
+      href: DEMO_APP_URL,
+      external: true,
+      tone: "outline",
+    },
+    {
+      id: "exit",
+      label: "Exit access",
+      onClick: handleExitAccess,
+      tone: "danger",
+    },
+  ];
+
   return (
     <div className="relative min-w-0 flex-1 bg-[#e8edf4]">
-      <div
-        ref={topBarRef}
-        className="guide-topbar fixed inset-x-0 z-40 border-b border-slate-600 bg-slate-900/95 shadow-sm backdrop-blur-md"
-        style={{ top: "var(--af-site-header-h, 0px)" }}
-      >
-        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-2 gap-2 px-3 py-3 sm:flex sm:flex-wrap sm:justify-center sm:px-6 lg:px-8">
-          <button
-            type="button"
-            onClick={() => handleCopy("invite")}
-            disabled={Boolean(copying)}
-            className="col-span-2 inline-flex min-h-10 items-center justify-center rounded-[10px] bg-sky-300 px-3 py-2 text-center text-xs font-extrabold text-slate-900 hover:bg-sky-200 disabled:opacity-60 sm:col-auto sm:px-4 sm:text-[13px]"
-          >
-            {copying === "invite" ? "Copying…" : "Share access invite"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleCopy("guide")}
-            disabled={Boolean(copying)}
-            className="inline-flex min-h-10 items-center justify-center rounded-[10px] bg-indigo-300 px-3 py-2 text-center text-xs font-extrabold text-slate-900 hover:bg-indigo-200 disabled:opacity-60 sm:px-4 sm:text-[13px]"
-          >
-            {copying === "guide" ? "Copying…" : "Copy full guide"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleCopy("accounts")}
-            disabled={Boolean(copying)}
-            className="inline-flex min-h-10 items-center justify-center rounded-[10px] bg-emerald-300 px-3 py-2 text-center text-xs font-extrabold text-slate-900 hover:bg-emerald-200 disabled:opacity-60 sm:px-4 sm:text-[13px]"
-          >
-            {copying === "accounts" ? "Copying…" : "Copy accounts only"}
-          </button>
-          <a
-            href={DEMO_DOCS_URL}
-            className="inline-flex min-h-10 items-center justify-center rounded-[10px] border-[1.5px] border-slate-400 px-3 py-2 text-center text-xs font-extrabold text-slate-200 hover:bg-slate-400/20 sm:px-4 sm:text-[13px]"
-          >
-            Open full documentation
-          </a>
-          <a
-            href={DEMO_APP_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex min-h-10 items-center justify-center rounded-[10px] border-[1.5px] border-slate-400 px-3 py-2 text-center text-xs font-extrabold text-slate-200 hover:bg-slate-400/20 sm:px-4 sm:text-[13px]"
-          >
-            Open App
-          </a>
-          <button
-            type="button"
-            onClick={handleExitAccess}
-            title="Lock guide access and return to the password screen"
-            className="inline-flex min-h-10 items-center justify-center rounded-[10px] border-[1.5px] border-rose-400/80 bg-rose-500/20 px-3 py-2 text-center text-xs font-extrabold text-rose-100 hover:bg-rose-500/35 sm:px-4 sm:text-[13px]"
-          >
-            Exit access
-          </button>
-        </div>
-      </div>
+      <GuideActionBar
+        title="Demo guide"
+        actions={actions}
+        barRef={topBarRef}
+        onLayoutChange={measureTopBar}
+      />
 
       <GuideJumpBar items={DEMO_JUMP_CHIPS} />
 
