@@ -26,6 +26,7 @@ import {
   CountryItem,
 } from "../../lib/dashboard/types";
 import { isFullyPaid } from "../../lib/dashboard/payment";
+import { buildStatsFromExpenses } from "../../lib/dashboard/buildStats";
 import {
   canAccessSection,
   pathnameToSection,
@@ -137,19 +138,22 @@ export default function DashboardWorkspace() {
         throw new Error("Failed to load dashboard data from backend.");
       }
 
-      const expensesData = (await expensesResponse.json()) as Expense[];
-      setExpenses(
-        expensesData.sort(
-          (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
-        )
+      let expensesData = (await expensesResponse.json()) as Expense[];
+
+      // Approver: only assigned projects (client-side so Analytics cards always match the table)
+      if (currentUser.role === "APPROVER") {
+        const allowed = new Set(currentUser.assignedProjects || []);
+        expensesData = expensesData.filter((e) => allowed.has(e.project));
+      }
+
+      expensesData = expensesData.sort(
+        (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
       );
+      setExpenses(expensesData);
 
       if (!isRequester) {
-        const statsResponse = await fetch(`${API_URL}/expenses/stats`, { headers });
-        if (!statsResponse.ok) {
-          throw new Error("Failed to load dashboard stats from backend.");
-        }
-        setStats((await statsResponse.json()) as DashboardStats);
+        // Stats from the same scoped list — Approver ≠ Processor company-wide totals
+        setStats(buildStatsFromExpenses(expensesData));
       } else {
         setStats(null);
       }
