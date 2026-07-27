@@ -10,6 +10,7 @@ export interface SectionMeta {
 export const SECTION_META: Record<DashboardSection, SectionMeta> = {
   home: {
     title: "Dashboard",
+    titleAccent: "(Spend Management)",
     subtitle: "Monthly performance and workspace overview",
     breadcrumb: "Dashboard",
   },
@@ -64,7 +65,7 @@ export const SECTION_META: Record<DashboardSection, SectionMeta> = {
   analytics: {
     title: "Analytics",
     titleAccent: "& Tracker",
-    subtitle: "Reports, category breakdown, and full expense database",
+    subtitle: "Reports for expenses you can access — category breakdown and full database",
     breadcrumb: "Analytics & Tracker",
   },
   profile: {

@@ -172,13 +172,13 @@ export default function DashboardSectionStats({
         <StatCard
           title="Total Submissions"
           value={String(stats.totalRequests)}
-          subtext="All expense requests"
+          subtext="Requests in your access scope"
           emoji="📋"
         />
         <StatCard
           title="Total Volume"
           value={`$${stats.totalRequestedAmount.toFixed(2)}`}
-          subtext="Requested amount"
+          subtext="Requested amount (your scope)"
           emoji="💵"
           valueColor="text-orange-500"
         />

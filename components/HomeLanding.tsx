@@ -308,7 +308,7 @@ export default function HomeLanding() {
           <div className="max-w-xl">
             <p className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.22em] text-teal-600">
               <span className="h-[3px] w-7 rounded-full bg-teal-500" />
-              Internal expense tool
+              Spend Management
             </p>
 
             <h1 className="mt-4 text-[clamp(2.15rem,5.2vw,3.4rem)] font-extrabold leading-[1.1] tracking-tight text-[#0f172a]">
@@ -317,7 +317,8 @@ export default function HomeLanding() {
             </h1>
 
             <p className="mt-5 max-w-md text-[15px] leading-relaxed text-slate-500 sm:text-base">
-              Aceolution&apos;s internal platform for expense requests, approvals, disbursements, and audit trails — built for your team.
+              Aceolution&apos;s internal Spend Management platform for expense requests, approvals,
+              disbursements, and audit trails — built for your team.
             </p>
 
             <div className="mt-8">
