@@ -28,8 +28,7 @@ export const DASHBOARD_SECTION_PATHS: Record<Exclude<DashboardSection, "home">, 
   profile: DASHBOARD_ROUTES.profile,
 };
 
-export function getDefaultDashboardRoute(role: AuthUser["role"]): string {
-  if (role === "REQUESTER") return DASHBOARD_ROUTES.myRequests;
+export function getDefaultDashboardRoute(_role: AuthUser["role"]): string {
   return DASHBOARD_ROUTES.home;
 }
 
@@ -50,14 +49,14 @@ function normalizeDashboardPath(path: string): string {
 
 /**
  * Resolve an intended dashboard path for a role.
- * If the role cannot access it, fall back to a safe role default.
+ * Default for every role is Dashboard home.
+ * Deep links (`?next=/dashboard/...`) go to that page when the role can access it.
  */
 export function resolveAccessibleDashboardPath(
   role: AuthUser["role"],
   intendedPath?: string | null
 ): string {
-  const fallback =
-    role === "REQUESTER" ? DASHBOARD_ROUTES.myRequests : DASHBOARD_ROUTES.home;
+  const fallback = DASHBOARD_ROUTES.home;
 
   if (!isSafeInternalPath(intendedPath)) {
     return getDefaultDashboardRoute(role);
