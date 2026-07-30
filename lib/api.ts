@@ -1,2 +1,5 @@
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+/** Backend base URL from NEXT_PUBLIC_API_URL only (no hardcoded host). Trailing slash stripped. */
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL?.trim() || "").replace(
+  /\/$/,
+  "",
+);
