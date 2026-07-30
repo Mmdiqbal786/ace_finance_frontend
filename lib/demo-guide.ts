@@ -365,7 +365,7 @@ export function buildShareInviteText(): string {
     "",
     "How to access:",
     "",
-    "1) Wake backend first (wait up to ~50 seconds if sleeping):",
+    "1) Open the API (optional health check):",
     DEMO_API_URL,
     "",
     "2) Open the app:",

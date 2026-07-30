@@ -312,12 +312,6 @@ function LoginForm() {
               </div>
             )}
 
-            {loading && !challenge && (
-              <p className="text-center text-xs font-medium text-slate-500">
-                Connecting to API…
-              </p>
-            )}
-
             <button
               id="login-submit"
               type="submit"
