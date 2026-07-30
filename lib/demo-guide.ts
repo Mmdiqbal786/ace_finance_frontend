@@ -1,6 +1,8 @@
-export const DEMO_APP_URL = "https://ace-finance-frontend.onrender.com/";
-export const DEMO_API_URL = "https://ace-finance-backend.onrender.com/";
-export const DEMO_GUIDE_URL = "https://ace-finance-frontend.onrender.com/demo-guide/";
+export const DEMO_APP_URL = "https://ambitious-ocean-0aff06400.7.azurestaticapps.net/";
+export const DEMO_API_URL =
+  "https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net/";
+export const DEMO_GUIDE_URL =
+  "https://ambitious-ocean-0aff06400.7.azurestaticapps.net/demo-guide/";
 /** Demo guide unlock password — set via NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD (not committed). */
 export const DEMO_ACCESS_CODE =
   process.env.NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD?.trim() || "";
@@ -419,7 +421,7 @@ export function buildFullGuideCopyText(): string {
     `Frontend (App): ${DEMO_APP_URL}`,
     `Backend (API): ${DEMO_API_URL}`,
     "",
-    "Note: The backend is on Render’s free tier and may sleep after inactivity. Open the Backend URL once first (wait until it loads — up to ~50 seconds), then use the Frontend.",
+    "Note: Hosted on Azure (Static Web Apps + App Service). Use the Frontend URL for the app and the Backend URL for the API.",
     "",
     "1) Test accounts",
     buildAccountsCopyText(),

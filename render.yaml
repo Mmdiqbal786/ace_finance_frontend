@@ -6,6 +6,6 @@ services:
     staticPublishPath: ./out
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://ace-finance-backend.onrender.com
+        value: https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net
       - key: NODE_VERSION
         value: "22"

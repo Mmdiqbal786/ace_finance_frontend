@@ -91,11 +91,11 @@ function LoginForm() {
 
   function loginFetchError(err: any): string {
     if (err?.name === 'AbortError') {
-      return 'The server took too long to respond. The API may be waking up on Render — wait ~1 minute and try again.';
+      return 'The server took too long to respond. Check that the API is running, then try again.';
     }
     const msg = String(err?.message || '');
     if (/failed to fetch|networkerror|load failed/i.test(msg)) {
-      return 'Cannot reach the API. Check that the backend is awake, or open the API URL once to wake it, then try again.';
+      return 'Cannot reach the API. Check NEXT_PUBLIC_API_URL and that the backend is online, then try again.';
     }
     return msg || 'Login failed';
   }
@@ -314,7 +314,7 @@ function LoginForm() {
 
             {loading && !challenge && (
               <p className="text-center text-xs font-medium text-slate-500">
-                Connecting to API… On Render free tier the first request can take up to ~50 seconds.
+                Connecting to API…
               </p>
             )}
 

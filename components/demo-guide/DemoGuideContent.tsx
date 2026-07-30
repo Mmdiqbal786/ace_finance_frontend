@@ -310,8 +310,8 @@ export default function DemoGuideContent() {
             </div>
             <div className="block ex">
               <h4>Note</h4>
-              The backend is on Render’s free tier and may sleep after inactivity. Open the Backend
-              URL once first (wait until it loads — up to ~50 seconds), then use the Frontend.
+              Hosted on Azure (Static Web Apps + App Service). Use the Frontend URL for the app and
+              the Backend URL for the API.
             </div>
           </GuideSection>
 

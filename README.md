@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aceolution Finance — Frontend
 
-## Getting Started
+Next.js web app for Aceolution Finance spend management: submit expenses, approve/process payments, analytics, and admin configuration.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) + React 19 + TypeScript
+- **Tailwind CSS 4**
+- **Static export** (`output: "export"`) — builds to `out/`
+- Node.js `>=20 <23`
+
+Talks to the NestJS API (`ace_finance_backend`) via `NEXT_PUBLIC_API_URL`.
+
+## Roles
+
+| Role | Main areas |
+|------|------------|
+| `REQUESTER` | Submit expense, My Requests |
+| `APPROVER` | Approver queue |
+| `PROCESSOR` | Processor / payment queue |
+| `ADMIN` | Users, categories, projects, countries |
+
+Dashboard home includes spend analytics scoped to the signed-in user’s role.
+
+## Pages
+
+- Landing, login, forgot/reset/set password, authenticator setup
+- Dashboard: home, submit expense, my requests, approver, processor, analytics, profile
+- Admin: user management, categories, projects, countries
+- Guides: `/demo-guide`, `/docs-guide`, `/docs-guide/present` (password-gated)
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env
+# or .env.local — same variables
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXT_PUBLIC_API_URL` | Yes | Backend URL (local: `http://localhost:3001`) |
+| `NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD` | For guides | Unlocks `/demo-guide` and `/docs-guide` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+These are `NEXT_PUBLIC_*` values, so they are embedded in the client build. Do not put secrets that must stay server-only here. Keep real passwords out of git.
 
-## Learn More
+### Examples
 
-To learn more about Next.js, take a look at the following resources:
+```env
+# Local
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD=your-demo-password
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Production (set in Azure Static Web Apps env before build)
+# NEXT_PUBLIC_API_URL=https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net
+# NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD=your-secure-demo-password
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Run
 
-## Deploy on Vercel
+```bash
+# development
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Open [http://localhost:3000](http://localhost:3000). Backend should already be running on port `3001`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# production static build
+npm run build
+# output in ./out
+
+# optional local preview of static export
+npm run preview
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Next.js development server |
+| `npm run build` | Static export to `out/` |
+| `npm run preview` | Serve the `out/` folder locally |
+| `npm run lint` | ESLint |
+
+## Deploy (Azure)
+
+- **Frontend:** Azure Static Web Apps — build `npm run build`, publish `./out`
+- **Backend:** Azure App Service (NestJS)
+- Set `NEXT_PUBLIC_API_URL` (and demo password if needed) in the Static Web Apps build environment **before** build
+
+### Live URLs
+
+| App | URL |
+|-----|-----|
+| Frontend | https://ambitious-ocean-0aff06400.7.azurestaticapps.net/ |
+| Backend | https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net/ |
+
+## Related
+
+- Backend: sibling repo / folder `ace_finance_backend`
+- Demo accounts and flows: open `/demo-guide` after unlock
+- Product docs: `/docs-guide`
