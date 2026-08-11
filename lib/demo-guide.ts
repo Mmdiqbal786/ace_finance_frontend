@@ -1,8 +1,23 @@
-export const DEMO_APP_URL = "https://ambitious-ocean-0aff06400.7.azurestaticapps.net/";
-export const DEMO_API_URL =
-  "https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net/";
-export const DEMO_GUIDE_URL =
-  "https://ambitious-ocean-0aff06400.7.azurestaticapps.net/demo-guide/";
+function withTrailingSlash(url: string): string {
+  const trimmed = url.trim().replace(/\/$/, "");
+  return trimmed ? `${trimmed}/` : "";
+}
+
+/** Live app URL — set NEXT_PUBLIC_APP_URL (e.g. https://finance.aceolution.com). */
+export const DEMO_APP_URL = withTrailingSlash(
+  process.env.NEXT_PUBLIC_APP_URL || "",
+);
+
+/** Live API URL — same as API_URL from NEXT_PUBLIC_API_URL. */
+export const DEMO_API_URL = withTrailingSlash(
+  process.env.NEXT_PUBLIC_API_URL || "",
+);
+
+/** Absolute demo-guide link when APP_URL is set; otherwise same-origin path. */
+export const DEMO_GUIDE_URL = DEMO_APP_URL
+  ? `${DEMO_APP_URL.replace(/\/$/, "")}/demo-guide/`
+  : "/demo-guide/";
+
 /** Demo guide unlock password — set via NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD (not committed). */
 export const DEMO_ACCESS_CODE =
   process.env.NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD?.trim() || "";

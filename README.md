@@ -42,6 +42,7 @@ cp .env.example .env
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_API_URL` | Yes | Backend URL (local: `http://localhost:3001`) |
+| `NEXT_PUBLIC_APP_URL` | For guides | Live frontend URL used in demo/docs links (e.g. `https://finance.aceolution.com`) |
 | `NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD` | For guides | Unlocks `/demo-guide` and `/docs-guide` |
 
 These are `NEXT_PUBLIC_*` values, so they are embedded in the client build. Do not put secrets that must stay server-only here. Keep real passwords out of git.
@@ -51,10 +52,12 @@ These are `NEXT_PUBLIC_*` values, so they are embedded in the client build. Do n
 ```env
 # Local
 NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD=your-demo-password
 
 # Production (set in Azure Static Web Apps env before build)
 # NEXT_PUBLIC_API_URL=https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net
+# NEXT_PUBLIC_APP_URL=https://finance.aceolution.com
 # NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD=your-secure-demo-password
 ```
 
@@ -95,7 +98,7 @@ npm run preview
 
 | App | URL |
 |-----|-----|
-| Frontend | https://ambitious-ocean-0aff06400.7.azurestaticapps.net/ |
+| Frontend | https://finance.aceolution.com/ |
 | Backend | https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net/ |
 
 ## Related
