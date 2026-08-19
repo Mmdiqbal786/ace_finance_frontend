@@ -5,9 +5,12 @@ import StatCard from "../StatCard";
 import { Expense, DashboardStats } from "../../lib/dashboard/types";
 import {
   buildMonthlyStats,
+  buildMonthlyStatsForDateRange,
   getCurrentMonthByCategory,
   getCurrentMonthStats,
+  getExpensesByCategory,
   getMonthOverMonthChange,
+  getRangeStatsFromExpenses,
 } from "../../lib/dashboard/monthlyStats";
 import { CATEGORY_COLORS } from "../../lib/dashboard/constants";
 import { todayIso } from "../../lib/validation";
@@ -15,6 +18,8 @@ import { todayIso } from "../../lib/validation";
 interface DashboardHomeOverviewProps {
   expenses: Expense[];
   stats: DashboardStats | null;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 function formatChange(value: number | null): string {
@@ -23,11 +28,41 @@ function formatChange(value: number | null): string {
   return `${sign}${value.toFixed(0)}% vs last month`;
 }
 
-export default function DashboardHomeOverview({ expenses, stats }: DashboardHomeOverviewProps) {
-  const currentMonth = useMemo(() => getCurrentMonthStats(expenses), [expenses]);
-  const monthlyTrend = useMemo(() => buildMonthlyStats(expenses, 6), [expenses]);
-  const monthCategories = useMemo(() => getCurrentMonthByCategory(expenses), [expenses]);
-  const momChange = useMemo(() => getMonthOverMonthChange(expenses), [expenses]);
+function formatRangeLabel(from: string, to: string): string {
+  if (from && to) return `${from} to ${to}`;
+  if (from) return `From ${from}`;
+  if (to) return `Until ${to}`;
+  return "";
+}
+
+export default function DashboardHomeOverview({
+  expenses,
+  stats,
+  dateFrom = "",
+  dateTo = "",
+}: DashboardHomeOverviewProps) {
+  const rangeActive = Boolean(dateFrom || dateTo);
+  const rangeLabel = formatRangeLabel(dateFrom, dateTo);
+
+  const currentMonth = useMemo(
+    () => (rangeActive ? getRangeStatsFromExpenses(expenses) : getCurrentMonthStats(expenses)),
+    [expenses, rangeActive]
+  );
+  const monthlyTrend = useMemo(
+    () =>
+      rangeActive
+        ? buildMonthlyStatsForDateRange(expenses, dateFrom, dateTo)
+        : buildMonthlyStats(expenses, 6),
+    [expenses, rangeActive, dateFrom, dateTo]
+  );
+  const monthCategories = useMemo(
+    () => (rangeActive ? getExpensesByCategory(expenses) : getCurrentMonthByCategory(expenses)),
+    [expenses, rangeActive]
+  );
+  const momChange = useMemo(
+    () => (rangeActive ? { requestedChange: null, paidChange: null, submissionsChange: null } : getMonthOverMonthChange(expenses)),
+    [expenses, rangeActive]
+  );
   const dueTodayApprovalCount = useMemo(() => {
     const today = todayIso();
     return expenses.filter(
@@ -46,16 +81,24 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
-          title="Requested This Month"
+          title={rangeActive ? "Requested in Range" : "Requested This Month"}
           value={`$${currentMonth.requested.toFixed(2)}`}
-          subtext={`${currentMonth.submissions} submissions · ${formatChange(momChange.requestedChange)}`}
+          subtext={
+            rangeActive
+              ? `${currentMonth.submissions} submissions · ${rangeLabel}`
+              : `${currentMonth.submissions} submissions · ${formatChange(momChange.requestedChange)}`
+          }
           emoji="💵"
           valueColor="text-orange-500"
         />
         <StatCard
-          title="Paid This Month"
+          title={rangeActive ? "Paid in Range" : "Paid This Month"}
           value={`$${currentMonth.paid.toFixed(2)}`}
-          subtext={`${currentMonth.processed} processed · ${formatChange(momChange.paidChange)}`}
+          subtext={
+            rangeActive
+              ? `${currentMonth.processed} processed · ${rangeLabel}`
+              : `${currentMonth.processed} processed · ${formatChange(momChange.paidChange)}`
+          }
           emoji="💳"
           valueColor="text-emerald-600"
         />
@@ -74,7 +117,7 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
           valueColor="text-orange-600"
         />
         <StatCard
-          title="Rejected This Month"
+          title={rangeActive ? "Rejected in Range" : "Rejected This Month"}
           value={String(currentMonth.rejected)}
           subtext="Declined requests"
           emoji="🚫"
@@ -85,9 +128,13 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 portal-card rounded-2xl p-6 shadow-xl">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-            <span>📈</span> 6-Month Trend
+            <span>📈</span> {rangeActive ? "Range Trend" : "6-Month Trend"}
           </h3>
-          <p className="text-xs text-slate-500 mb-5">Requested vs paid amounts by month</p>
+          <p className="text-xs text-slate-500 mb-5">
+            {rangeActive
+              ? `Requested vs paid amounts${rangeLabel ? ` (${rangeLabel})` : ""}`
+              : "Requested vs paid amounts by month"}
+          </p>
 
           <div className="space-y-4">
             {monthlyTrend.map((month) => (
@@ -150,7 +197,11 @@ export default function DashboardHomeOverview({ expenses, stats }: DashboardHome
               );
             })}
             {Object.keys(monthCategories).length === 0 && (
-              <p className="text-xs text-slate-500 py-6 text-center">No expenses submitted this month yet.</p>
+              <p className="text-xs text-slate-500 py-6 text-center">
+                {rangeActive
+                  ? "No expenses submitted in this date range."
+                  : "No expenses submitted this month yet."}
+              </p>
             )}
           </div>
         </div>

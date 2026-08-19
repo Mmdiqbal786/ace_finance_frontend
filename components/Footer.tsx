@@ -28,9 +28,9 @@ export default function Footer() {
 
   if (isHome) {
     return (
-      <footer className="shrink-0 w-full border-t border-slate-200 bg-white">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-5 px-4 py-7 sm:flex-row sm:items-center sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:flex-wrap sm:items-center sm:gap-7">
+      <footer suppressHydrationWarning className="shrink-0 w-full border-t border-slate-200 bg-white">
+        <div suppressHydrationWarning className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-5 px-4 py-7 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+          <div suppressHydrationWarning className="flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:flex-wrap sm:items-center sm:gap-7">
             <Link href="/demo-guide" className="inline-flex items-center gap-2 font-medium hover:text-[#0a1628]">
               <span className="text-slate-400" aria-hidden>
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -53,7 +53,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="shrink-0 w-full border-t border-slate-200 bg-white py-6">
+    <footer suppressHydrationWarning className="shrink-0 w-full border-t border-slate-200 bg-white py-6">
       <div suppressHydrationWarning className="flex w-full px-4 text-center sm:px-6 lg:px-8">
         <p className="w-full text-xs text-slate-500">
           &copy; {new Date().getFullYear()} Aceolution Finance. All rights reserved.

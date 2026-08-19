@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import {
   getUser,
@@ -16,6 +16,7 @@ import DashboardSidebar from "../DashboardSidebar";
 import {
   buildCategoryFilterOptions,
   buildProjectFilterOptions,
+  filterExpensesByDateRange,
 } from "../../lib/dashboard/constants";
 import {
   Expense,
@@ -55,6 +56,9 @@ export default function DashboardWorkspace() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [topProjectFilter, setTopProjectFilter] = useState("ALL");
+  const [topDateFrom, setTopDateFrom] = useState("");
+  const [topDateTo, setTopDateTo] = useState("");
 
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [actionType, setActionType] = useState<ExpenseActionType>("view");
@@ -198,17 +202,6 @@ export default function DashboardWorkspace() {
       ? new Set(currentUser.assignedProjects || [])
       : null;
 
-  const pendingApproverList = expenses.filter((e) => {
-    if (e.status !== "PENDING_APPROVER") return false;
-    if (currentUser?.role === "APPROVER" && assignedProjectSet) {
-      return assignedProjectSet.has(e.project);
-    }
-    return true;
-  });
-  const approvedApproverList = expenses.filter(
-    (e) => e.status === "APPROVED_APPROVER" || e.status === "PARTIALLY_PAID"
-  );
-
   const projectsForSubmit =
     currentUser?.role === "REQUESTER"
       ? activeProjects.filter((p) => (currentUser.assignedProjects || []).includes(p.name))
@@ -219,9 +212,44 @@ export default function DashboardWorkspace() {
       ? activeProjects.filter((p) => (currentUser.assignedProjects || []).includes(p.name))
       : activeProjects;
 
+  const projectsForTopFilters = useMemo(() => {
+    if (!currentUser) return activeProjects;
+    if (currentUser.role === "APPROVER" || currentUser.role === "REQUESTER") {
+      const assigned = new Set(currentUser.assignedProjects || []);
+      return activeProjects.filter((p) => assigned.has(p.name));
+    }
+    return activeProjects;
+  }, [activeProjects, currentUser]);
+
   const categoryFilterOptions = buildCategoryFilterOptions(activeCategories);
   const projectFilterOptions = buildProjectFilterOptions(activeProjects);
   const approverProjectFilterOptions = buildProjectFilterOptions(projectsForApproverFilters);
+  const topProjectFilterOptions = buildProjectFilterOptions(projectsForTopFilters);
+  const topFilterEnabled = ["home", "analytics", "approver", "processor"].includes(activeSection);
+  const topFilteredExpenses = useMemo(() => {
+    if (!topFilterEnabled) return expenses;
+    let filtered = expenses;
+    if (topProjectFilter !== "ALL") {
+      filtered = filtered.filter((e) => e.project === topProjectFilter);
+    }
+    filtered = filterExpensesByDateRange(filtered, topDateFrom, topDateTo);
+    return filtered;
+  }, [expenses, topProjectFilter, topDateFrom, topDateTo, topFilterEnabled]);
+  const topFilteredStats =
+    currentUser?.role === "REQUESTER" ? null : buildStatsFromExpenses(topFilteredExpenses);
+  const sectionStats = topFilterEnabled ? topFilteredStats : stats;
+
+  const queueBaseExpenses = topFilterEnabled ? topFilteredExpenses : expenses;
+  const pendingApproverList = queueBaseExpenses.filter((e) => {
+    if (e.status !== "PENDING_APPROVER") return false;
+    if (currentUser?.role === "APPROVER" && assignedProjectSet) {
+      return assignedProjectSet.has(e.project);
+    }
+    return true;
+  });
+  const approvedApproverList = queueBaseExpenses.filter(
+    (e) => e.status === "APPROVED_APPROVER" || e.status === "PARTIALLY_PAID"
+  );
   const sectionMeta = SECTION_META[activeSection];
 
   const expenseActions = {
@@ -244,21 +272,21 @@ export default function DashboardWorkspace() {
         <div className="relative z-10 mx-auto w-full max-w-screen-2xl px-3 py-5 sm:px-6 sm:py-8 lg:px-10 2xl:px-12">
           <DashboardBreadcrumb section={activeSection} />
 
-          <div className="flex items-start justify-between gap-3 mb-6 sm:mb-8">
-            <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
-                {sectionMeta.title}
-                {sectionMeta.titleAccent && (
-                  <>
-                    {" "}
-                    <span className="af-title-accent">{sectionMeta.titleAccent}</span>
-                  </>
-                )}
-              </h1>
-              <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{sectionMeta.subtitle}</p>
-            </div>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                  {sectionMeta.title}
+                  {sectionMeta.titleAccent && (
+                    <>
+                      {" "}
+                      <span className="af-title-accent">{sectionMeta.titleAccent}</span>
+                    </>
+                  )}
+                </h1>
+                <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{sectionMeta.subtitle}</p>
+              </div>
 
-            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
@@ -268,6 +296,58 @@ export default function DashboardWorkspace() {
                 <span>Menu</span>
               </button>
             </div>
+
+            {topFilterEnabled && (
+              <div className="portal-card mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-3 py-3 sm:px-4 sm:py-3.5">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-600">From</span>
+                    <input
+                      type="date"
+                      value={topDateFrom}
+                      onChange={(e) => setTopDateFrom(e.target.value)}
+                      className="af-input af-input-sm cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-600">To</span>
+                    <input
+                      type="date"
+                      value={topDateTo}
+                      min={topDateFrom || undefined}
+                      onChange={(e) => setTopDateTo(e.target.value)}
+                      className="af-input af-input-sm cursor-pointer"
+                    />
+                  </div>
+                  {(topDateFrom || topDateTo) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTopDateFrom("");
+                        setTopDateTo("");
+                      }}
+                      className="text-xs font-semibold text-slate-600 hover:text-[var(--af-navy)] cursor-pointer"
+                    >
+                      Clear dates
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 sm:ml-auto">
+                  <span className="text-xs font-semibold text-slate-600">Project</span>
+                  <select
+                    value={topProjectFilter}
+                    onChange={(e) => setTopProjectFilter(e.target.value)}
+                    className="af-select af-select-sm cursor-pointer min-w-[10rem]"
+                  >
+                    {topProjectFilterOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           {error && (
@@ -288,11 +368,11 @@ export default function DashboardWorkspace() {
               "submit-expense",
               "my-requests",
             ].includes(activeSection) &&
-            stats && (
+            sectionStats && (
               <DashboardSectionStats
                 section={activeSection}
-                stats={stats}
-                expenses={expenses}
+                stats={sectionStats}
+                expenses={topFilteredExpenses}
                 pendingApproverCount={pendingApproverList.length}
                 pendingProcessorCount={approvedApproverList.length}
               />
@@ -329,7 +409,12 @@ export default function DashboardWorkspace() {
           ) : (
             <>
               {activeSection === "home" && (
-                <DashboardHomeOverview expenses={expenses} stats={stats} />
+                <DashboardHomeOverview
+                  expenses={topFilteredExpenses}
+                  stats={topFilteredStats}
+                  dateFrom={topDateFrom}
+                  dateTo={topDateTo}
+                />
               )}
 
               {activeSection === "submit-expense" && currentUser && (
@@ -446,8 +531,8 @@ export default function DashboardWorkspace() {
 
               {activeSection === "analytics" && (
                 <AnalyticsPanel
-                  stats={stats}
-                  expenses={expenses}
+                  stats={topFilteredStats}
+                  expenses={topFilteredExpenses}
                   categoryFilterOptions={categoryFilterOptions}
                   projectFilterOptions={projectFilterOptions}
                   {...expenseActions}

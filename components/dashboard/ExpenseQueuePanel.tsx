@@ -94,7 +94,7 @@ export default function ExpenseQueuePanel({
 
   const showEmptyInbox = !isTracker && expenses.length === 0 && emptyInbox;
   const filterEmptyHint = isTracker
-    ? "Try resetting search string or selecting another status filter."
+    ? "Try resetting search or selecting another status filter."
     : "Try resetting search or selecting another category.";
   const resolvedHeader =
     typeof headerText === "function" ? headerText(table.totalCount) : headerText;
@@ -128,9 +128,9 @@ export default function ExpenseQueuePanel({
               searchPlaceholder="Search requester, ID, desc..."
               filters={filters}
             >
-              {typeof toolbarExtra === "function"
-                ? toolbarExtra({ filtered: table.filtered })
-                : toolbarExtra}
+                  {typeof toolbarExtra === "function"
+                    ? toolbarExtra({ filtered: table.filtered })
+                    : toolbarExtra}
             </TableToolbar>
           </div>
 

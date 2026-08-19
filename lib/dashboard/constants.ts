@@ -123,6 +123,25 @@ export function buildProjectFilterOptions(
   ];
 }
 
+export function expenseSubmittedDate(expense: Expense): string {
+  return expense.submittedAt?.slice(0, 10) || "";
+}
+
+export function filterExpensesByDateRange(
+  expenses: Expense[],
+  from: string,
+  to: string
+): Expense[] {
+  if (!from && !to) return expenses;
+  return expenses.filter((expense) => {
+    const day = expenseSubmittedDate(expense);
+    if (!day) return false;
+    if (from && day < from) return false;
+    if (to && day > to) return false;
+    return true;
+  });
+}
+
 export function filterUserTable(
   u: { _id: string; name: string; email: string; role: string; isActive: boolean },
   search: string,

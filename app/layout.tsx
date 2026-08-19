@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import DashboardScrollLock from "../components/DashboardScrollLock";
 import { ToastProvider } from "../components/ToastProvider";
+import Script from "next/script";
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-af-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-dvh flex-col bg-[var(--af-bg)] text-slate-900 font-sans" suppressHydrationWarning>
+        <Script src="/early-strip.js" strategy="beforeInteractive" />
         <ToastProvider>
           <DashboardScrollLock />
           <Header />

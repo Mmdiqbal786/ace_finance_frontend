@@ -21,6 +21,7 @@ Talks to the NestJS API (`ace_finance_backend`) via `NEXT_PUBLIC_API_URL`.
 | `ADMIN` | Users, categories, projects, countries |
 
 Dashboard home includes spend analytics scoped to the signed-in user’s role.
+Dashboard and dashboard queues support filtering by Project and `submittedAt` date range (From/To) in the header.
 
 ## Pages
 
