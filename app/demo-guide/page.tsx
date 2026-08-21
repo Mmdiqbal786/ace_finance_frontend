@@ -8,6 +8,7 @@ import {
   isDemoGuideUnlocked,
   unlockDemoGuideAccess,
 } from "../../lib/demo-guide";
+import AppIcon from "../../components/icons/AppIcon";
 
 export default function DemoGuideGatePage() {
   const [password, setPassword] = useState("");
@@ -124,8 +125,9 @@ export default function DemoGuideGatePage() {
             </div>
 
             {error && (
-              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
-                ⚠️ {error}
+              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800 inline-flex items-start gap-2">
+                <AppIcon name="warning" size="sm" className="mt-0.5 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 

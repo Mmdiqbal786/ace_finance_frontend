@@ -5,6 +5,8 @@ import { getUser, logout, AuthUser, isAuthenticated, mustSetupTotp, mustChangePa
 import { usePathname } from 'next/navigation';
 import Modal from './Modal';
 import BrandLogo from './BrandLogo';
+// import NotificationBell from './NotificationBell';
+import AppIcon, { AppIconName } from './icons/AppIcon';
 import { DASHBOARD_ROUTES, getDefaultDashboardRoute } from '../lib/dashboard/routes';
 import { DEMO_GUIDE_GATE_EVENT, isDemoGuideUnlocked } from '../lib/demo-guide';
 
@@ -15,11 +17,11 @@ const roleBadgeClass: Record<string, string> = {
   REQUESTER: 'bg-violet-100 text-violet-800 border-violet-300',
 };
 
-const roleIcon: Record<string, string> = {
-  ADMIN: '👑',
-  APPROVER: '✅',
-  PROCESSOR: '💳',
-  REQUESTER: '📄',
+const roleIcon: Record<string, AppIconName> = {
+  ADMIN: 'crown',
+  APPROVER: 'check',
+  PROCESSOR: 'card',
+  REQUESTER: 'document',
 };
 
 function getInitials(name: string): string {
@@ -137,7 +139,11 @@ export default function Header() {
           {!mounted ? (
             <div suppressHydrationWarning className="h-9 w-32 rounded-lg bg-slate-100 animate-pulse" />
           ) : mounted && isDashboard && user ? (
-            <div ref={userMenuRef} className="relative">
+            <>
+              {/* Temporarily hidden — notification bell
+              <NotificationBell user={user} />
+              */}
+              <div ref={userMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((open) => !open)}
@@ -171,7 +177,7 @@ export default function Header() {
                     <span
                       className={`inline-flex items-center gap-1.5 mt-2.5 rounded-full border px-2.5 py-1 text-xs font-bold tracking-wide ${roleBadgeClass[user.role]}`}
                     >
-                      {roleIcon[user.role]}
+                      <AppIcon name={roleIcon[user.role] || "profile"} size="xs" />
                       {user.role}
                     </span>
                   </div>
@@ -183,7 +189,7 @@ export default function Header() {
                       onClick={() => setUserMenuOpen(false)}
                       className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 hover:text-[var(--af-accent)] transition-colors"
                     >
-                      <span>👤</span>
+                      <AppIcon name="profile" size="sm" />
                       Profile
                     </Link>
                     <button
@@ -195,13 +201,14 @@ export default function Header() {
                       }}
                       className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-red-50 hover:text-rose-700 transition-colors cursor-pointer"
                     >
-                      <span>🚪</span>
+                      <AppIcon name="logout" size="sm" />
                       Sign Out
                     </button>
                   </div>
                 </div>
               )}
             </div>
+            </>
           ) : mounted && user ? (
             isAuthGuestPage ? null : (
               <Link

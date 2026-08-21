@@ -9,7 +9,7 @@ const CATEGORIES_CONFIG: CatalogAdminConfig = {
   plural: "Categories",
   totalStatTitle: "Total Categories",
   totalStatSubtext: "Configured categories",
-  totalEmoji: "🏷️",
+  totalIcon: "tag",
   activeSubtext: "Shown on expense form",
   searchPlaceholder: "Search name or label...",
   emptyTitle: "No categories match filters",

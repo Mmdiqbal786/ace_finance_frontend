@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import AppIcon from "../components/icons/AppIcon";
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -14,8 +15,8 @@ export default function Error({ error, reset }: ErrorProps) {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-20 bg-[var(--af-bg)]">
-      <div className="h-16 w-16 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-3xl mb-6">
-        📡
+      <div className="h-16 w-16 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center mb-6">
+        <AppIcon name="signal" size="xl" />
       </div>
       <h1 className="text-3xl font-extrabold text-[var(--af-navy)] tracking-tight sm:text-4xl">
         System Connection Issue

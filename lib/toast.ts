@@ -23,7 +23,7 @@ type Listener = (toast: ToastItem) => void;
 const listeners = new Set<Listener>();
 
 function emit(kind: ToastKind, message: string, options?: ToastOptions) {
-  const cleaned = message.replace(/^[✅❌⚠️]\s*/, "").trim();
+  const cleaned = message.trim();
   const toast: ToastItem = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     kind,

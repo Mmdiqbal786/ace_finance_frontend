@@ -227,11 +227,13 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
             <li><strong>Cancel</strong> returns to the form · <strong>Confirm &amp; Submit</strong> creates the request.</li>
           </ol>
           System stores local amount + USD + FX rate/date → status <strong>Pending Approver</strong>.
-          Only Approvers assigned to that project get the email / queue item.
+          Only Approvers assigned to that project get the email / queue item.<br/><br/>
+          <strong>Right panel (desktop):</strong> <em>What happens next</em> — 4-step flow (submit → approver → payout → track).
+          Below that, <em>Your recent requests</em> shows up to the latest 4 (or an empty “No data” state). Click a row to view; <strong>Edit</strong> appears only when status is Changes Requested.
         </div>
         <figure class="shot">
           <img src="/docs-screenshots/08-submit-expense.png" alt="Submit expense form" loading="lazy" />
-          <figcaption>Submit Expense form — filled fields + attachment area</figcaption>
+          <figcaption>Submit Expense — form + right panel (What happens next · recent requests)</figcaption>
         </figure>
         <figure class="shot">
           <img src="/docs-screenshots/08b-submit-attachment-preview.png" alt="Attachment preview on submit form" loading="lazy" />
@@ -458,9 +460,26 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         
         <div class="section-title">7) Profile, password &amp; Authenticator</div>
         <p class="meta">Path: <code>/dashboard/profile/</code> · All roles · Authenticator <strong>required</strong> for Requester / Approver / Processor · <strong>optional</strong> for Admin</p>
+
+        <div class="block info">
+          <h4>Profile Details — projects &amp; access</h4>
+          <ul style="margin:0;padding-left:1.2rem;line-height:1.55">
+            <li><strong>Requester / Approver:</strong> View mode shows <strong>Assigned Projects</strong> as read-only chips (scrollable when many). Empty state: “No projects assigned” — Admin assigns in User Management.</li>
+            <li><strong>Admin / Processor:</strong> No project list. View mode shows <strong>Access Scope</strong> instead (Admin: all projects · Processor: all approved expenses).</li>
+            <li><strong>Edit Profile:</strong> Name only (Email / Role read-only). Assigned Projects and Access Scope are <strong>hidden</strong> while editing — they reappear after Cancel or Save.</li>
+          </ul>
+        </div>
         <figure class="shot">
           <img src="/docs-screenshots/32-profile-full.png" alt="Profile page" loading="lazy" />
-          <figcaption>Profile — details, change password, authenticator (required for non-admin)</figcaption>
+          <figcaption>Profile — details (incl. Assigned Projects or Access Scope), change password, authenticator</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/32e-profile-processor-access-scope.png" alt="Processor profile access scope" loading="lazy" />
+          <figcaption>Processor Profile — Access Scope (all approved expenses), not Assigned Projects</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/32f-profile-admin-access-scope.png" alt="Admin profile access scope" loading="lazy" />
+          <figcaption>Admin Profile — Access Scope (all projects)</figcaption>
         </figure>
         <figure class="shot">
           <img src="/docs-screenshots/32d-profile-authenticator-enabled.png" alt="Authenticator enabled on profile" loading="lazy" />
@@ -468,7 +487,7 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         </figure>
         <figure class="shot">
           <img src="/docs-screenshots/32b-profile-edit-mode.png" alt="Edit profile" loading="lazy" />
-          <figcaption>Edit Profile mode — update name</figcaption>
+          <figcaption>Edit Profile — name only (projects / access scope not shown)</figcaption>
         </figure>
         <figure class="shot">
           <img src="/docs-screenshots/40-toast-profile-success.png" alt="Profile success toast" loading="lazy" />
@@ -543,7 +562,8 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           <strong>Project assignment:</strong> When role is Requester or Approver, Admin must assign
           one or more projects on create/edit. Requesters can submit only those projects; Approvers
           only see/act on (and receive emails / due-soon reminders for) expenses in their assigned
-          projects. Admin and Processor are not project-scoped. Existing users with no projects have
+          projects. Those assignments also appear on the user’s <strong>Profile</strong> (view mode only).
+          Admin and Processor are not project-scoped (Profile shows Access Scope instead). Existing users with no projects have
           no project access until Admin assigns them.<br/>
           <strong>Demo badge (<code>isDemo</code>):</strong> Seeded <code>@acefinance.com</code>
           personas show as Demo in User Management — password-only login (no Email OTP / Authenticator).

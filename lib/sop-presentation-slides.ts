@@ -293,6 +293,7 @@ export const SOP_SLIDES: SopSlide[] = [
       "4. Confirm submission modal (full summary + preview)",
       "5. Confirm & Submit → Pending Approver",
       "Only Approvers assigned to that project get email / queue item",
+      "Right panel: What happens next (4 steps) · Your recent requests (latest 4 / empty No data)",
     ],
   },
   {
@@ -300,7 +301,10 @@ export const SOP_SLIDES: SopSlide[] = [
     kind: "content",
     title: "Submit Expense form",
     image: shot("08-submit-expense.png"),
-    bullets: ["Filled fields + attachment area"],
+    bullets: [
+      "Form + right panel (What happens next · recent requests)",
+      "Click recent row to view · Edit only when Changes Requested",
+    ],
   },
   {
     id: "submit-preview",
@@ -644,8 +648,24 @@ export const SOP_SLIDES: SopSlide[] = [
     image: shot("32-profile-full.png"),
     bullets: [
       "Details · change password · authenticator",
+      "Requester/Approver: Assigned Projects (read-only chips, scrollable)",
+      "Admin/Processor: Access Scope instead (not project-scoped)",
       "Authenticator required for non-admin · optional for Admin",
     ],
+  },
+  {
+    id: "profile-processor-scope",
+    kind: "content",
+    title: "Processor — Access Scope",
+    image: shot("32e-profile-processor-access-scope.png"),
+    bullets: ["All approved expenses · no Assigned Projects list"],
+  },
+  {
+    id: "profile-admin-scope",
+    kind: "content",
+    title: "Admin — Access Scope",
+    image: shot("32f-profile-admin-access-scope.png"),
+    bullets: ["All projects · manage users, catalogs, workflows"],
   },
   {
     id: "profile-totp-on",
@@ -659,7 +679,11 @@ export const SOP_SLIDES: SopSlide[] = [
     kind: "content",
     title: "Edit Profile — update name",
     image: shot("32b-profile-edit-mode.png"),
-    bullets: ["Success toast after save"],
+    bullets: [
+      "Name only — Email / Role read-only",
+      "Projects / Access Scope hidden while editing",
+      "Success toast after save",
+    ],
   },
   {
     id: "profile-toast",

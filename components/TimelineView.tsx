@@ -1,6 +1,7 @@
 import React from "react";
 import type { HistoryLog } from "../lib/dashboard/types";
 import { getHistoryPaymentDetails } from "../lib/dashboard/historyPayment";
+import AppIcon, { AppIconName } from "./icons/AppIcon";
 
 interface TimelineViewProps {
   history: HistoryLog[];
@@ -11,40 +12,40 @@ function formatUsd(value: number): string {
   return `$${value.toFixed(2)}`;
 }
 
-function getTimelineStyle(action: string) {
+function getTimelineStyle(action: string): { bubble: string; icon: AppIconName } {
   if (action.includes("Submitted") || action.includes("Resubmitted")) {
     return {
       bubble: "bg-slate-100 text-slate-500",
-      icon: "📥",
+      icon: "inbox",
     };
   }
   if (action.includes("Requested Changes") || action.includes("Returned to Approver")) {
     return {
       bubble: "bg-orange-50 text-orange-700 border border-orange-200",
-      icon: "↩️",
+      icon: "undo",
     };
   }
   if (action.includes("Rejected")) {
     return {
       bubble: "bg-rose-50 text-rose-600 border border-rose-200",
-      icon: "❌",
+      icon: "cross",
     };
   }
   if (action.includes("Approved")) {
     return {
       bubble: "bg-sky-50 text-[var(--af-accent)] border border-sky-200",
-      icon: "✅",
+      icon: "check",
     };
   }
   if (action.includes("Partially")) {
     return {
       bubble: "bg-amber-50 text-amber-700 border border-amber-200",
-      icon: "🪙",
+      icon: "coin",
     };
   }
   return {
     bubble: "bg-emerald-50 text-emerald-600 border border-emerald-200",
-    icon: "💸",
+    icon: "money",
   };
 }
 
@@ -75,7 +76,7 @@ export default function TimelineView({
                       <span
                         className={`h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-white text-xs ${style.bubble}`}
                       >
-                        {style.icon}
+                        <AppIcon name={style.icon} size="sm" color="currentColor" />
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -87,7 +88,7 @@ export default function TimelineView({
                         </span>
                       </div>
 
-                      {showPayment && payment && (
+                      {showPayment && (
                         <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-lg border border-slate-200 bg-white p-2.5 text-xs">
                           {payment.paymentAmount != null && (
                             <div>

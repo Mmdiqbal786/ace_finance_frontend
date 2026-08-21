@@ -18,7 +18,11 @@ export default function StatusToggle({ isActive, onToggle }: StatusToggleProps) 
           : "bg-rose-50 text-rose-700 hover:bg-emerald-50 hover:text-emerald-700"
       }`}
     >
-      {isActive ? "● Active" : "○ Inactive"}
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-600" : "bg-rose-500"}`}
+        aria-hidden
+      />
+      {isActive ? "Active" : "Inactive"}
     </button>
   );
 }

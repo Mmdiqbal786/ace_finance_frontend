@@ -1080,6 +1080,25 @@ body {
   }
 }
 
+@keyframes af-notif-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.65);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(244, 63, 94, 0);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+    transform: scale(1);
+  }
+}
+
+.af-notif-pulse {
+  animation: af-notif-pulse 1.4s ease-out infinite;
+}
+
 @keyframes af-live-blink {
   0%,
   100% {

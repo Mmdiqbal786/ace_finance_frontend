@@ -6,6 +6,7 @@ import TableToolbar from "../TableToolbar";
 import TablePagination from "../TablePagination";
 import TableRowActions from "../TableRowActions";
 import StatCard from "../StatCard";
+import AppIcon, { AppIconName } from "../icons/AppIcon";
 import FormField, { FormActionButtons, RequiredFieldsNote } from "../FormField";
 import ConfirmDialog from "../ConfirmDialog";
 import StatusToggle from "../StatusToggle";
@@ -260,19 +261,19 @@ export default function UsersPanel({
   return (
     <div className="mt-2">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <StatCard title="Total Users" value={String(users.length)} subtext="Registered accounts" emoji="👥" />
+        <StatCard title="Total Users" value={String(users.length)} subtext="Registered accounts" icon="users" />
         <StatCard
           title="Active Users"
           value={String(activeCount)}
           subtext={`${users.length - activeCount} inactive`}
-          emoji="✅"
+          icon="check"
           valueColor="text-emerald-600"
         />
         <StatCard
           title="Administrators"
           value={String(adminCount)}
           subtext="Full-access accounts"
-          emoji="👑"
+          icon="crown"
           valueColor="text-amber-600"
         />
       </div>
@@ -353,13 +354,18 @@ export default function UsersPanel({
                                     : "bg-emerald-50 text-emerald-800 ring-emerald-300"
                             }`}
                           >
-                            {u.role === "ADMIN"
-                              ? "👑"
-                              : u.role === "APPROVER"
-                                ? "✅"
-                                : u.role === "REQUESTER"
-                                  ? "📄"
-                                  : "💳"}{" "}
+                            <AppIcon
+                              name={
+                                (u.role === "ADMIN"
+                                  ? "crown"
+                                  : u.role === "APPROVER"
+                                    ? "check"
+                                    : u.role === "REQUESTER"
+                                      ? "document"
+                                      : "card") as AppIconName
+                              }
+                              size="xs"
+                            />{" "}
                             {u.role}
                           </span>
                         </td>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import AppIcon from "./icons/AppIcon";
 
 interface ModalProps {
   isOpen: boolean;
@@ -53,10 +54,10 @@ export default function Modal({
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 text-lg font-bold p-1 cursor-pointer transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 p-1 cursor-pointer transition-colors"
           aria-label="Close modal"
         >
-          ✕
+          <AppIcon name="close" size="sm" color="currentColor" />
         </button>
 
         <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2 pr-8">

@@ -41,21 +41,21 @@ export default function DashboardSectionStats({
           title="Awaiting Your Approval"
           value={String(pendingApproverCount)}
           subtext="Pending in your queue"
-          emoji="🛡️"
+          icon="shield"
           valueColor="text-amber-500"
         />
         <StatCard
           title="Pending Amount"
           value={`$${pendingApproverAmount.toFixed(2)}`}
           subtext="Total awaiting sign-off"
-          emoji="💵"
+          icon="money"
           valueColor="text-orange-500"
         />
         <StatCard
           title="Rejected (All Time)"
           value={String(stats.rejected)}
           subtext="Declined requests"
-          emoji="🚫"
+          icon="blocked"
           valueColor="text-rose-500"
         />
       </div>
@@ -69,21 +69,21 @@ export default function DashboardSectionStats({
           title="Ready to Pay"
           value={String(pendingProcessorCount)}
           subtext="Approved, awaiting disbursement"
-          emoji="💸"
+          icon="money"
           valueColor="text-[var(--af-accent)]"
         />
         <StatCard
           title="Payout Amount"
           value={`$${pendingProcessorAmount.toFixed(2)}`}
           subtext="Total ready for release"
-          emoji="💵"
+          icon="money"
           valueColor="text-orange-500"
         />
         <StatCard
           title="Paid (All Time)"
           value={`$${stats.totalProcessedAmount.toFixed(2)}`}
           subtext={`${stats.processed} expenses processed`}
-          emoji="💳"
+          icon="card"
           valueColor="text-emerald-600"
         />
       </div>
@@ -100,20 +100,20 @@ export default function DashboardSectionStats({
           title="Total Users"
           value={String(users.length)}
           subtext="Registered accounts"
-          emoji="👥"
+          icon="users"
         />
         <StatCard
           title="Active Users"
           value={String(activeUsers)}
           subtext={`${users.length - activeUsers} inactive`}
-          emoji="✅"
+          icon="check"
           valueColor="text-emerald-600"
         />
         <StatCard
           title="Administrators"
           value={String(adminCount)}
           subtext="Full-access accounts"
-          emoji="👑"
+          icon="crown"
           valueColor="text-amber-600"
         />
       </div>
@@ -124,19 +124,24 @@ export default function DashboardSectionStats({
     const activeCount = categories.filter((c) => c.isActive).length;
     return (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <StatCard title="Total Categories" value={String(categories.length)} subtext="Configured categories" emoji="🏷️" />
+        <StatCard
+          title="Total Categories"
+          value={String(categories.length)}
+          subtext="Configured categories"
+          icon="tag"
+        />
         <StatCard
           title="Active"
           value={String(activeCount)}
           subtext="Shown on expense form"
-          emoji="✅"
+          icon="check"
           valueColor="text-emerald-600"
         />
         <StatCard
           title="Inactive"
           value={String(categories.length - activeCount)}
           subtext="Hidden from form"
-          emoji="○"
+          icon="dot"
           valueColor="text-rose-500"
         />
       </div>
@@ -147,19 +152,24 @@ export default function DashboardSectionStats({
     const activeCount = projects.filter((p) => p.isActive).length;
     return (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <StatCard title="Total Projects" value={String(projects.length)} subtext="Configured projects" emoji="📁" />
+        <StatCard
+          title="Total Projects"
+          value={String(projects.length)}
+          subtext="Configured projects"
+          icon="folder"
+        />
         <StatCard
           title="Active"
           value={String(activeCount)}
           subtext="Selectable on form"
-          emoji="✅"
+          icon="check"
           valueColor="text-emerald-600"
         />
         <StatCard
           title="Inactive"
           value={String(projects.length - activeCount)}
           subtext="Hidden from form"
-          emoji="○"
+          icon="dot"
           valueColor="text-rose-500"
         />
       </div>
@@ -173,20 +183,20 @@ export default function DashboardSectionStats({
           title="Total Submissions"
           value={String(stats.totalRequests)}
           subtext="Requests in your access scope"
-          emoji="📋"
+          icon="clipboard"
         />
         <StatCard
           title="Total Volume"
           value={`$${stats.totalRequestedAmount.toFixed(2)}`}
           subtext="Requested amount (your scope)"
-          emoji="💵"
+          icon="money"
           valueColor="text-orange-500"
         />
         <StatCard
           title="Total Disbursed"
           value={`$${stats.totalProcessedAmount.toFixed(2)}`}
           subtext={`${stats.processed} paid out`}
-          emoji="💳"
+          icon="card"
           valueColor="text-emerald-600"
         />
         <StatCard
@@ -197,7 +207,7 @@ export default function DashboardSectionStats({
               : "0%"
           }
           subtext={`${stats.rejected} rejected`}
-          emoji="🚫"
+          icon="blocked"
           valueColor="text-rose-500"
         />
       </div>

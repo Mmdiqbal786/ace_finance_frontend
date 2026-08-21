@@ -2,28 +2,37 @@
 
 import React, { useEffect, useState } from "react";
 import { subscribeToasts, toast as toastApi, type ToastItem, type ToastKind } from "../lib/toast";
+import AppIcon, { AppIconName } from "./icons/AppIcon";
 
 const TOAST_MS = 3200;
 
-function toneStyles(kind: ToastKind) {
+function toneStyles(kind: ToastKind): {
+  wrap: string;
+  mark: string;
+  icon: AppIconName;
+  iconColor: string;
+} {
   if (kind === "success") {
     return {
       wrap: "border-emerald-200 bg-emerald-50 text-emerald-800",
       mark: "bg-emerald-500 text-white",
-      icon: "✓",
+      icon: "check",
+      iconColor: "#ffffff",
     };
   }
   if (kind === "error") {
     return {
       wrap: "border-rose-200 bg-rose-50 text-rose-800",
       mark: "bg-rose-500 text-white",
-      icon: "!",
+      icon: "warning",
+      iconColor: "#ffffff",
     };
   }
   return {
     wrap: "border-sky-200 bg-sky-50 text-slate-800",
     mark: "bg-[var(--af-navy)] text-white",
-    icon: "i",
+    icon: "info",
+    iconColor: "#ffffff",
   };
 }
 
@@ -92,9 +101,9 @@ function ToastCard({
       className={`pointer-events-auto flex w-full items-start gap-3 rounded-xl border px-3.5 py-3 shadow-lg shadow-slate-900/10 animate-[af-toast-in_0.28s_ease-out] sm:w-[22rem] ${styles.wrap}`}
     >
       <span
-        className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${styles.mark}`}
+        className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${styles.mark}`}
       >
-        {styles.icon}
+        <AppIcon name={styles.icon} size="xs" color={styles.iconColor} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold leading-snug">{toast.message}</p>
@@ -105,10 +114,10 @@ function ToastCard({
       <button
         type="button"
         onClick={onDone}
-        className="shrink-0 rounded-md px-1.5 py-0.5 text-sm font-bold opacity-60 hover:opacity-100 cursor-pointer"
+        className="shrink-0 rounded-md p-1 opacity-60 hover:opacity-100 cursor-pointer"
         aria-label="Dismiss notification"
       >
-        ×
+        <AppIcon name="close" size="xs" color="currentColor" />
       </button>
     </div>
   );
@@ -136,9 +145,9 @@ function CenterToast({
       >
         <div className="flex items-start gap-3">
           <span
-            className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${styles.mark}`}
+            className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${styles.mark}`}
           >
-            {styles.icon}
+            <AppIcon name={styles.icon} size="sm" color={styles.iconColor} />
           </span>
           <div className="min-w-0 flex-1">
             <p id={`toast-title-${toast.id}`} className="text-base font-bold leading-snug">

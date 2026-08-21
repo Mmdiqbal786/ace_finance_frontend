@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import ExpenseRequestFields, {
   ExpenseRequestField,
   ExpenseRequestValues,
@@ -13,8 +14,59 @@ import { API_URL } from "../../lib/api";
 import { AuthUser } from "../../lib/auth";
 import { readApiError } from "../../lib/apiError";
 import { toast } from "../../lib/toast";
+import AppIcon, { AppIconName } from "../icons/AppIcon";
+import StatusBadge from "../StatusBadge";
 import { todayIso } from "../../lib/validation";
 import { CategoryItem, CountryItem, Expense, ProjectItem } from "../../lib/dashboard/types";
+import { DASHBOARD_ROUTES } from "../../lib/dashboard/routes";
+import { canRequesterEditExpense } from "../../lib/dashboard/payment";
+
+const SUBMIT_FLOW_STEPS: {
+  step: string;
+  title: string;
+  detail: string;
+  icon: AppIconName;
+  tone: string;
+  iconColor: string;
+  line: string;
+}[] = [
+  {
+    step: "1",
+    title: "You submit",
+    detail: "Fill the form and attach your invoice. You get a Request ID right away.",
+    icon: "document",
+    tone: "border-violet-200 bg-violet-50",
+    iconColor: "#7c3aed",
+    line: "bg-violet-300",
+  },
+  {
+    step: "2",
+    title: "Approver review",
+    detail: "Your project manager can approve, reject, or ask you for changes.",
+    icon: "shield",
+    tone: "border-sky-200 bg-sky-50",
+    iconColor: "#0284c7",
+    line: "bg-sky-300",
+  },
+  {
+    step: "3",
+    title: "Finance payout",
+    detail: "Processor records full or partial payment and uploads receipts.",
+    icon: "money",
+    tone: "border-emerald-200 bg-emerald-50",
+    iconColor: "#059669",
+    line: "bg-emerald-300",
+  },
+  {
+    step: "4",
+    title: "Track status",
+    detail: "Follow every update here and in My Requests until it is fully paid.",
+    icon: "chart",
+    tone: "border-amber-200 bg-amber-50",
+    iconColor: "#d97706",
+    line: "bg-amber-300",
+  },
+];
 
 interface SubmitExpensePanelProps {
   currentUser: AuthUser;
@@ -22,6 +74,9 @@ interface SubmitExpensePanelProps {
   projects: ProjectItem[];
   countries: CountryItem[];
   catalogLoading?: boolean;
+  expenses?: Expense[];
+  onViewExpense?: (expense: Expense) => void;
+  onEditExpense?: (expense: Expense) => void;
   onSubmitted?: () => void;
 }
 
@@ -91,10 +146,24 @@ export default function SubmitExpensePanel({
   projects,
   countries,
   catalogLoading = false,
+  expenses = [],
+  onViewExpense,
+  onEditExpense,
   onSubmitted,
 }: SubmitExpensePanelProps) {
   const [values, setValues] = useState<ExpenseRequestValues>(() => emptyValues(currentUser));
   const form = useFormValidation<ExpenseRequestField>();
+
+  const recentRequests = useMemo(() => {
+    return [...expenses]
+      .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+      .slice(0, 4);
+  }, [expenses]);
+
+  const needsUpdateCount = useMemo(
+    () => expenses.filter((e) => e.status === "CHANGES_REQUESTED").length,
+    [expenses]
+  );
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [invoiceError, setInvoiceError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -247,10 +316,11 @@ export default function SubmitExpensePanel({
     !(currentUser.assignedProjects && currentUser.assignedProjects.length > 0);
 
   return (
-    <div className="portal-card rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 max-w-3xl">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_19rem] xl:items-stretch">
+    <div className="portal-card flex h-full min-w-0 flex-col rounded-2xl shadow-xl p-4 sm:p-6 md:p-8">
       <div className="mb-5 pb-4 border-b border-slate-200">
         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-          <span>📄</span> New Expense Request
+          <AppIcon name="document" size="md" /> New Expense Request
         </h3>
       </div>
 
@@ -438,6 +508,141 @@ export default function SubmitExpensePanel({
           </button>
         </div>
       </Modal>
+    </div>
+
+    <aside className="portal-card flex h-full min-h-0 flex-col rounded-2xl shadow-xl p-5 sm:p-6">
+      <div className="shrink-0">
+        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <AppIcon name="clipboard" size="sm" /> What happens next
+        </h4>
+        <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
+          Your expense moves through this flow after you submit.
+        </p>
+        <ol className="mt-4 space-y-0">
+          {SUBMIT_FLOW_STEPS.map((item, index) => (
+            <li key={item.step} className="relative flex gap-3">
+              <div className="flex w-9 shrink-0 flex-col items-center">
+                <span
+                  className={`z-[1] flex h-9 w-9 items-center justify-center rounded-xl border ${item.tone}`}
+                >
+                  <AppIcon name={item.icon} size="sm" color={item.iconColor} />
+                </span>
+                {index < SUBMIT_FLOW_STEPS.length - 1 && (
+                  <span className={`mt-1 mb-1 w-0.5 flex-1 min-h-[14px] rounded-full ${item.line}`} />
+                )}
+              </div>
+              <div className={`mb-3 min-w-0 flex-1 rounded-xl border px-3 py-2.5 ${item.tone}`}>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-flex h-5 min-w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                    style={{ backgroundColor: item.iconColor }}
+                  >
+                    {item.step}
+                  </span>
+                  <p className="text-xs font-bold text-slate-900">{item.title}</p>
+                </div>
+                <p className="mt-1 text-[11px] leading-relaxed text-slate-600">{item.detail}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div className="mt-5 flex min-h-0 flex-1 flex-col border-t border-slate-200 pt-5">
+        <div className="flex shrink-0 items-center justify-between gap-2">
+          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <AppIcon name="clock" size="sm" /> Your recent requests
+          </h4>
+          <span className="text-[11px] font-semibold text-slate-500">
+            {recentRequests.length === 0
+              ? "No data"
+              : recentRequests.length === 1
+                ? "1 request"
+                : `Latest ${recentRequests.length}`}
+          </span>
+        </div>
+
+        {needsUpdateCount > 0 && (
+          <div className="mt-3 shrink-0 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5">
+            <p className="text-xs font-semibold text-orange-800">
+              {needsUpdateCount} request{needsUpdateCount === 1 ? "" : "s"} need
+              {needsUpdateCount === 1 ? "s" : ""} your update
+            </p>
+            <p className="mt-0.5 text-[11px] text-orange-700">
+              Open the item below and use Edit, or go to My Requests.
+            </p>
+          </div>
+        )}
+
+        {recentRequests.length === 0 ? (
+          <div className="mt-3 flex min-h-0 flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-8 text-center">
+            <AppIcon name="inbox" size="lg" color="#94a3b8" />
+            <p className="mt-3 text-sm font-semibold text-slate-700">No data</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+              Submit an expense and it will show up here with live status.
+            </p>
+          </div>
+        ) : (
+          <ul className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-0.5">
+            {recentRequests.map((expense) => {
+              const canEdit = canRequesterEditExpense(expense);
+              return (
+                <li key={expense.id}>
+                  <button
+                    type="button"
+                    onClick={() => onViewExpense?.(expense)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-left hover:border-slate-300 hover:bg-white transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-mono text-[11px] font-bold text-[var(--af-accent)] truncate">
+                        {expense.id}
+                      </p>
+                      <p className="shrink-0 text-xs font-bold text-slate-900">
+                        ${Number(expense.amount).toFixed(2)}
+                      </p>
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-slate-600 truncate">
+                      {expense.project || "—"}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <StatusBadge status={expense.status} className="text-[10px] py-0.5" />
+                      {canEdit && onEditExpense && (
+                        <span
+                          role="link"
+                          tabIndex={0}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onEditExpense(expense);
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              onEditExpense(expense);
+                            }
+                          }}
+                          className="text-[11px] font-semibold text-[var(--af-accent)] hover:underline cursor-pointer"
+                        >
+                          Edit
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <Link
+          href={DASHBOARD_ROUTES.myRequests}
+          className="mt-4 inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition-colors"
+        >
+          <AppIcon name="clipboard" size="sm" color="currentColor" />
+          Open My Requests
+        </Link>
+      </div>
+    </aside>
     </div>
   );
 }

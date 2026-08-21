@@ -465,7 +465,7 @@ export function buildFullGuideCopyText(): string {
     "Or approve then Processor Reject Payout → Rejected by Processor.",
     "",
     "4) Verify audit trail (must check)",
-    ...DEMO_AUDIT_CHECKS.map((item) => `✓ ${item}`),
+    ...DEMO_AUDIT_CHECKS.map((item) => `- ${item}`),
     "Then open Analytics / Tracker → Export Excel and open all sheets: Expense Report · Change Requests · Workflow History · Payment History",
     "",
     "5) Role capabilities (full list)"

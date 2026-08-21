@@ -14,6 +14,7 @@ import {
 } from "../../lib/dashboard/monthlyStats";
 import { CATEGORY_COLORS } from "../../lib/dashboard/constants";
 import { todayIso } from "../../lib/validation";
+import AppIcon, { AppIconName } from "../icons/AppIcon";
 
 interface DashboardHomeOverviewProps {
   expenses: Expense[];
@@ -88,7 +89,7 @@ export default function DashboardHomeOverview({
               ? `${currentMonth.submissions} submissions · ${rangeLabel}`
               : `${currentMonth.submissions} submissions · ${formatChange(momChange.requestedChange)}`
           }
-          emoji="💵"
+          icon="money"
           valueColor="text-orange-500"
         />
         <StatCard
@@ -99,28 +100,28 @@ export default function DashboardHomeOverview({
               ? `${currentMonth.processed} processed · ${rangeLabel}`
               : `${currentMonth.processed} processed · ${formatChange(momChange.paidChange)}`
           }
-          emoji="💳"
+          icon="card"
           valueColor="text-emerald-600"
         />
         <StatCard
           title="To Be Approved"
           value={String(currentMonth.pending)}
           subtext="Awaiting approval or payout"
-          emoji="⏳"
+          icon="clock"
           valueColor="text-amber-600"
         />
         <StatCard
           title="Due Today"
           value={String(dueTodayApprovalCount)}
           subtext="Awaiting approval today"
-          emoji="📅"
+          icon="calendar"
           valueColor="text-orange-600"
         />
         <StatCard
           title={rangeActive ? "Rejected in Range" : "Rejected This Month"}
           value={String(currentMonth.rejected)}
           subtext="Declined requests"
-          emoji="🚫"
+          icon="blocked"
           valueColor="text-rose-600"
         />
       </div>
@@ -128,7 +129,7 @@ export default function DashboardHomeOverview({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 portal-card rounded-2xl p-6 shadow-xl">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-            <span>📈</span> {rangeActive ? "Range Trend" : "6-Month Trend"}
+            <AppIcon name="chart" size="sm" /> {rangeActive ? "Range Trend" : "6-Month Trend"}
           </h3>
           <p className="text-xs text-slate-500 mb-5">
             {rangeActive
@@ -175,7 +176,7 @@ export default function DashboardHomeOverview({
 
         <div className="portal-card rounded-2xl p-6 shadow-xl">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-            <span>📊</span> Spending by Category
+            <AppIcon name="chart" size="sm" /> Spending by Category
           </h3>
           <div className="space-y-3">
             {Object.entries(monthCategories).map(([category, amount]) => {
@@ -210,22 +211,24 @@ export default function DashboardHomeOverview({
       {stats && stats.recentActivity.length > 0 && (
         <div className="portal-card rounded-2xl p-6 shadow-xl">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-            <span>⏱️</span> Recent Activity
+            <AppIcon name="clock" size="sm" /> Recent Activity
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {stats.recentActivity.slice(0, 6).map((log, index) => (
+            {stats.recentActivity.slice(0, 6).map((log, index) => {
+              const activityIcon: AppIconName = log.action.includes("Submitted")
+                ? "inbox"
+                : log.action.includes("Approved")
+                  ? "check"
+                  : log.action.includes("Rejected")
+                    ? "cross"
+                    : "money";
+              return (
               <div
                 key={`${log.expenseId}-${index}`}
                 className="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-200 p-3"
               >
-                <div className="h-8 w-8 shrink-0 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-sm">
-                  {log.action.includes("Submitted")
-                    ? "📥"
-                    : log.action.includes("Approved")
-                      ? "✅"
-                      : log.action.includes("Rejected")
-                        ? "❌"
-                        : "💸"}
+                <div className="h-8 w-8 shrink-0 rounded-lg bg-white border border-slate-200 flex items-center justify-center">
+                  <AppIcon name={activityIcon} size="sm" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-slate-900 truncate">{log.action}</p>
@@ -234,7 +237,8 @@ export default function DashboardHomeOverview({
                   </p>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

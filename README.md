@@ -13,15 +13,26 @@ Talks to the NestJS API (`ace_finance_backend`) via `NEXT_PUBLIC_API_URL`.
 
 ## Roles
 
-| Role | Main areas |
-|------|------------|
-| `REQUESTER` | Submit expense, My Requests |
-| `APPROVER` | Approver queue |
-| `PROCESSOR` | Processor / payment queue |
-| `ADMIN` | Users, categories, projects, countries |
+| Role | Main areas | Project scope |
+|------|------------|---------------|
+| `REQUESTER` | Submit expense, My Requests | Assigned projects only (dropdown + Profile) |
+| `APPROVER` | Approver queue | Assigned projects only (queue / emails / Profile) |
+| `PROCESSOR` | Processor / payment queue | All approved expenses (not project-scoped) |
+| `ADMIN` | Users, categories, projects, countries | All projects (not project-scoped) |
 
 Dashboard home includes spend analytics scoped to the signed-in user’s role.
-Dashboard and dashboard queues support filtering by Project and `submittedAt` date range (From/To) in the header.
+Dashboard and queues support filtering by Project and `submittedAt` date range (From/To) in the header.
+
+**Profile**
+- Requester / Approver: view mode shows **Assigned Projects** (read-only chips, scrollable when many). Edit Profile hides projects (name only).
+- Admin / Processor: view mode shows **Access Scope** instead (no project list). Edit Profile hides Access Scope too.
+- Projects are assigned only by Admin in User Management.
+
+**Submit Expense**
+- Form plus desktop right panel: *What happens next* (4 steps) and *Your recent requests* (latest 4, or empty “No data”).
+
+**Notifications**
+- Backend in-app notification APIs exist; the header notification bell is **temporarily hidden** in the UI (code kept for later).
 
 ## Pages
 
@@ -88,6 +99,25 @@ npm run preview
 | `npm run build` | Static export to `out/` |
 | `npm run preview` | Serve the `out/` folder locally |
 | `npm run lint` | ESLint |
+
+### Docs screenshots (local)
+
+Requires frontend `:3000` and backend `:3001`. Writes to `public/docs-screenshots/`.
+
+```bash
+# Full UI refresh (most /docs-guide/ shots)
+node scripts/capture-docs-refresh.cjs
+
+# Profile / Submit / Access Scope (demo Ops + Processor accounts)
+node scripts/capture-docs-updated-ui.cjs
+
+# Auth / confirm-preview / gaps (as needed)
+node scripts/capture-docs-auth.cjs
+node scripts/capture-docs-confirm-preview.cjs
+node scripts/capture-docs-screenshots-gaps.cjs
+```
+
+Email inbox screenshots and the Excel workbook example (`38b-export-workbook-example.png`) are captured separately and usually left as-is.
 
 ## Deploy (Azure)
 

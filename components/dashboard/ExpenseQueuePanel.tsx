@@ -14,6 +14,7 @@ import {
 } from "../../lib/dashboard/constants";
 import { getPaidAmount, getRemainingAmount } from "../../lib/dashboard/payment";
 import { Expense } from "../../lib/dashboard/types";
+import AppIcon, { AppIconName } from "../icons/AppIcon";
 
 export type ExpenseQueueVariant = "approver" | "processor" | "tracker";
 
@@ -29,7 +30,7 @@ interface ExpenseQueuePanelProps {
   projectFilterOptions: SelectOption[];
   headerText: string | ((totalCount: number) => string);
   emptyInbox?: {
-    emoji: string;
+    icon: AppIconName;
     title: string;
     subtitle: string;
   };
@@ -115,7 +116,9 @@ export default function ExpenseQueuePanel({
 
       {showEmptyInbox ? (
         <div className="text-center py-16 text-slate-700">
-          <span className="text-3xl block mb-2">{emptyInbox.emoji}</span>
+          <span className="mb-2 inline-flex justify-center">
+            <AppIcon name={emptyInbox.icon} size="xl" />
+          </span>
           <p className="text-sm font-semibold">{emptyInbox.title}</p>
           <p className="text-xs mt-1 text-slate-700">{emptyInbox.subtitle}</p>
         </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { isAuthenticated } from "../lib/auth";
 import { DASHBOARD_ROUTES } from "../lib/dashboard/routes";
+import AppIcon from "../components/icons/AppIcon";
 
 export default function NotFound() {
   const [mounted, setMounted] = useState(false);
@@ -16,8 +17,8 @@ export default function NotFound() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-20 bg-[var(--af-bg)]">
-      <div className="h-16 w-16 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-3xl mb-6 shadow-sm">
-        🔍
+      <div className="h-16 w-16 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center mb-6 shadow-sm">
+        <AppIcon name="search" size="xl" />
       </div>
       <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">
         Page Not Found

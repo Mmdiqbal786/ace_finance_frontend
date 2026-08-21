@@ -15,6 +15,7 @@ import { API_URL } from "../../lib/api";
 import { authHeaders, getToken } from "../../lib/auth";
 import { readApiError } from "../../lib/apiError";
 import { toast } from "../../lib/toast";
+import AppIcon from "../icons/AppIcon";
 import {
   CategoryItem,
   CountryItem,
@@ -626,25 +627,47 @@ export default function ExpenseActionModal({
 
   const modalTitle =
     actionType === "approve" ? (
-      <span className="text-emerald-600">✅ Approve Expense</span>
+      <span className="inline-flex items-center gap-2 text-emerald-600">
+        <AppIcon name="check" size="sm" /> Approve Expense
+      </span>
     ) : actionType === "reject" ? (
-      <span className="text-rose-600">❌ Reject Expense</span>
+      <span className="inline-flex items-center gap-2 text-rose-600">
+        <AppIcon name="cross" size="sm" /> Reject Expense
+      </span>
     ) : actionType === "process" ? (
-      <span className="text-emerald-600">💸 Mark as Processed (Paid)</span>
+      <span className="inline-flex items-center gap-2 text-emerald-600">
+        <AppIcon name="money" size="sm" /> Mark as Processed (Paid)
+      </span>
     ) : actionType === "partial-pay" ? (
-      <span className="text-amber-700">🪙 Record Partial Payment</span>
+      <span className="inline-flex items-center gap-2 text-amber-700">
+        <AppIcon name="coin" size="sm" /> Record Partial Payment
+      </span>
     ) : actionType === "processor-reject" ? (
-      <span className="text-rose-600">❌ Reject Disbursement Payout</span>
+      <span className="inline-flex items-center gap-2 text-rose-600">
+        <AppIcon name="cross" size="sm" /> Reject Disbursement Payout
+      </span>
     ) : actionType === "request-changes" ? (
-      <span className="text-amber-700">↩️ Request Changes</span>
+      <span className="inline-flex items-center gap-2 text-amber-700">
+        <AppIcon name="undo" size="sm" /> Request Changes
+      </span>
     ) : actionType === "view" ? (
-      <span className="text-slate-600">📄 Expense Details & Audit</span>
+      <span className="inline-flex items-center gap-2 text-slate-600">
+        <AppIcon name="document" size="sm" /> Expense Details & Audit
+      </span>
     ) : actionType === "edit" ? (
-      <span className="text-[var(--af-accent)]">
-        {editConfirmOpen ? "Confirm changes" : "✏️ Edit Expense Request"}
+      <span className="inline-flex items-center gap-2 text-[var(--af-accent)]">
+        {editConfirmOpen ? (
+          "Confirm changes"
+        ) : (
+          <>
+            <AppIcon name="edit" size="sm" /> Edit Expense Request
+          </>
+        )}
       </span>
     ) : actionType === "delete" ? (
-      <span className="text-rose-500">⚠️ Confirm Deletion</span>
+      <span className="inline-flex items-center gap-2 text-rose-500">
+        <AppIcon name="blocked" size="sm" /> Confirm Deletion
+      </span>
     ) : null;
 
   return (
@@ -1140,7 +1163,7 @@ export default function ExpenseActionModal({
           ) : actionType === "delete" ? (
             <div className="space-y-4">
               <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-slate-900 flex items-start gap-3">
-                <span className="text-2xl mt-0.5">⚠️</span>
+                <AppIcon name="blocked" size="md" className="mt-0.5" />
                 <div>
                   <h4 className="text-sm font-bold text-rose-450">Warning: Permanent Deletion</h4>
                   <p className="text-xs text-slate-700 mt-1">
@@ -1502,7 +1525,7 @@ export default function ExpenseActionModal({
                   className="rounded-lg px-2 py-1 text-sm font-bold text-slate-400 hover:text-slate-900 cursor-pointer"
                   aria-label="Close preview"
                 >
-                  ✕
+                  <AppIcon name="close" size="sm" color="currentColor" />
                 </button>
               </div>
             </div>

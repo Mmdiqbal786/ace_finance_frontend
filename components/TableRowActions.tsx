@@ -2,10 +2,11 @@
 
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import AppIcon, { AppIconName } from "./icons/AppIcon";
 
 export interface TableExtraAction {
   label: string;
-  icon?: string;
+  icon?: AppIconName;
   onClick: () => void;
   tone?: "default" | "success" | "danger";
 }
@@ -29,6 +30,15 @@ const toneClass: Record<NonNullable<TableExtraAction["tone"]>, string> = {
 };
 
 const MENU_MIN_WIDTH = 176;
+
+function ActionIcon({ icon }: { icon?: AppIconName }) {
+  if (!icon) return null;
+  return (
+    <span className="inline-flex w-5 items-center justify-center">
+      <AppIcon name={icon} size="sm" />
+    </span>
+  );
+}
 
 export default function TableRowActions({
   onView,
@@ -139,7 +149,7 @@ export default function TableRowActions({
               toneClass[action.tone || "default"]
             }`}
           >
-            {action.icon && <span className="w-5 text-center text-base leading-none">{action.icon}</span>}
+            <ActionIcon icon={action.icon} />
             {action.label}
           </button>
         ))}
@@ -152,7 +162,7 @@ export default function TableRowActions({
           onClick={() => run(onView)}
           className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
         >
-          <span className="w-5 text-center text-base leading-none">👁️</span>
+          <ActionIcon icon="eye" />
           View
         </button>
         {editSlotAction ? (
@@ -164,9 +174,7 @@ export default function TableRowActions({
               toneClass[editSlotAction.tone || "default"]
             }`}
           >
-            {editSlotAction.icon && (
-              <span className="w-5 text-center text-base leading-none">{editSlotAction.icon}</span>
-            )}
+            <ActionIcon icon={editSlotAction.icon} />
             {editSlotAction.label}
           </button>
         ) : (
@@ -177,7 +185,7 @@ export default function TableRowActions({
               onClick={() => run(onEdit)}
               className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--af-accent)] hover:bg-sky-50 transition-colors cursor-pointer"
             >
-              <span className="w-5 text-center text-base leading-none">✏️</span>
+              <ActionIcon icon="edit" />
               Edit
             </button>
           )
@@ -189,7 +197,7 @@ export default function TableRowActions({
             onClick={() => run(onDelete)}
             className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
           >
-            <span className="w-5 text-center text-base leading-none">🗑️</span>
+            <ActionIcon icon="trash" />
             Delete
           </button>
         )}

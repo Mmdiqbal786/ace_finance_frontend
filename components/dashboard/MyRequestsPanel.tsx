@@ -13,6 +13,7 @@ import {
   getPaidAmount,
   getRemainingAmount,
 } from "../../lib/dashboard/payment";
+import AppIcon from "../icons/AppIcon";
 import { Expense } from "../../lib/dashboard/types";
 
 interface SelectOption {
@@ -53,7 +54,9 @@ export default function MyRequestsPanel({
 
       {expenses.length === 0 ? (
         <div className="text-center py-16 text-slate-700">
-          <span className="text-3xl block mb-2">📭</span>
+          <span className="mb-2 inline-flex justify-center">
+            <AppIcon name="inbox" size="xl" />
+          </span>
           <p className="text-sm font-semibold">No requests yet</p>
           <p className="text-xs mt-1 text-slate-600">
             Submit an expense from the Submit Expense page to see it here.

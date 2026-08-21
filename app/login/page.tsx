@@ -11,6 +11,7 @@ import FormField from '../../components/FormField';
 import AuthSplitLayout from '../../components/AuthSplitLayout';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { validateLoginEmail, validateLoginPassword } from '../../lib/validation';
+import AppIcon from '../../components/icons/AppIcon';
 
 function LoginSpinner({ className = "h-5 w-5 text-white" }: { className?: string }) {
   return (
@@ -307,8 +308,9 @@ function LoginForm() {
             </div>
 
             {error && (
-              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
-                ⚠️ {error}
+              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800 inline-flex items-start gap-2">
+                <AppIcon name="warning" size="sm" className="mt-0.5 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
@@ -429,8 +431,9 @@ function LoginForm() {
             )}
 
             {error && (
-              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
-                ⚠️ {error}
+              <div className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800 inline-flex items-start gap-2">
+                <AppIcon name="warning" size="sm" className="mt-0.5 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 

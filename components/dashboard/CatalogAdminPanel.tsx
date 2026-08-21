@@ -17,6 +17,7 @@ import { readApiError } from "../../lib/apiError";
 import { toast } from "../../lib/toast";
 import { USER_STATUS_FILTER_OPTIONS, filterCatalogTable } from "../../lib/dashboard/constants";
 import { validateCatalogName } from "../../lib/validation";
+import type { AppIconName } from "../icons/AppIcon";
 
 export interface CatalogItemBase {
   _id: string;
@@ -47,7 +48,7 @@ export interface CatalogAdminConfig {
   plural: string;
   totalStatTitle: string;
   totalStatSubtext: string;
-  totalEmoji: string;
+  totalIcon: AppIconName;
   activeSubtext: string;
   searchPlaceholder: string;
   emptyTitle: string;
@@ -264,20 +265,20 @@ export default function CatalogAdminPanel({
           title={config.totalStatTitle}
           value={String(items.length)}
           subtext={config.totalStatSubtext}
-          emoji={config.totalEmoji}
+          icon={config.totalIcon}
         />
         <StatCard
           title="Active"
           value={String(activeCount)}
           subtext={config.activeSubtext}
-          emoji="✅"
+          icon="check"
           valueColor="text-emerald-600"
         />
         <StatCard
           title="Inactive"
           value={String(items.length - activeCount)}
           subtext="Hidden from form"
-          emoji="○"
+          icon="dot"
           valueColor="text-rose-500"
         />
       </div>

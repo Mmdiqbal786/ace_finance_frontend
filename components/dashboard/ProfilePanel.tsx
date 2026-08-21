@@ -29,6 +29,10 @@ const ROLE_LABELS: Record<AuthUser["role"], string> = {
   REQUESTER: "Requester",
 };
 
+function roleShowsProjects(role: AuthUser["role"]): boolean {
+  return role === "REQUESTER" || role === "APPROVER";
+}
+
 function EyeIcon({ open }: { open: boolean }) {
   if (open) {
     return (
@@ -99,6 +103,9 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     name: currentUser.name,
     email: currentUser.email,
     role: currentUser.role,
+    assignedProjects: Array.isArray(currentUser.assignedProjects)
+      ? currentUser.assignedProjects
+      : [],
   });
   const [editingProfile, setEditingProfile] = useState(false);
   const [editName, setEditName] = useState(currentUser.name);
@@ -158,6 +165,9 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
           name: data.name,
           email: data.email,
           role: data.role,
+          assignedProjects: Array.isArray(data.assignedProjects)
+            ? data.assignedProjects
+            : [],
         });
         setEditName(data.name);
         updateStoredUser({
@@ -459,7 +469,12 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
       });
       if (!res.ok) throw new Error(await readApiError(res, "Failed to update profile."));
       const data = await res.json();
-      setProfile({ name: data.name, email: data.email, role: data.role });
+      setProfile((prev) => ({
+        ...prev,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+      }));
       setEditName(data.name);
       setEditingProfile(false);
       updateStoredUser({ name: data.name });
@@ -515,8 +530,8 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
-      <div className="portal-card rounded-2xl p-6 sm:p-8">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+      <div className="portal-card flex h-full flex-col rounded-2xl p-6 sm:p-8">
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900">Profile Details</h2>
@@ -534,7 +549,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
         </div>
 
         {!editingProfile ? (
-          <dl className="mt-5 space-y-4">
+          <dl className="mt-5 flex flex-1 flex-col space-y-4">
             <div>
               <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Name</dt>
               <dd className="mt-1 text-base font-semibold text-slate-900">{profile.name}</dd>
@@ -551,6 +566,59 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
                 </span>
               </dd>
             </div>
+            {roleShowsProjects(profile.role) ? (
+              <div className="flex min-h-0 flex-1 flex-col pt-1">
+                <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Assigned Projects
+                  {profile.assignedProjects.length > 0 && (
+                    <span className="ml-1.5 font-semibold normal-case tracking-normal text-slate-400">
+                      · {profile.assignedProjects.length}
+                    </span>
+                  )}
+                </dt>
+                <dd className="mt-2.5 flex min-h-0 flex-1 flex-col">
+                  {profile.assignedProjects.length > 0 ? (
+                    <div className="max-h-[11rem] min-h-[7.5rem] flex-1 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50/90 p-4">
+                      <div className="flex flex-wrap content-start gap-2.5">
+                        {profile.assignedProjects.map((project) => (
+                          <span
+                            key={project}
+                            className="inline-flex max-w-full items-center rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 shadow-sm"
+                          >
+                            {project}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex min-h-[7.5rem] flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-6 text-center">
+                      <p className="text-sm font-semibold text-slate-700">No projects assigned</p>
+                      <p className="mt-1.5 max-w-[16rem] text-xs leading-relaxed text-slate-500">
+                        Ask an administrator to assign projects in User Management.
+                      </p>
+                    </div>
+                  )}
+                </dd>
+              </div>
+            ) : (
+              <div className="flex min-h-0 flex-1 flex-col pt-1">
+                <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Access Scope
+                </dt>
+                <dd className="mt-2.5 flex min-h-0 flex-1 flex-col">
+                  <div className="flex min-h-[7.5rem] flex-1 flex-col justify-center rounded-xl border border-slate-200 bg-slate-50/90 p-4">
+                    <span className="inline-flex w-fit rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-800">
+                      {profile.role === "ADMIN" ? "All projects" : "All approved expenses"}
+                    </span>
+                    <p className="mt-3 text-xs leading-relaxed text-slate-600">
+                      {profile.role === "ADMIN"
+                        ? "Administrators are not limited to assigned projects. You can manage users, catalogs, and all expense workflows."
+                        : "Processors are not limited to assigned projects. You can pay or reject any manager-approved expense across all projects."}
+                    </p>
+                  </div>
+                </dd>
+              </div>
+            )}
           </dl>
         ) : (
           <form onSubmit={handleSaveProfile} noValidate className="mt-5 flex flex-col gap-4">
@@ -616,7 +684,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
         )}
       </div>
 
-      <div className="portal-card rounded-2xl p-6 sm:p-8">
+      <div className="portal-card flex h-full flex-col rounded-2xl p-6 sm:p-8">
         <div className="border-b border-slate-200 pb-4">
           <h2 className="text-lg font-bold text-slate-900">Change Password</h2>
           <p className="mt-1 text-sm text-slate-600">

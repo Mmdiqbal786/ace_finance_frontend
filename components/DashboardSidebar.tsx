@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AuthUser, logout } from "../lib/auth";
 import Modal from "./Modal";
+import AppIcon, { AppIconName } from "./icons/AppIcon";
 import {
   DASHBOARD_ROUTES,
   pathnameToSection,
@@ -20,7 +21,7 @@ interface DashboardSidebarProps {
 }
 
 interface NavItemProps {
-  icon: string;
+  icon: AppIconName;
   label: string;
   shortLabel?: string;
   href: string;
@@ -55,7 +56,7 @@ function NavItem({
         active ? activeStyles : "af-sidebar-nav-idle"
       }`}
     >
-      <span className="text-base shrink-0">{icon}</span>
+      <AppIcon name={icon} size="sm" className="shrink-0" color="currentColor" />
       <span className="flex-1 text-left truncate">
         <span className="sm:hidden">{shortLabel || label}</span>
         <span className="hidden sm:inline">{label}</span>
@@ -111,7 +112,7 @@ export default function DashboardSidebar({
             className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10 hover:text-white transition-colors cursor-pointer lg:hidden"
             aria-label="Close menu"
           >
-            ✕
+            <AppIcon name="close" size="sm" color="currentColor" />
           </button>
           <p className="text-base font-bold text-white truncate">{user?.name || "Dashboard"}</p>
           {user?.email && (
@@ -124,7 +125,7 @@ export default function DashboardSidebar({
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           <NavItem
-            icon="🏠"
+            icon="home"
             label="Dashboard"
             shortLabel="Home"
             href={DASHBOARD_ROUTES.home}
@@ -135,7 +136,7 @@ export default function DashboardSidebar({
           {user?.role === "REQUESTER" && (
             <>
               <NavItem
-                icon="📄"
+                icon="document"
                 label="Submit Expense"
                 shortLabel="Submit"
                 href={DASHBOARD_ROUTES.submitExpense}
@@ -143,7 +144,7 @@ export default function DashboardSidebar({
                 onNavigate={onMobileClose}
               />
               <NavItem
-                icon="📋"
+                icon="clipboard"
                 label="My Requests"
                 shortLabel="Mine"
                 href={DASHBOARD_ROUTES.myRequests}
@@ -155,7 +156,7 @@ export default function DashboardSidebar({
 
           {(user?.role === "APPROVER" || user?.role === "ADMIN") && (
             <NavItem
-              icon="🛡️"
+              icon="shield"
               label="Approver"
               href={DASHBOARD_ROUTES.approver}
               active={isSectionActive(pathname, "approver")}
@@ -167,7 +168,7 @@ export default function DashboardSidebar({
 
           {(user?.role === "PROCESSOR" || user?.role === "ADMIN") && (
             <NavItem
-              icon="💸"
+              icon="money"
               label="Processor"
               href={DASHBOARD_ROUTES.processor}
               active={isSectionActive(pathname, "processor")}
@@ -179,7 +180,7 @@ export default function DashboardSidebar({
           {user?.role === "ADMIN" && (
             <>
               <NavItem
-                icon="👥"
+                icon="users"
                 label="User Management"
                 shortLabel="Users"
                 href={DASHBOARD_ROUTES.userManagement}
@@ -188,7 +189,7 @@ export default function DashboardSidebar({
                 onNavigate={onMobileClose}
               />
               <NavItem
-                icon="🏷️"
+                icon="tag"
                 label="Categories"
                 href={DASHBOARD_ROUTES.categories}
                 active={isSectionActive(pathname, "categories")}
@@ -196,7 +197,7 @@ export default function DashboardSidebar({
                 onNavigate={onMobileClose}
               />
               <NavItem
-                icon="📁"
+                icon="folder"
                 label="Projects"
                 href={DASHBOARD_ROUTES.projects}
                 active={isSectionActive(pathname, "projects")}
@@ -204,7 +205,7 @@ export default function DashboardSidebar({
                 onNavigate={onMobileClose}
               />
               <NavItem
-                icon="🌍"
+                icon="globe"
                 label="Countries"
                 href={DASHBOARD_ROUTES.countries}
                 active={isSectionActive(pathname, "countries")}
@@ -216,7 +217,7 @@ export default function DashboardSidebar({
 
           {user?.role !== "REQUESTER" && (
             <NavItem
-              icon="📊"
+              icon="chart"
               label="Analytics & Tracker"
               shortLabel="Analytics"
               href={DASHBOARD_ROUTES.analytics}
@@ -232,7 +233,7 @@ export default function DashboardSidebar({
             onClick={() => setShowLogoutConfirm(true)}
             className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/25 px-3 py-2.5 text-sm font-semibold text-slate-100 hover:border-red-400/50 hover:bg-red-500/10 hover:text-red-200 transition-colors cursor-pointer"
           >
-            <span>🚪</span>
+            <AppIcon name="logout" size="sm" color="currentColor" />
             Sign Out
           </button>
         </div>

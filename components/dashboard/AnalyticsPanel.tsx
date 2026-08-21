@@ -7,6 +7,7 @@ import { exportExpensesReport } from "../../lib/dashboard/exportExpensesReport";
 import { DashboardStats, Expense } from "../../lib/dashboard/types";
 import ExpenseQueuePanel from "./ExpenseQueuePanel";
 import type { TableExtraAction } from "../TableRowActions";
+import AppIcon, { AppIconName } from "../icons/AppIcon";
 
 interface SelectOption {
   value: string;
@@ -53,7 +54,7 @@ export default function AnalyticsPanel({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 portal-card rounded-2xl p-6 shadow-xl">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-              <span>📊</span> Volume by Category
+              <AppIcon name="chart" size="sm" /> Volume by Category
             </h3>
             <div className="space-y-4">
               {Object.entries(stats.byCategory).map(([category, amount]) => {
@@ -90,7 +91,7 @@ export default function AnalyticsPanel({
 
           <div className="portal-card rounded-2xl p-6 shadow-xl">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-              <span>⏱️</span> Audit Activity Log
+              <AppIcon name="clock" size="sm" /> Audit Activity Log
             </h3>
             {stats.recentActivity.length === 0 ? (
               <p className="text-xs text-slate-700 py-6 text-center">No activity logged yet.</p>
@@ -107,14 +108,19 @@ export default function AnalyticsPanel({
                           />
                         ) : null}
                         <div className="relative flex space-x-2 items-start">
-                          <div className="h-6 w-6 rounded-full bg-slate-50 border border-slate-400 flex items-center justify-center text-xs">
-                            {log.action.includes("Submitted")
-                              ? "📥"
-                              : log.action.includes("Approved")
-                                ? "✅"
-                                : log.action.includes("Rejected")
-                                  ? "❌"
-                                  : "💸"}
+                          <div className="h-6 w-6 rounded-full bg-slate-50 border border-slate-400 flex items-center justify-center">
+                            <AppIcon
+                              name={
+                                (log.action.includes("Submitted")
+                                  ? "inbox"
+                                  : log.action.includes("Approved")
+                                    ? "check"
+                                    : log.action.includes("Rejected")
+                                      ? "cross"
+                                      : "money") as AppIconName
+                              }
+                              size="xs"
+                            />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-bold text-slate-800">{log.action}</div>
@@ -149,9 +155,9 @@ export default function AnalyticsPanel({
           <button
             type="button"
             onClick={() => handleExport(filtered)}
-            className="inline-flex items-center justify-center rounded-xl bg-[var(--af-navy)] hover:bg-[var(--af-navy-soft)] px-3.5 py-1.5 text-xs font-bold text-white shadow transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[var(--af-navy)] hover:bg-[var(--af-navy-soft)] px-3.5 py-1.5 text-xs font-bold text-white shadow transition-colors cursor-pointer"
           >
-            📥 Export Excel Report
+            <AppIcon name="inbox" size="xs" color="#ffffff" /> Export Excel Report
           </button>
         )}
       />

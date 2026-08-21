@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { usePathname } from "next/navigation";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   getUser,
   isAuthenticated,
@@ -47,9 +47,24 @@ import MyRequestsPanel from "./MyRequestsPanel";
 import ProfilePanel from "./ProfilePanel";
 import DashboardBreadcrumb from "./DashboardBreadcrumb";
 import { SECTION_META } from "../../lib/dashboard/sectionMeta";
+import AppIcon from "../icons/AppIcon";
+
+const OPEN_FROM_QUERY_ACTIONS = new Set<ExpenseActionType>([
+  "view",
+  "edit",
+  "approve",
+  "reject",
+  "process",
+  "partial-pay",
+  "processor-reject",
+  "request-changes",
+  "delete",
+]);
 
 export default function DashboardWorkspace() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const activeSection = pathnameToSection(pathname);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -62,6 +77,7 @@ export default function DashboardWorkspace() {
 
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [actionType, setActionType] = useState<ExpenseActionType>("view");
+  const openedFromQueryRef = useRef<string | null>(null);
 
   const [activeCategories, setActiveCategories] = useState<CategoryItem[]>([]);
   const [activeProjects, setActiveProjects] = useState<ProjectItem[]>([]);
@@ -197,6 +213,44 @@ export default function DashboardWorkspace() {
     setActionType(type);
   };
 
+  // Deep-link from notification: /dashboard/approver/?expense=EXP-...&action=view
+  useEffect(() => {
+    const expenseId = searchParams.get("expense");
+    if (!expenseId) {
+      openedFromQueryRef.current = null;
+      return;
+    }
+    if (loading) return;
+    if (openedFromQueryRef.current === expenseId) return;
+
+    let cancelled = false;
+    const requestedAction = (searchParams.get("action") || "view") as ExpenseActionType;
+    const action = OPEN_FROM_QUERY_ACTIONS.has(requestedAction) ? requestedAction : "view";
+
+    (async () => {
+      let expense = expenses.find((e) => e.id === expenseId) || null;
+      if (!expense) {
+        try {
+          const res = await fetch(`${API_URL}/expenses/${encodeURIComponent(expenseId)}`);
+          if (res.ok) {
+            const data = await res.json();
+            expense = data as Expense;
+          }
+        } catch {
+          // Ignore; leave modal closed if expense cannot be loaded.
+        }
+      }
+      if (cancelled || !expense) return;
+      openedFromQueryRef.current = expenseId;
+      openActionModal(expense, action);
+      router.replace(pathname, { scroll: false });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, loading, expenses, pathname, router]);
+
   const assignedProjectSet =
     currentUser?.role === "APPROVER" || currentUser?.role === "REQUESTER"
       ? new Set(currentUser.assignedProjects || [])
@@ -292,7 +346,7 @@ export default function DashboardWorkspace() {
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-400 bg-white px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
               >
-                <span>☰</span>
+                <AppIcon name="menu" size="sm" />
                 <span>Menu</span>
               </button>
             </div>
@@ -351,11 +405,14 @@ export default function DashboardWorkspace() {
           </div>
 
           {error && (
-            <div className="mb-6 rounded-xl bg-rose-50 border border-rose-200 p-4 text-sm text-rose-700">
-              ⚠️ {error}{" "}
-              <button onClick={fetchData} className="underline font-bold ml-2">
-                Try Reconnecting
-              </button>
+            <div className="mb-6 rounded-xl bg-rose-50 border border-rose-200 p-4 text-sm text-rose-700 inline-flex items-start gap-2">
+              <AppIcon name="warning" size="sm" className="mt-0.5" />
+              <span>
+                {error}{" "}
+                <button onClick={fetchData} className="underline font-bold ml-1">
+                  Try Reconnecting
+                </button>
+              </span>
             </div>
           )}
 
@@ -424,6 +481,9 @@ export default function DashboardWorkspace() {
                   projects={projectsForSubmit}
                   countries={activeCountries}
                   catalogLoading={catalogLoading}
+                  expenses={expenses}
+                  onViewExpense={(e) => openActionModal(e, "view")}
+                  onEditExpense={(e) => openActionModal(e, "edit")}
                   onSubmitted={fetchData}
                 />
               )}
@@ -447,7 +507,7 @@ export default function DashboardWorkspace() {
                     `Showing ${count} expenses awaiting your sign-off`
                   }
                   emptyInbox={{
-                    emoji: "🎉",
+                    icon: "party",
                     title: "Inbox is clear!",
                     subtitle:
                       currentUser?.role === "APPROVER" &&
@@ -458,20 +518,20 @@ export default function DashboardWorkspace() {
                   getExtraActions={(e) => [
                     {
                       label: "Approve",
-                      icon: "✅",
+                      icon: "check",
                       tone: "success",
                       onClick: () => openActionModal(e, "approve"),
                     },
                     {
                       label: "Reject",
-                      icon: "❌",
+                      icon: "cross",
                       tone: "danger",
                       onClick: () => openActionModal(e, "reject"),
                     },
                   ]}
                   getEditSlotAction={(e) => ({
                     label: "Request Changes",
-                    icon: "↩️",
+                    icon: "undo",
                     onClick: () => openActionModal(e, "request-changes"),
                   })}
                   showEdit={false}
@@ -490,26 +550,26 @@ export default function DashboardWorkspace() {
                     `Showing ${count} approved expenses awaiting payment release`
                   }
                   emptyInbox={{
-                    emoji: "🎈",
+                    icon: "balloon",
                     title: "All payouts cleared!",
                     subtitle: "No approved requests are currently waiting to be processed.",
                   }}
                   getExtraActions={(e) => [
                     {
                       label: "Mark Paid",
-                      icon: "💸",
+                      icon: "money",
                       tone: "success",
                       onClick: () => openActionModal(e, "process"),
                     },
                     {
                       label: "Partially Paid",
-                      icon: "🪙",
+                      icon: "coin",
                       tone: "success",
                       onClick: () => openActionModal(e, "partial-pay"),
                     },
                     {
                       label: "Reject Payout",
-                      icon: "❌",
+                      icon: "cross",
                       tone: "danger",
                       onClick: () => openActionModal(e, "processor-reject"),
                     },
@@ -518,7 +578,7 @@ export default function DashboardWorkspace() {
                     e.status === "APPROVED_APPROVER"
                       ? {
                           label: "Request Changes",
-                          icon: "↩️",
+                          icon: "undo",
                           onClick: () => openActionModal(e, "request-changes"),
                         }
                       : null
@@ -554,7 +614,7 @@ export default function DashboardWorkspace() {
                     if (!canApproverReturn && !canProcessorReturn) return null;
                     return {
                       label: "Request Changes",
-                      icon: "↩️",
+                      icon: "undo",
                       onClick: () => openActionModal(e, "request-changes"),
                     };
                   }}
