@@ -9,7 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "preview": "npx --yes serve@14 out",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy:azure": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/deploy-azure-swa.ps1"
   },
   "dependencies": {
     "next": "16.2.10",

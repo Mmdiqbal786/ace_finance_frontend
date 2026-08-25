@@ -121,9 +121,41 @@ Email inbox screenshots and the Excel workbook example (`38b-export-workbook-exa
 
 ## Deploy (Azure)
 
-- **Frontend:** Azure Static Web Apps — build `npm run build`, publish `./out`
+- **Frontend:** Azure Static Web Apps — static export `./out`
 - **Backend:** Azure App Service (NestJS)
-- Set `NEXT_PUBLIC_API_URL` (and demo password if needed) in the Static Web Apps build environment **before** build
+
+### One-command frontend deploy (recommended)
+
+You do **not** need to manually flip `.env` local ↔ production or delete `node_modules` every time.
+
+1. Copy deploy secrets (once):
+
+```bash
+cp .env.deploy.example .env.deploy
+# Edit .env.deploy — set SWA_DEPLOYMENT_TOKEN from Azure Portal → Static Web App → Manage deployment token
+```
+
+2. Keep `.env` on **local** URLs for `npm run dev`.
+
+3. Deploy:
+
+```bash
+npm run deploy:azure
+# or: .\scripts\deploy-azure-swa.ps1
+# optional full wipe: .\scripts\deploy-azure-swa.ps1 -CleanNodeModules
+```
+
+What the script does:
+
+- Sets production `NEXT_PUBLIC_*` from `.env.deploy` **only for that build process** (does not rewrite `.env`)
+- Cleans `out/` + `.next/`
+- Runs `npm run build`
+- Runs `swa deploy ./out --app-name ace-finance-frontend --env production`
+- Leaves local `.env` unchanged
+
+Requires: `npm i -g @azure/static-web-apps-cli`
+
+`.env.deploy` is gitignored — never commit the deployment token.
 
 ### Live URLs
 
