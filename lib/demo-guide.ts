@@ -188,8 +188,8 @@ export const DEMO_EXTRA_STAFF: DemoStaff[] = [
     login2fa: "Password only (demo)",
   },
   {
-    name: "Priya Sharma",
-    email: "priya.processor@acefinance.com",
+    name: "Alisha",
+    email: "alisha.processor@acefinance.com",
     password: "Processor@1234",
     role: "PROCESSOR",
     projects: "All projects",

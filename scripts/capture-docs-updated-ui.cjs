@@ -18,7 +18,7 @@ const ACCOUNTS = {
     password: "Requester@1234",
   },
   processor: {
-    email: "priya.processor@acefinance.com",
+    email: "alisha.processor@acefinance.com",
     password: "Processor@1234",
   },
   admin: {
