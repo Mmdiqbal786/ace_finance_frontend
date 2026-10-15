@@ -134,14 +134,14 @@ function CenterToast({
 
   return (
     <div
-      className="fixed inset-0 z-[210] flex items-center justify-center bg-slate-900/40 p-4 animate-[af-toast-in_0.28s_ease-out]"
+      className="fixed inset-0 z-[210] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[2px] animate-[af-toast-in_0.28s_ease-out]"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby={`toast-title-${toast.id}`}
       suppressHydrationWarning
     >
       <div
-        className={`relative z-10 w-full max-w-md rounded-2xl border px-5 py-5 shadow-2xl shadow-slate-900/20 ${styles.wrap}`}
+        className={`relative z-10 w-full max-w-lg rounded-2xl border px-5 py-5 shadow-2xl shadow-slate-900/20 ${styles.wrap}`}
       >
         <div className="flex items-start gap-3">
           <span
@@ -150,11 +150,17 @@ function CenterToast({
             <AppIcon name={styles.icon} size="sm" color={styles.iconColor} />
           </span>
           <div className="min-w-0 flex-1">
-            <p id={`toast-title-${toast.id}`} className="text-base font-bold leading-snug">
+            <p id={`toast-title-${toast.id}`} className="text-base font-bold leading-snug break-words">
               {toast.message}
             </p>
             {toast.detail && (
-              <p className="mt-2 rounded-lg border border-current/15 bg-white/60 px-3 py-2 font-mono text-sm font-bold tracking-wide text-slate-900">
+              <p
+                className={`mt-2.5 rounded-xl border border-current/15 bg-white/70 px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 break-words ${
+                  toast.kind === "success"
+                    ? "font-mono font-bold tracking-wide"
+                    : "font-medium"
+                }`}
+              >
                 {toast.detail}
               </p>
             )}
@@ -166,7 +172,7 @@ function CenterToast({
         <button
           type="button"
           onClick={onDone}
-          className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-[var(--af-navy)] px-4 text-sm font-bold text-white hover:bg-[var(--af-navy-soft)] cursor-pointer"
+          className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-[var(--af-navy)] px-4 text-sm font-bold text-white hover:bg-[var(--af-navy-soft)] cursor-pointer transition-colors shadow-sm"
         >
           Dismiss
         </button>

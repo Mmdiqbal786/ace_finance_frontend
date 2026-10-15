@@ -17,7 +17,14 @@ import { toast } from "../../lib/toast";
 import AppIcon, { AppIconName } from "../icons/AppIcon";
 import StatusBadge from "../StatusBadge";
 import { todayIso } from "../../lib/validation";
-import { CategoryItem, CountryItem, Expense, ProjectItem } from "../../lib/dashboard/types";
+import {
+  CategoryItem,
+  CountryItem,
+  Expense,
+  ProjectItem,
+  ParsedInvoiceData,
+  ParsedInvoiceResponse,
+} from "../../lib/dashboard/types";
 import { DASHBOARD_ROUTES } from "../../lib/dashboard/routes";
 import { canRequesterEditExpense } from "../../lib/dashboard/payment";
 
@@ -88,6 +95,9 @@ const ALLOWED_INVOICE_TYPES = [
   "image/gif",
 ];
 const MAX_INVOICE_BYTES = 5 * 1024 * 1024;
+const IS_INVOICE_PARSE_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_INVOICE_PARSE === "true" ||
+  process.env.NEXT_PUBLIC_ENABLE_INVOICE_PARSE === "1";
 
 function emptyValues(user: AuthUser): ExpenseRequestValues {
   return {
@@ -168,7 +178,25 @@ export default function SubmitExpensePanel({
   const [invoiceError, setInvoiceError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [potentialDuplicateWarning, setPotentialDuplicateWarning] = useState<string | null>(null);
+  const [duplicateConfirmed, setDuplicateConfirmed] = useState(false);
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `sub-${Date.now()}-${Math.random()}`
+  );
+  const [parsingInvoice, setParsingInvoice] = useState(false);
+  const [parsedData, setParsedData] = useState<ParsedInvoiceData | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [convertingFx, setConvertingFx] = useState(false);
+  const [convertedFxInfo, setConvertedFxInfo] = useState<{
+    from: string;
+    to: string;
+    rate: number;
+    original: number;
+    converted: number;
+  } | null>(null);
 
   useEffect(() => {
     setValues((prev) => ({
@@ -182,10 +210,35 @@ export default function SubmitExpensePanel({
     }));
   }, [currentUser, categories, projects, countries]);
 
-  const currency = useMemo(() => {
-    const selected = countries.find((c) => c.name === values.country);
-    return (selected?.currency || "USD").toUpperCase();
+  const selectedCountry = useMemo(() => {
+    return countries.find((c) => c.name === values.country);
   }, [countries, values.country]);
+
+  const currency = useMemo(() => {
+    return (selectedCountry?.currency || "USD").toUpperCase();
+  }, [selectedCountry]);
+
+  const matchingCountryForInvoice = useMemo(() => {
+    if (!parsedData?.currency) return null;
+    const docCurr = parsedData.currency.toUpperCase();
+    return (
+      countries.find((c) => {
+        if (docCurr === "USD") return c.name === "United States";
+        if (docCurr === "INR") return c.name === "India";
+        if (docCurr === "AED") return c.name === "United Arab Emirates";
+        if (docCurr === "GBP") return c.name === "United Kingdom";
+        if (docCurr === "EUR") return c.name === "Germany" || c.name === "France";
+        return (c.currency || "").toUpperCase() === docCurr;
+      }) ||
+      countries.find((c) => (c.currency || "").toUpperCase() === docCurr) ||
+      null
+    );
+  }, [countries, parsedData?.currency]);
+
+  const currencyMismatch = useMemo(() => {
+    if (!parsedData?.currency || !values.country) return false;
+    return parsedData.currency.toUpperCase() !== currency;
+  }, [parsedData?.currency, values.country, currency]);
 
   const attachmentPreviewUrl = useMemo(() => {
     if (!invoiceFile) return null;
@@ -217,14 +270,163 @@ export default function SubmitExpensePanel({
   ) => {
     if (field === "requesterEmail") return;
     setValues((prev) => ({ ...prev, [field]: value }));
+    if (field === "country") {
+      setConvertedFxInfo(null);
+    }
     if (submitError) setSubmitError("");
+    if (potentialDuplicateWarning) {
+      setPotentialDuplicateWarning(null);
+      setDuplicateConfirmed(false);
+    }
   };
 
-  const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSwitchToInvoiceCountry = () => {
+    if (!matchingCountryForInvoice) return;
+    setValues((prev) => ({
+      ...prev,
+      country: matchingCountryForInvoice.name,
+      amount: parsedData?.amount ? String(parsedData.amount) : prev.amount,
+    }));
+    setConvertedFxInfo(null);
+    toast.success(`Country switched to ${matchingCountryForInvoice.name} (${parsedData?.currency}).`);
+  };
+
+  const handleConvertToLocalCurrency = async () => {
+    if (!parsedData?.currency || !parsedData?.amount || !currency) return;
+    setConvertingFx(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/fx/convert?from=${encodeURIComponent(parsedData.currency)}&to=${encodeURIComponent(currency)}&amount=${parsedData.amount}`
+      );
+      if (res.ok) {
+        const json = await res.json();
+        const converted = json.convertedAmount;
+        setValues((prev) => ({
+          ...prev,
+          amount: String(converted),
+        }));
+        setConvertedFxInfo({
+          from: parsedData.currency,
+          to: currency,
+          rate: json.exchangeRate,
+          original: parsedData.amount,
+          converted,
+        });
+        toast.success(`Converted ${parsedData.currency} ${parsedData.amount} → ${currency} ${converted} at live rate ${json.exchangeRate}.`);
+      } else {
+        toast.error("Could not fetch live exchange rate.");
+      }
+    } catch {
+      toast.error("FX conversion error. Please enter the local amount manually.");
+    } finally {
+      setConvertingFx(false);
+    }
+  };
+
+  const handleInvoiceChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setInvoiceFile(file);
-    setInvoiceError(validateInvoiceFile(file));
+    const err = validateInvoiceFile(file);
+    setInvoiceError(err);
     if (submitError) setSubmitError("");
+    if (potentialDuplicateWarning) {
+      setPotentialDuplicateWarning(null);
+      setDuplicateConfirmed(false);
+    }
+    setParsedData(null);
+    setConvertedFxInfo(null);
+
+    if (IS_INVOICE_PARSE_ENABLED && file && !err) {
+      setParsingInvoice(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch(`${API_URL}/expenses/parse-invoice`, {
+          method: "POST",
+          body: formData,
+        });
+        if (res.ok) {
+          const json: ParsedInvoiceResponse = await res.json();
+          if (json.success && json.data) {
+            const d = json.data;
+            setParsedData(d);
+            let matchedCountryName = "";
+            setValues((prev) => {
+              const updated = { ...prev };
+              // Always sync invoice number with newly parsed document
+              updated.invoiceNumber = d.invoiceNumber || "";
+              if (d.invoiceDate) {
+                updated.invoiceDate = d.invoiceDate;
+              }
+              if (d.descriptionSuggestion) {
+                updated.description = d.descriptionSuggestion;
+              }
+              if (d.categorySuggestion) {
+                const matched = categories.find(
+                  (c) =>
+                    c.name.toLowerCase() === d.categorySuggestion?.toLowerCase() ||
+                    c.label.toLowerCase() === d.categorySuggestion?.toLowerCase() ||
+                    c.name.toLowerCase().includes(d.categorySuggestion?.toLowerCase() || "")
+                );
+                if (matched) {
+                  updated.category = matched.name;
+                }
+              }
+
+              // Auto-match country to invoice currency if available
+              if (d.currency) {
+                const docCurr = d.currency.toUpperCase();
+                const matched =
+                  countries.find((c) => {
+                    if (docCurr === "USD") return c.name === "United States";
+                    if (docCurr === "INR") return c.name === "India";
+                    if (docCurr === "AED") return c.name === "United Arab Emirates";
+                    if (docCurr === "GBP") return c.name === "United Kingdom";
+                    if (docCurr === "EUR") return c.name === "Germany" || c.name === "France";
+                    return (c.currency || "").toUpperCase() === docCurr;
+                  }) ||
+                  countries.find((c) => (c.currency || "").toUpperCase() === docCurr);
+
+                if (matched) {
+                  updated.country = matched.name;
+                  matchedCountryName = matched.name;
+                }
+              }
+
+              if (d.amount) {
+                updated.amount = d.amount.toString();
+              }
+              return updated;
+            });
+            toast.success(
+              `Document parsed via ${d.parseMethod === "pdf-parse" ? "PDF Parse" : "Tesseract OCR"}${
+                matchedCountryName ? ` · Auto-selected ${matchedCountryName} (${d.currency})` : ""
+              }.`
+            );
+          }
+        }
+      } catch (parseErr) {
+        console.warn("Parse document error:", parseErr);
+      } finally {
+        setParsingInvoice(false);
+      }
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setInvoiceFile(null);
+    setInvoiceError("");
+    setParsedData(null);
+    setConvertedFxInfo(null);
+    const input = document.getElementById("invoice") as HTMLInputElement | null;
+    if (input) input.value = "";
+    if (potentialDuplicateWarning) {
+      setPotentialDuplicateWarning(null);
+      setDuplicateConfirmed(false);
+    }
+    if (/duplicate invoice file|file hash|attachment/i.test(submitError)) {
+      setSubmitError("");
+    }
   };
 
   const handleSubmitClick = (e: React.FormEvent) => {
@@ -255,9 +457,10 @@ export default function SubmitExpensePanel({
     setConfirmOpen(false);
   };
 
-  const confirmAndSubmit = async () => {
+  const confirmAndSubmit = async (overrideConfirmed?: boolean) => {
     if (!invoiceFile) return;
 
+    const isConfirmed = overrideConfirmed ?? duplicateConfirmed;
     setSubmitting(true);
     setSubmitError("");
     try {
@@ -277,6 +480,12 @@ export default function SubmitExpensePanel({
       }
       if (values.invoiceDate) formData.append("invoiceDate", values.invoiceDate);
       formData.append("invoice", invoiceFile);
+      if (isConfirmed) {
+        formData.append("duplicateConfirmed", "true");
+      }
+      if (idempotencyKey) {
+        formData.append("idempotencyKey", idempotencyKey);
+      }
 
       const response = await fetch(`${API_URL}/expenses`, {
         method: "POST",
@@ -289,9 +498,17 @@ export default function SubmitExpensePanel({
 
       const result = (await response.json()) as Expense;
       setConfirmOpen(false);
+      setIsDuplicateModalOpen(false);
       setValues(emptyValues(currentUser));
       setInvoiceFile(null);
       setInvoiceError("");
+      setPotentialDuplicateWarning(null);
+      setDuplicateConfirmed(false);
+      setIdempotencyKey(
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `sub-${Date.now()}-${Math.random()}`
+      );
       form.clearAll();
       toast.success("Expense request submitted.", {
         sticky: true,
@@ -301,8 +518,36 @@ export default function SubmitExpensePanel({
       onSubmitted?.();
     } catch (err: any) {
       setConfirmOpen(false);
-      setSubmitError(err.message || "Failed to submit expense request.");
-      toast.error(err.message || "Failed to submit expense request.");
+      const msg = err.message || "Failed to submit expense request.";
+      if (msg.includes("POTENTIAL_DUPLICATE:")) {
+        const cleanMsg = msg.replace("POTENTIAL_DUPLICATE:", "").trim();
+        setPotentialDuplicateWarning(cleanMsg);
+        setIsDuplicateModalOpen(true);
+        setSubmitError("");
+      } else {
+        setIsDuplicateModalOpen(false);
+        setSubmitError(msg);
+        const isDuplicateError = /duplicate/i.test(msg);
+        if (isDuplicateError) {
+          const colonIndex = msg.indexOf(":");
+          if (colonIndex > 0 && colonIndex < 60) {
+            const title = msg.slice(0, colonIndex).trim();
+            const detail = msg.slice(colonIndex + 1).trim();
+            toast.error(title, {
+              sticky: true,
+              center: true,
+              detail,
+            });
+          } else {
+            toast.error(msg, {
+              sticky: true,
+              center: true,
+            });
+          }
+        } else {
+          toast.error(msg);
+        }
+      }
     } finally {
       setSubmitting(false);
     }
@@ -339,8 +584,122 @@ export default function SubmitExpensePanel({
       )}
 
       {submitError && (
-        <div className="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
-          {submitError}
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-xl bg-rose-50 border border-rose-200 p-3.5 text-xs text-rose-800 animate-[af-toast-in_0.2s_ease-out]">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <span className="mt-0.5 shrink-0 text-rose-500 font-bold text-sm">⚠️</span>
+            <span className="break-words font-medium leading-relaxed">{submitError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSubmitError("")}
+            className="shrink-0 -mr-1 -mt-1 rounded-lg p-1.5 text-rose-400 hover:text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
+            aria-label="Remove message"
+            title="Remove this message"
+          >
+            <AppIcon name="close" size="xs" color="currentColor" />
+          </button>
+        </div>
+      )}
+
+
+      {IS_INVOICE_PARSE_ENABLED && parsingInvoice && (
+        <div className="mb-4 rounded-xl bg-sky-50 border border-sky-200 p-3 text-xs text-sky-900 flex items-center gap-2.5">
+          <span className="text-base animate-pulse">📄</span>
+          <div>
+            <strong className="font-semibold block">Analyzing document (Zero-AI: PDF Parse / OCR)...</strong>
+            <span>Extracting text locally to auto-fill invoice number, dates, and amounts.</span>
+          </div>
+        </div>
+      )}
+
+      {IS_INVOICE_PARSE_ENABLED && parsedData && (
+        <div className="mb-4 rounded-xl bg-emerald-50 border border-emerald-300 p-3 text-xs text-emerald-950 flex items-start gap-2.5">
+          <span className="text-base">⚡</span>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <strong className="font-semibold text-emerald-900">
+                Document Auto-Extracted ({parsedData.parseMethod === "pdf-parse" ? "PDF Parse" : "Tesseract OCR"})
+              </strong>
+              <button
+                type="button"
+                onClick={() => setParsedData(null)}
+                className="text-slate-400 hover:text-slate-600 text-[11px] cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-2 text-[11px]">
+              {parsedData.invoiceNumber && (
+                <span className="bg-white/90 px-2 py-0.5 rounded border border-emerald-200 font-mono">
+                  Invoice #: <strong>{parsedData.invoiceNumber}</strong>
+                </span>
+              )}
+              {parsedData.invoiceDate && (
+                <span className="bg-white/90 px-2 py-0.5 rounded border border-emerald-200">
+                  Date: <strong>{parsedData.invoiceDate}</strong>
+                </span>
+              )}
+              {parsedData.amount && (
+                <span className="bg-white/90 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
+                  Amount: <strong>{parsedData.currency || "$"} {parsedData.amount}</strong>
+                </span>
+              )}
+              {parsedData.vendor && (
+                <span className="bg-white/90 px-2 py-0.5 rounded border border-emerald-200">
+                  Vendor: <strong>{parsedData.vendor}</strong>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {IS_INVOICE_PARSE_ENABLED && currencyMismatch && parsedData && (
+        <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50/95 p-3.5 text-xs text-amber-950 shadow-sm">
+          <div className="flex items-start gap-3">
+            <span className="text-xl shrink-0">💱</span>
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-1.5">
+                <strong className="text-amber-950 font-bold text-sm">
+                  Currency Mismatch Detected
+                </strong>
+                <span className="text-[11px] font-semibold bg-amber-200/90 text-amber-900 px-2 py-0.5 rounded border border-amber-300">
+                  Invoice: {parsedData.currency} · Selected Country: {currency}
+                </span>
+              </div>
+              <p className="mt-1 text-amber-900 leading-relaxed">
+                The invoice was billed in <strong>{parsedData.currency} ({parsedData.currency === "USD" ? "$" : ""}{parsedData.amount})</strong>, but the selected country ({values.country}) uses <strong>{currency}</strong>. If submitted as-is, the amount will be processed as {currency}.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {matchingCountryForInvoice && (
+                  <button
+                    type="button"
+                    onClick={handleSwitchToInvoiceCountry}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                  >
+                    <span>🌐</span>
+                    <span>Switch Country to {matchingCountryForInvoice.name} ({parsedData.currency})</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={convertingFx}
+                  onClick={handleConvertToLocalCurrency}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-amber-100 text-amber-950 border border-amber-400 font-semibold text-xs shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <span>🔄</span>
+                  <span>
+                    {convertingFx ? "Fetching Live FX Rate..." : `Convert to ${currency} (Live FX Rate)`}
+                  </span>
+                </button>
+              </div>
+              {convertedFxInfo && (
+                <div className="mt-2.5 text-[11px] text-emerald-900 bg-emerald-50 border border-emerald-300 p-2.5 rounded-lg font-medium">
+                  ✓ <strong>Converted successfully:</strong> {convertedFxInfo.from} {convertedFxInfo.original} × {convertedFxInfo.rate} = <strong>{convertedFxInfo.to} {convertedFxInfo.converted}</strong> (updated in Amount field).
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -372,19 +731,37 @@ export default function SubmitExpensePanel({
             id="invoice"
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,application/pdf,image/*"
+            onClick={(e) => {
+              (e.target as HTMLInputElement).value = "";
+            }}
             onChange={handleInvoiceChange}
             disabled={submitting || noAssignedProjects}
             className={`af-input${invoiceError ? " is-invalid" : ""} file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200`}
             aria-invalid={Boolean(invoiceError)}
           />
           {invoiceFile && !invoiceError && (
-            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs text-slate-600">
-                Selected:{" "}
-                <span className="font-semibold text-slate-800 break-all">{invoiceFile.name}</span>
-                {" · "}
-                {formatBytes(invoiceFile.size)}
-              </p>
+            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3.5 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-slate-600 truncate">
+                    Selected:{" "}
+                    <span className="font-semibold text-slate-800 break-all">{invoiceFile.name}</span>
+                    {" · "}
+                    <span className="text-slate-500 font-medium">{formatBytes(invoiceFile.size)}</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveAttachment}
+                  disabled={submitting}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
+                  aria-label="Remove attachment"
+                  title="Remove selected attachment"
+                >
+                  <AppIcon name="trash" size="xs" color="currentColor" />
+                  <span>Remove Attachment</span>
+                </button>
+              </div>
               {attachmentPreviewUrl && attachmentIsImage && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -500,11 +877,86 @@ export default function SubmitExpensePanel({
           </button>
           <button
             type="button"
-            onClick={confirmAndSubmit}
+            onClick={() => confirmAndSubmit()}
             disabled={submitting}
             className="h-10 rounded-xl bg-[var(--af-navy)] px-5 text-sm font-bold text-white hover:bg-[var(--af-navy-soft)] disabled:opacity-50 cursor-pointer"
           >
             {submitting ? "Submitting..." : "Confirm & Submit"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Potential Duplicate Warning Dialog Modal */}
+      <Modal
+        isOpen={isDuplicateModalOpen}
+        onClose={() => {
+          if (!submitting) {
+            setIsDuplicateModalOpen(false);
+            setDuplicateConfirmed(false);
+          }
+        }}
+        title={
+          <span className="flex items-center gap-2.5 text-amber-950 font-bold text-lg">
+            <span className="text-2xl">⚠️</span>
+            <span>Potential Duplicate Detected</span>
+          </span>
+        }
+        maxWidthClass="max-w-xl"
+      >
+        <p className="text-xs text-slate-600 mb-3">
+          Our system detected a similar expense recently submitted under this project:
+        </p>
+
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-950 leading-relaxed shadow-sm">
+          <strong className="block font-semibold text-amber-900 text-sm mb-1">
+            Matching Expense Details
+          </strong>
+          <p className="text-amber-900 leading-relaxed mb-2 font-medium">
+            {potentialDuplicateWarning}
+          </p>
+          <p className="text-amber-800 text-[11px] border-t border-amber-200/80 pt-2">
+            If this is a legitimate separate and distinct expense (such as a second taxi ride, separate team meal, or subsequent service on the same day), please check the confirmation box below to proceed with submission.
+          </p>
+        </div>
+
+        <label className="flex items-start gap-3 p-3.5 rounded-xl border border-amber-300 bg-white hover:bg-amber-50/50 cursor-pointer transition-colors mt-4 shadow-sm">
+          <input
+            type="checkbox"
+            checked={duplicateConfirmed}
+            onChange={(e) => setDuplicateConfirmed(e.target.checked)}
+            className="mt-0.5 rounded border-amber-400 text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+          />
+          <span className="text-xs font-semibold text-slate-800 leading-normal">
+            I confirm this is a separate and distinct expense (e.g. separate meal, ride, or service on the same day).
+          </span>
+        </label>
+
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={() => {
+              setIsDuplicateModalOpen(false);
+              setDuplicateConfirmed(false);
+            }}
+            className="h-10 rounded-xl border border-slate-300 bg-white px-5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            Go Back & Review
+          </button>
+          <button
+            type="button"
+            disabled={!duplicateConfirmed || submitting}
+            onClick={() => confirmAndSubmit(true)}
+            className="h-10 rounded-xl bg-amber-600 hover:bg-amber-700 px-5 text-xs font-bold text-white shadow transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {submitting ? (
+              <>
+                <span className="animate-spin text-sm">⏳</span>
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <span>Confirm & Submit Expense</span>
+            )}
           </button>
         </div>
       </Modal>

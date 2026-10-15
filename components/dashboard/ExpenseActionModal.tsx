@@ -211,8 +211,9 @@ export default function ExpenseActionModal({
         expense.invoiceOriginalName || "invoice",
         expense.invoiceMimeType
       );
-    } catch (err: any) {
-      toast.error(err.message || "Failed to open invoice.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to open invoice.";
+      toast.error(msg);
     } finally {
       setAttachmentBusy(false);
     }
@@ -224,8 +225,9 @@ export default function ExpenseActionModal({
     try {
       const blob = await fetchExpenseInvoice(expense.id);
       triggerBlobDownload(blob, expense.invoiceOriginalName || "invoice");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to download invoice.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to download invoice.";
+      toast.error(msg);
     } finally {
       setAttachmentBusy(false);
     }
@@ -237,8 +239,9 @@ export default function ExpenseActionModal({
     try {
       const blob = await fetchPaymentReceipt(expense.id, fileName);
       await showAttachmentPreview(blob, originalName || fileName, mimeType);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to open receipt.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to open receipt.";
+      toast.error(msg);
     } finally {
       setAttachmentBusy(false);
     }
@@ -250,8 +253,9 @@ export default function ExpenseActionModal({
     try {
       const blob = await fetchPaymentReceipt(expense.id, fileName);
       triggerBlobDownload(blob, originalName || fileName);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to download receipt.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to download receipt.";
+      toast.error(msg);
     } finally {
       setAttachmentBusy(false);
     }
@@ -402,9 +406,29 @@ export default function ExpenseActionModal({
           : "Expense updated successfully!"
       );
       onCompleted();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setEditConfirmOpen(false);
-      toast.error(err.message || "Failed to update expense");
+      const msg = err instanceof Error ? err.message : "Failed to update expense";
+      const isDuplicateError = /duplicate/i.test(msg);
+      if (isDuplicateError) {
+        const colonIndex = msg.indexOf(":");
+        if (colonIndex > 0 && colonIndex < 60) {
+          const title = msg.slice(0, colonIndex).trim();
+          const detail = msg.slice(colonIndex + 1).trim();
+          toast.error(title, {
+            sticky: true,
+            center: true,
+            detail,
+          });
+        } else {
+          toast.error(msg, {
+            sticky: true,
+            center: true,
+          });
+        }
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -481,8 +505,9 @@ export default function ExpenseActionModal({
             : `Partial payment of $${Number(paymentAmount).toFixed(2)} recorded.`
         );
         onCompleted();
-      } catch (err: any) {
-        toast.error(err.message || "Partial payment failed");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Partial payment failed";
+        toast.error(msg);
       } finally {
         setSubmitting(false);
       }
@@ -520,8 +545,9 @@ export default function ExpenseActionModal({
             : "Changes requested — requester can edit and resubmit."
         );
         onCompleted();
-      } catch (err: any) {
-        toast.error(err.message || "Request changes failed");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Request changes failed";
+        toast.error(msg);
       } finally {
         setSubmitting(false);
       }
@@ -594,8 +620,9 @@ export default function ExpenseActionModal({
             : "Expense approved."
       );
       onCompleted();
-    } catch (err: any) {
-      toast.error(err.message || "Action failed");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Action failed";
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -618,8 +645,9 @@ export default function ExpenseActionModal({
       handleClose();
       toast.success("Expense deleted.");
       onCompleted();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete expense");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete expense";
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -679,7 +707,14 @@ export default function ExpenseActionModal({
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-400 text-xs space-y-2 mb-4">
               <div className="flex justify-between items-center">
                 <span className="text-slate-700">Request ID:</span>
-                <span className="font-mono text-[var(--af-accent)] font-bold">{expense.id}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[var(--af-accent)] font-bold">{expense.id}</span>
+                  {expense.isPotentialDuplicate && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-300">
+                      ⚠️ Potential Duplicate
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-700">Requester:</span>
@@ -788,6 +823,60 @@ export default function ExpenseActionModal({
                   <span className="text-slate-500 text-sm">No invoice attached</span>
                 )}
               </div>
+
+              {expense.invoiceFileHash && (
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-slate-600">Invoice verification:</span>
+                  <span className="font-mono text-emerald-700 font-semibold inline-flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Verified unique ({expense.invoiceFileHash.slice(0, 8)}…)
+                  </span>
+                </div>
+              )}
+
+              {expense.extractedInvoiceNumber && (
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-slate-600">
+                    Document parse ({expense.parseMethod === "pdf-parse" ? "PDF Parse" : "OCR"}):
+                  </span>
+                  <span className="font-mono text-indigo-700 font-semibold inline-flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                    Extracted #{expense.extractedInvoiceNumber}
+                    {expense.extractedAmount !== undefined
+                      ? ` (${expense.extractedCurrency || "$"} ${expense.extractedAmount})`
+                      : ""}
+                  </span>
+                </div>
+              )}
+
+              {expense.extractedVendor && (
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-slate-600">Detected vendor:</span>
+                  <span className="text-slate-800 font-medium">{expense.extractedVendor}</span>
+                </div>
+              )}
+
+              {expense.isPotentialDuplicate && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-3 text-xs text-amber-950">
+                  <div className="flex items-start gap-2">
+                    <span className="text-base leading-none">⚠️</span>
+                    <div>
+                      <strong className="block font-bold text-amber-900 mb-0.5">
+                        Potential Duplicate Warning (Fuzzy Match)
+                      </strong>
+                      <p className="text-[11px] leading-relaxed text-amber-900">
+                        {expense.duplicateWarningReason ||
+                          "An expense with matching amount, category, and date window was found for this project."}
+                      </p>
+                      {expense.duplicateConfirmedByRequester && (
+                        <span className="inline-block mt-1.5 font-semibold text-[10px] text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300">
+                          ✓ Confirmed as separate expense by requester
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <span className="text-slate-700 block mb-1">Payment receipts:</span>

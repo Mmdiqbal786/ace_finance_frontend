@@ -24,13 +24,26 @@ const listeners = new Set<Listener>();
 
 function emit(kind: ToastKind, message: string, options?: ToastOptions) {
   const cleaned = message.trim();
+  const isDuplicate = kind === "error" && /duplicate/i.test(cleaned);
+  let finalMessage = cleaned || message;
+  let finalDetail = options?.detail?.trim() || undefined;
+
+  // For duplicate error notifications without custom detail, split before and after first colon
+  if (isDuplicate && !finalDetail) {
+    const colonIndex = finalMessage.indexOf(":");
+    if (colonIndex > 0 && colonIndex < 60) {
+      finalDetail = finalMessage.slice(colonIndex + 1).trim();
+      finalMessage = finalMessage.slice(0, colonIndex).trim();
+    }
+  }
+
   const toast: ToastItem = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     kind,
-    message: cleaned || message,
-    sticky: Boolean(options?.sticky),
-    center: Boolean(options?.center),
-    detail: options?.detail?.trim() || undefined,
+    message: finalMessage,
+    sticky: options?.sticky !== undefined ? Boolean(options.sticky) : isDuplicate,
+    center: options?.center !== undefined ? Boolean(options.center) : isDuplicate,
+    detail: finalDetail,
   };
   listeners.forEach((listener) => listener(toast));
 }

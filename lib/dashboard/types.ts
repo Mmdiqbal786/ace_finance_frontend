@@ -49,8 +49,42 @@ export interface Expense {
   invoiceOriginalName?: string;
   invoiceMimeType?: string;
   invoiceSize?: number;
+  invoiceFileHash?: string;
+  invoiceNumberNormalized?: string;
+  isPotentialDuplicate?: boolean;
+  duplicateWarningReason?: string;
+  duplicateConfirmedByRequester?: boolean;
+  idempotencyKey?: string;
+  extractedInvoiceNumber?: string;
+  extractedInvoiceDate?: string;
+  extractedAmount?: number;
+  extractedCurrency?: string;
+  extractedVendor?: string;
+  parseMethod?: string;
   paymentReceipts?: PaymentReceipt[];
   history: HistoryLog[];
+}
+
+export interface ParsedInvoiceData {
+  rawText: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  amount?: number;
+  currency?: string;
+  vendor?: string;
+  categorySuggestion?: string;
+  descriptionSuggestion?: string;
+  parseMethod: 'pdf-parse' | 'tesseract-ocr' | 'none';
+  confidence: {
+    invoiceNumber: number;
+    invoiceDate: number;
+    amount: number;
+  };
+}
+
+export interface ParsedInvoiceResponse {
+  success: boolean;
+  data: ParsedInvoiceData;
 }
 
 export interface CategoryItem {
