@@ -24,6 +24,7 @@ import {
   ProjectItem,
 } from "../../lib/dashboard/types";
 import { canRequesterEditExpense, getPaidAmount, getRemainingAmount } from "../../lib/dashboard/payment";
+import DuplicateWarningMessage from "./DuplicateWarningMessage";
 import { getChangeRequestLogs } from "../../lib/dashboard/changeRequestHistory";
 import { validatePartialPaymentAmount, validateRejectionNotes, validateChangeRequestNotes } from "../../lib/validation";
 
@@ -144,6 +145,8 @@ interface ExpenseActionModalProps {
   activeProjects: ProjectItem[];
   activeCountries: CountryItem[];
   lockRequesterEmail?: boolean;
+  accessibleExpenses?: Expense[];
+  onOpenExpense?: (expense: Expense) => void;
 }
 
 export default function ExpenseActionModal({
@@ -155,6 +158,8 @@ export default function ExpenseActionModal({
   activeProjects,
   activeCountries,
   lockRequesterEmail = false,
+  accessibleExpenses = [],
+  onOpenExpense,
 }: ExpenseActionModalProps) {
   const [actionNotes, setActionNotes] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
@@ -865,8 +870,15 @@ export default function ExpenseActionModal({
                         Potential Duplicate Warning (Fuzzy Match)
                       </strong>
                       <p className="text-[11px] leading-relaxed text-amber-900">
-                        {expense.duplicateWarningReason ||
-                          "An expense with matching amount, category, and date window was found for this project."}
+                        {expense.duplicateWarningReason ? (
+                          <DuplicateWarningMessage
+                            reason={expense.duplicateWarningReason}
+                            expenses={accessibleExpenses.filter((item) => item.id !== expense.id)}
+                            onOpen={onOpenExpense}
+                          />
+                        ) : (
+                          "An expense with matching amount, category, and date window was found for this project."
+                        )}
                       </p>
                       {expense.duplicateConfirmedByRequester && (
                         <span className="inline-block mt-1.5 font-semibold text-[10px] text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300">

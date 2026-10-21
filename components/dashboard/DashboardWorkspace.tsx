@@ -632,6 +632,8 @@ export default function DashboardWorkspace() {
             activeProjects={activeProjects}
             activeCountries={activeCountries}
             lockRequesterEmail={currentUser?.role === "REQUESTER"}
+            accessibleExpenses={expenses}
+            onOpenExpense={(related) => openActionModal(related, "view")}
           />
 
           {activeSection === "user-management" && currentUser?.role === "ADMIN" && (

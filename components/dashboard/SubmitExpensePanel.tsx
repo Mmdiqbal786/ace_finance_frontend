@@ -27,6 +27,7 @@ import {
 } from "../../lib/dashboard/types";
 import { DASHBOARD_ROUTES } from "../../lib/dashboard/routes";
 import { canRequesterEditExpense } from "../../lib/dashboard/payment";
+import DuplicateWarningMessage from "./DuplicateWarningMessage";
 
 const SUBMIT_FLOW_STEPS: {
   step: string;
@@ -912,7 +913,13 @@ export default function SubmitExpensePanel({
             Matching Expense Details
           </strong>
           <p className="text-amber-900 leading-relaxed mb-2 font-medium">
-            {potentialDuplicateWarning}
+            {potentialDuplicateWarning ? (
+              <DuplicateWarningMessage
+                reason={potentialDuplicateWarning}
+                expenses={expenses}
+                onOpen={onViewExpense}
+              />
+            ) : null}
           </p>
           <p className="text-amber-800 text-[11px] border-t border-amber-200/80 pt-2">
             If this is a legitimate separate and distinct expense (such as a second taxi ride, separate team meal, or subsequent service on the same day), please check the confirmation box below to proceed with submission.
