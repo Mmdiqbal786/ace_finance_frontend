@@ -38,6 +38,7 @@ export const SOP_SLIDES: SopSlide[] = [
     kind: "agenda",
     title: "Agenda — full documentation map",
     bullets: [
+      "0. System architecture — Live/Demo, auth, hosting",
       "1. Status legend & expense lifecycle",
       "2. Landing, login types & password reset",
       "3. Requester flow — home → submit → track → edit",
@@ -57,10 +58,53 @@ export const SOP_SLIDES: SopSlide[] = [
     title: "How this deck is organized",
     bullets: [
       "Same coverage as /docs-guide/ — not a summary-only deck",
-      "Flows are role-by-role: Requester → Approver → Processor → Admin",
+      "Starts with system architecture, then role-by-role flows",
       "Each screenshot slide = one real UI capture from the live app",
       "Present mode: ← → / Space · F fullscreen · Esc exit",
       "Download PowerPoint uses this exact slide list",
+    ],
+  },
+
+  // ═══════════════════════════════════════════════
+  // 0 ARCHITECTURE
+  // ═══════════════════════════════════════════════
+  {
+    id: "sec-architecture",
+    kind: "section",
+    title: "0) System architecture",
+    subtitle: "Hosting · Live/Demo isolation · Microsoft-first sign-in",
+  },
+  {
+    id: "architecture-hosting",
+    kind: "content",
+    title: "Hosting & stack (Azure)",
+    bullets: [
+      "Web: https://finance.aceolution.com/ (Next.js Static Web Apps)",
+      "API: Azure App Service (NestJS) · MongoDB Atlas · Azure Blob · ACS Email",
+      "Microsoft Entra SSO for company staff",
+      "Full markdown + PDF in docs/Architecture/ (in both app git repos)",
+    ],
+  },
+  {
+    id: "architecture-stores",
+    kind: "content",
+    title: "Live vs Demo stores",
+    bullets: [
+      "Live Mongo: ace_finance · Demo Mongo: ace_finance_demo",
+      "Live blob: ace-finance-files · Demo blob: ace-finance-files-demo",
+      "JWT store claim routes every request — training never touches Live data",
+      "UI shows Live / Demo workspace badge after sign-in",
+    ],
+  },
+  {
+    id: "architecture-auth",
+    kind: "content",
+    title: "Sign-in overview",
+    bullets: [
+      "Microsoft (primary) · Demo Access (dynamic isDemo list) · Use password instead",
+      "Dual-store email → Choose Workspace with role per store",
+      "Microsoft-linked: no password / forgot-password",
+      "VAPT: prefer Demo workspace for destructive tests",
     ],
   },
 
@@ -117,27 +161,58 @@ export const SOP_SLIDES: SopSlide[] = [
     bullets: ["Public home · path into Sign in / demo"],
   },
   {
+    id: "login-home",
+    kind: "content",
+    title: "Login home — Microsoft-first",
+    image: shot("02-login-home.png"),
+    bullets: [
+      "Sign in with Microsoft · Demo Access · Use password instead",
+      "Path: /login/",
+    ],
+  },
+  {
+    id: "login-demo-access",
+    kind: "content",
+    title: "Demo Access — dynamic demo list",
+    image: shot("02b-login-demo-access.png"),
+    bullets: [
+      "Loads active isDemo users from demo DB",
+      "One-click → demo store only (isolated data + files)",
+    ],
+  },
+  {
     id: "login-password",
     kind: "content",
-    title: "Login step 1 — email + password (all roles)",
+    title: "Use password instead",
     image: shot("02-login-password.png"),
     bullets: [
-      "Path: /login/",
-      "Continue → next step depends on role & MFA settings",
+      "Admin / accounts without Microsoft",
+      "Microsoft-linked accounts cannot use this path",
+    ],
+  },
+  {
+    id: "login-workspace",
+    kind: "content",
+    title: "Choose Workspace — Live vs Demo",
+    image: shot("02c-login-workspace.png"),
+    bullets: [
+      "Shown when the email exists in both stores",
+      "Each card shows the role in that store",
     ],
   },
   {
     id: "login-a-flow",
     kind: "content",
-    title: "Login A — Requester / Approver / Processor",
+    title: "Login A — Requester / Approver / Processor (password)",
     bullets: [
-      "1. Email + password → Continue",
+      "1. Use password instead → email + password → Continue",
       "2. App sends 6-digit Email OTP",
       "3. Verify Sign In: Email code OR Authenticator (either one)",
-      "4. First login after welcome → /set-password/ then /setup-authenticator/",
-      "5. If TOTP missing → /setup-authenticator/ (required)",
-      "6. Else → role dashboard",
-      "Demo isDemo users: password only (no Email OTP / Authenticator)",
+      "4. Choose Workspace if email exists in Live and Demo",
+      "5. First login after welcome → /set-password/ then /setup-authenticator/",
+      "6. If TOTP missing → /setup-authenticator/ (required)",
+      "7. Else → role dashboard",
+      "Training personas: prefer Demo Access (not password)",
     ],
   },
   {
@@ -268,7 +343,7 @@ export const SOP_SLIDES: SopSlide[] = [
     title: "Requester — who & access",
     bullets: [
       "Access: Requester only",
-      "Login: Email OTP + Authenticator (real) · isDemo: password only",
+      "Login: Microsoft or Email OTP + Authenticator (Live) · training: Demo Access",
       "Project-scoped: only assigned projects in Submit dropdown",
       "If no projects assigned → contact Admin",
       "Pages: Dashboard · Submit Expense · My Requests · Profile",
@@ -280,6 +355,31 @@ export const SOP_SLIDES: SopSlide[] = [
     title: "Requester dashboard home",
     image: shot("07-requester-dashboard.png"),
     bullets: ["Landing after successful login for Requester role"],
+  },
+  {
+    id: "requester-duplicates",
+    kind: "content",
+    title: "Duplicate invoice detection",
+    bullets: [
+      "Hard duplicate (same file hash / invoice #) → blocked at submit; no expense created",
+      "Potential duplicate (project + category + amount ±1 day) → warning; confirm to continue",
+      "Rejected claims excluded so a fixed invoice can be resubmitted",
+      "Checked before Azure Blob upload",
+    ],
+  },
+  {
+    id: "requester-hard-dup",
+    kind: "content",
+    title: "Hard duplicate — auto-blocked",
+    image: shot("08d-submit-hard-duplicate.png"),
+    bullets: ["Toast / error: Duplicate invoice file or number detected"],
+  },
+  {
+    id: "requester-soft-dup",
+    kind: "content",
+    title: "Potential duplicate — confirm",
+    image: shot("08e-submit-potential-duplicate.png"),
+    bullets: ["Modal: Potential Duplicate Detected · checkbox required"],
   },
   {
     id: "submit-steps",
@@ -768,21 +868,28 @@ export const SOP_SLIDES: SopSlide[] = [
     ],
   },
   {
+    id: "admin-demo-badge",
+    kind: "content",
+    title: "Demo workspace badge",
+    image: shot("04c-demo-workspace-badge.png"),
+    bullets: ["Header DEMO WORKSPACE · sidebar DEMO badge"],
+  },
+  {
     id: "admin-users",
     kind: "content",
-    title: "User Management",
-    image: shot("24-admin-users.png"),
-    bullets: ["Create / edit / delete users"],
+    title: "User Management (Demo)",
+    image: shot("24b-admin-users-demo-access.png"),
+    bullets: ["Demo column = on Demo Access login list", "Create / edit / delete users"],
   },
   {
     id: "admin-create-user",
     kind: "content",
-    title: "Create User modal",
-    image: shot("44-admin-create-user-modal.png"),
+    title: "Create User — Demo Access toggle",
+    image: shot("44b-admin-create-user-demo-access.png"),
     bullets: [
-      "Welcome email + temp password + force password change",
+      "Demo workspace only: Show on Demo Access login (isDemo)",
       "Requester/Approver: assign one or more projects (required)",
-      "isDemo badge: password-only demo personas",
+      "Demo Access users: no welcome email; appear on login Demo Access list",
     ],
   },
   {

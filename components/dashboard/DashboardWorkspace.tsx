@@ -125,6 +125,7 @@ export default function DashboardWorkspace() {
           mustChangePassword: data.mustChangePassword ?? cached?.mustChangePassword,
           mustSetupTotp: data.mustSetupTotp ?? cached?.mustSetupTotp,
           totpEnabled: data.totpEnabled ?? cached?.totpEnabled,
+          microsoftLinked: data.microsoftLinked ?? cached?.microsoftLinked,
         };
         updateStoredUser(next);
         setCurrentUser(next);
@@ -187,10 +188,11 @@ export default function DashboardWorkspace() {
   const fetchActiveCatalogs = async () => {
     setCatalogLoading(true);
     try {
+      const headers = authHeaders();
       const [catRes, projRes, countryRes] = await Promise.all([
-        fetch(`${API_URL}/categories/active`),
-        fetch(`${API_URL}/projects/active`),
-        fetch(`${API_URL}/countries/active`),
+        fetch(`${API_URL}/categories/active`, { headers }),
+        fetch(`${API_URL}/projects/active`, { headers }),
+        fetch(`${API_URL}/countries/active`, { headers }),
       ]);
       if (catRes.ok) setActiveCategories(await catRes.json());
       if (projRes.ok) setActiveProjects(await projRes.json());
@@ -231,7 +233,9 @@ export default function DashboardWorkspace() {
       let expense = expenses.find((e) => e.id === expenseId) || null;
       if (!expense) {
         try {
-          const res = await fetch(`${API_URL}/expenses/${encodeURIComponent(expenseId)}`);
+          const res = await fetch(`${API_URL}/expenses/${encodeURIComponent(expenseId)}`, {
+            headers: authHeaders(),
+          });
           if (res.ok) {
             const data = await res.json();
             expense = data as Expense;

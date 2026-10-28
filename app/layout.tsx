@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import DashboardScrollLock from "../components/DashboardScrollLock";
+import NavigationLoader from "../components/NavigationLoader";
 import { ToastProvider } from "../components/ToastProvider";
 import Script from "next/script";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
         <Script src="/early-strip.js" strategy="beforeInteractive" />
         <ToastProvider>
           <DashboardScrollLock />
+          <NavigationLoader />
           <Header />
           <main className="flex min-h-0 flex-1 flex-col">{children}</main>
           <Footer />

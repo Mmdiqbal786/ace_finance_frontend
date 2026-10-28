@@ -23,11 +23,13 @@ export const DOCS_GUIDE_BODY_HTML = `
         </p>
         <div class="toc">
           <strong style="color:#0f172a;">Contents · click any item to jump</strong><br/>
+          <a href="#architecture">0. System architecture (Live / Demo, auth, hosting)</a><br/>
           <a href="#status">1. Status legend &amp; flow</a><br/>
           <a href="#login">2. All login possibilities</a><br/>
           <a href="#login-2fa-methods" style="padding-left:12px;">2a. After password — Email code + Authenticator</a><br/>
           <a href="#first-login-setup" style="padding-left:12px;">2b. First login — Create Password + Set up Authenticator</a><br/>
           <a href="#requester">3. Requester pages (submit, track, edit)</a><br/>
+          <a href="#duplicates" style="padding-left:12px;">3a. Duplicate invoice detection (hard block + warning)</a><br/>
           <a href="#approver">4. Approver — every action</a><br/>
           <a href="#processor">5. Processor — every action</a><br/>
           <a href="#analytics">6. Analytics, details &amp; Excel</a><br/>
@@ -41,6 +43,75 @@ export const DOCS_GUIDE_BODY_HTML = `
           <a href="#roles">10. Role matrix</a><br/>
           <a href="#errors-gallery">11. Validation &amp; toast gallery</a>
         </div>
+      </div>
+
+      <!-- 0 ARCHITECTURE -->
+      <div class="pad-sm guide-section" id="architecture">
+        <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">0) System architecture</span></div>
+
+        <div class="section-title">0) System architecture</div>
+        <p class="meta">
+          High-level view for demos, onboarding, and security review.
+          Dedicated page: <a href="/architecture/"><strong>/architecture/</strong></a>.
+          Full markdown + PDF also in the git repo at <code>docs/Architecture/</code>
+          (mirrored in the backend repo).
+        </p>
+
+        <div class="block info">
+          <h4>Hosting (Azure)</h4>
+          <strong>Web:</strong> <a href="https://finance.aceolution.com/" target="_blank" rel="noopener">https://finance.aceolution.com/</a><br/>
+          <strong>API:</strong> <a href="https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net/" target="_blank" rel="noopener">https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net/</a><br/>
+          <strong>Demo guide:</strong> <a href="/demo-guide/">/demo-guide/</a> (access code from the team)<br/>
+          <strong>Stack:</strong> Next.js (Static Web Apps) · NestJS (App Service) · MongoDB Atlas · Azure Blob · Microsoft Entra · ACS Email
+        </div>
+
+        <div class="block info">
+          <h4>Live vs Demo stores (isolation)</h4>
+          Real company work and training data are <strong>fully separate</strong>.
+          The JWT <code>store</code> claim (<code>live</code> / <code>demo</code>) routes every API request.
+          <br/><br/>
+          <table>
+            <tr><th></th><th>Live</th><th>Demo</th></tr>
+            <tr><td>MongoDB</td><td><code>ace_finance</code></td><td><code>ace_finance_demo</code></td></tr>
+            <tr><td>Azure Blob</td><td><code>ace-finance-files</code></td><td><code>ace-finance-files-demo</code></td></tr>
+            <tr><td>Purpose</td><td>Real company work</td><td>Training / client demos</td></tr>
+          </table>
+          Header and sidebar show a <strong>Live</strong> or <strong>Demo</strong> workspace badge after sign-in.
+        </div>
+
+        <div class="block info">
+          <h4>Sign-in (Microsoft-first)</h4>
+          1. <strong>Sign in with Microsoft</strong> — company staff (<code>@aceolution.*</code>), company MFA<br/>
+          2. <strong>Demo Access</strong> — dynamic list of active <code>isDemo</code> users in the <strong>demo</strong> DB (Admin toggles in Demo → Users)<br/>
+          3. <strong>Use password instead</strong> — admin / accounts without Microsoft (OTP + optional TOTP)<br/>
+          <br/>
+          If the same email exists in Live <em>and</em> Demo, the app shows <strong>Choose Workspace</strong> with the <strong>role in each store</strong>.
+          Microsoft-linked accounts cannot use password login or forgot-password.
+          Details continue in <a href="#login">section 2 — All login possibilities</a>.
+        </div>
+
+        <div class="block info">
+          <h4>Roles (same names in both stores; data separate)</h4>
+          <code>ADMIN</code> · <code>APPROVER</code> · <code>PROCESSOR</code> · <code>REQUESTER</code><br/>
+          Requester / Approver are project-scoped via <code>assignedProjects</code>. See <a href="#roles">section 10 — Role matrix</a>.
+        </div>
+
+        <div class="block ok">
+          <h4>Security / VAPT note</h4>
+          Preferred destructive testing: use <strong>Demo</strong> workspace or Demo Access so Live data stays untouched.
+          Microsoft allows customer pen-tests of <em>your</em> Azure web apps under their Cloud Unified Penetration Testing Rules of Engagement
+          (no DoS, no other tenants). Full scope checklist:
+          <code>docs/Architecture/AUTH_LIVE_DEMO_STORES.md</code>.
+        </div>
+
+        <div class="block info">
+          <h4>Where the full architecture lives</h4>
+          Web: <a href="/architecture/"><strong>/architecture/</strong></a>
+          · PDF: <a href="/architecture/Aceolution_Finance_Architecture.pdf" target="_blank" rel="noopener">download</a><br/>
+          Git: <code>docs/Architecture/</code> (frontend + backend mirrors)
+        </div>
+
+        <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">0) System architecture</span></div>
       </div>
 
       <!-- 1 STATUS -->
@@ -77,24 +148,65 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         <div class="section-title">2) All login possibilities</div>
         <p class="meta">Path: <code>/login/</code> · Related: <code>/forgot-password/</code> · <code>/reset-password/</code> · <code>/set-password/</code> · <code>/setup-authenticator/</code></p>
 
+        <div class="block info">
+          <h4>Login layout (current)</h4>
+          Main screen is <strong>Microsoft-first</strong>:<br/>
+          1. <strong>Sign in with Microsoft</strong> — company staff (<code>@aceolution.*</code>)<br/>
+          2. <strong>Demo Access</strong> — dynamic list of active <code>isDemo</code> users in the <strong>demo</strong> database + demo file storage<br/>
+          3. <strong>Use password instead</strong> — admin / legacy / accounts without Microsoft<br/>
+          <br/>
+          <strong>Live vs Demo stores:</strong> separate MongoDB databases (<code>ace_finance</code> / <code>ace_finance_demo</code>) and Azure containers.
+          If the same email exists in both stores, after Microsoft or password the app asks <strong>Choose Workspace</strong> and shows the <strong>role in each store</strong>.
+          Header/sidebar shows a Live or Demo workspace badge.
+        </div>
+
         <figure class="shot">
           <img src="/docs-screenshots/01-landing.png" alt="Landing page" loading="lazy" />
           <figcaption>Landing page — entry to the app</figcaption>
         </figure>
 
         <figure class="shot">
-          <img src="/docs-screenshots/02-login-password.png" alt="Login email password" loading="lazy" />
-          <figcaption>Login step 1 — email + password (all roles)</figcaption>
+          <img src="/docs-screenshots/02-login-home.png" alt="Microsoft-first login home" loading="lazy" />
+          <figcaption>Login home — Sign in with Microsoft · Demo Access · Use password instead</figcaption>
         </figure>
 
         <div class="block info">
-          <h4>Login A — Requester / Approver / Processor (Email OTP + Authenticator)</h4>
-          1. Enter email + password → Continue<br/>
+          <h4>Login M — Microsoft (company staff)</h4>
+          1. Sign in with Microsoft → company MFA<br/>
+          2. If the email exists in Live <em>and</em> Demo → Choose Workspace (role shown on each card)<br/>
+          3. Otherwise → live dashboard for that user’s role<br/>
+          Microsoft-linked accounts cannot use password login or forgot-password.
+        </div>
+
+        <div class="block info">
+          <h4>Login D — Demo Access (training)</h4>
+          1. Demo Access → list loads from demo DB (<code>GET /auth/demo-accounts</code>)<br/>
+          2. Click a persona → signed into <strong>demo</strong> store (no Microsoft / OTP)<br/>
+          3. Admin (in Demo workspace) → Users → “Show on Demo Access login” adds/removes people from this list
+        </div>
+        <figure class="shot">
+          <img src="/docs-screenshots/02b-login-demo-access.png" alt="Demo Access role list" loading="lazy" />
+          <figcaption>Demo Access — dynamic list from demo database</figcaption>
+        </figure>
+
+        <figure class="shot">
+          <img src="/docs-screenshots/02-login-password.png" alt="Login email password" loading="lazy" />
+          <figcaption>Use password instead — email + password (admin / no Microsoft)</figcaption>
+        </figure>
+
+        <figure class="shot">
+          <img src="/docs-screenshots/02c-login-workspace.png" alt="Choose Live or Demo workspace" loading="lazy" />
+          <figcaption>Choose Workspace — Live (Production) vs Demo (Sandbox), role shown on each card</figcaption>
+        </figure>
+
+        <div class="block info">
+          <h4>Login A — Requester / Approver / Processor via password (Email OTP + Authenticator)</h4>
+          1. Use password instead → email + password → Continue<br/>
           2. App sends 6-digit code to email<br/>
           3. On <strong>Verify Sign In</strong>, choose one method:<br/>
           &nbsp;&nbsp;• <strong>Email code</strong> — code from inbox<br/>
           &nbsp;&nbsp;• <strong>Authenticator</strong> — 6-digit code from the app (shown after authenticator is set up)<br/>
-          4. Verify &amp; Sign In<br/>
+          4. Verify &amp; Sign In (then Choose Workspace if the email exists in both stores)<br/>
           5. If first login after welcome email → <code>/set-password/</code> then <code>/setup-authenticator/</code><br/>
           6. If authenticator not set yet → <code>/setup-authenticator/</code> (required)<br/>
           7. Otherwise → role dashboard
@@ -115,12 +227,16 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         </figure>
 
         <div class="block info">
-          <h4>Login B — Admin (password only)</h4>
-          Admin has no email OTP by default. Password success goes straight to dashboard. Authenticator is optional for Admin.
+          <h4>Login B — Admin (password)</h4>
+          Admin has no email OTP by default. After password (and optional TOTP), Admin usually sees <strong>Choose Workspace</strong> (Live / Demo) with role ADMIN on each store. Authenticator is optional for Admin.
         </div>
         <figure class="shot">
           <img src="/docs-screenshots/04-login-admin-dashboard.png" alt="Admin dashboard after login" loading="lazy" />
-          <figcaption>Admin login success → Dashboard home</figcaption>
+          <figcaption>Admin login success → Dashboard home (Live or Demo after workspace choice)</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/04b-login-workspace-badge.png" alt="Workspace badge in header" loading="lazy" />
+          <figcaption>Header / chrome — Live or Demo workspace badge after sign-in</figcaption>
         </figure>
 
         <div class="block info">
@@ -187,9 +303,10 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         </figure>
         <div class="block info">
           <h4>Forgot / Reset password</h4>
+          For <strong>password accounts only</strong> (not Microsoft-linked; not Demo Access personas).<br/>
           Reset link ~1 hour.<br/>
           Success: “Your password has been updated…” / password changed → post-auth destination (authenticator setup if still required).<br/>
-          Errors: invalid/expired link · password &lt; 8 chars · need letter+number · passwords do not match · current password incorrect · Enter the temporary password…
+          Errors: Microsoft-linked account must use Sign in with Microsoft · invalid/expired link · password &lt; 8 chars · need letter+number · passwords do not match · current password incorrect · Enter the temporary password…
         </div>
       
         <div class="sec-mark sec-mark--end"><span class="sec-mark__tag">Section end</span><span class="sec-mark__title">2) All login possibilities</span></div>
@@ -201,8 +318,8 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         
         <div class="section-title">3) Requester pages</div>
         <p class="meta">
-          Access: <strong>Requester only</strong> · Login: Email OTP + Authenticator (real accounts) ·
-          Project-scoped demo users (<code>isDemo</code>): password only
+          Access: <strong>Requester only</strong> · Login: Microsoft or Email OTP + Authenticator (Live) ·
+          Training: Demo Access (<code>isDemo</code> in demo store)
         </p>
 
         <figure class="shot">
@@ -247,11 +364,40 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         <div class="block err">
           <h4>Errors</h4>
           Required selects · amount rules · date rules · description ≤500 · PDF/image max 5 MB ·
-          no projects assigned · Failed to submit…
+          no projects assigned · Failed to submit… ·
+          <strong>Duplicate invoice</strong> (hard block — see <a href="#duplicates">3a</a>)
         </div>
         <figure class="shot">
           <img src="/docs-screenshots/41-submit-validation-errors.png" alt="Submit validation errors" loading="lazy" />
           <figcaption>Submit Expense — client validation errors when required fields are empty</figcaption>
+        </figure>
+
+        <div class="block info" id="duplicates">
+          <h4>3a) Duplicate invoice detection</h4>
+          Same invoice / same claim must not be paid twice. The API checks <strong>before</strong> uploading the file to Azure Blob.
+          <br/><br/>
+          <strong>A — Hard duplicate (auto-blocked)</strong><br/>
+          Submission is <strong>rejected immediately</strong> (HTTP 400). <em>No expense row is created</em>
+          (this is not a workflow status like Rejected by Manager — the request never enters the queue).<br/>
+          Triggers include:<br/>
+          1. <strong>Exact same invoice file</strong> (SHA-256 file hash) — even if renamed<br/>
+          2. <strong>Same invoice number</strong> in the same project (normalized, e.g. spaces/punctuation ignored)<br/>
+          3. Same invoice number <strong>across projects</strong> when date or amount(+currency) also matches<br/>
+          4. Invoice number extracted from the PDF/OCR matching an existing non-rejected request<br/>
+          Already <code>REJECTED_APPROVER</code> / <code>REJECTED_PROCESSOR</code> rows are ignored so a fixed claim can be resubmitted.
+          <br/><br/>
+          <strong>B — Potential duplicate (warning, not auto-block)</strong><br/>
+          “Fuzzy triple”: same <strong>project + category + amount</strong> within ±1 day (typical for Uber/meals without invoice #).
+          UI shows <strong>Potential Duplicate Detected</strong> — requester must tick confirm, then can still submit.
+          The other request id is shown (link when visible to that user).
+        </div>
+        <figure class="shot">
+          <img src="/docs-screenshots/08d-submit-hard-duplicate.png" alt="Hard duplicate blocked on submit" loading="lazy" />
+          <figcaption>Hard duplicate — auto-blocked at submit (same file / invoice #); request is not created</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/08e-submit-potential-duplicate.png" alt="Potential duplicate warning modal" loading="lazy" />
+          <figcaption>Potential duplicate — warning modal; confirm checkbox required before Submit anyway</figcaption>
         </figure>
 
         <div class="block info">
@@ -548,15 +694,27 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
         <div class="sec-mark sec-mark--start"><span class="sec-mark__tag">Section start</span><span class="sec-mark__title">8) Admin pages</span></div>
         
         <div class="section-title">8) Admin pages</div>
-        <p class="meta">Access: <strong>Admin only</strong> · Login: password only (or TOTP if enabled)</p>
+        <p class="meta">Access: <strong>Admin only</strong> · Login: Microsoft or password (optional TOTP) · then Choose Workspace when needed</p>
 
         <figure class="shot">
+          <img src="/docs-screenshots/04c-demo-workspace-badge.png" alt="Demo workspace badge" loading="lazy" />
+          <figcaption>Demo workspace — header “DEMO WORKSPACE” badge + sidebar DEMO badge</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/24b-admin-users-demo-access.png" alt="User management in Demo workspace" loading="lazy" />
+          <figcaption>User Management (Demo workspace) — Demo column shows who is on Demo Access login</figcaption>
+        </figure>
+        <figure class="shot">
           <img src="/docs-screenshots/24-admin-users.png" alt="User management" loading="lazy" />
-          <figcaption>User Management — create / edit / delete</figcaption>
+          <figcaption>User Management — create / edit / delete (same page; Live or Demo store)</figcaption>
         </figure>
         <figure class="shot">
           <img src="/docs-screenshots/44-admin-create-user-modal.png" alt="Create user modal" loading="lazy" />
-          <figcaption>Create User modal — welcome email + temp password + force password change</figcaption>
+          <figcaption>Create User modal — welcome email + temp password (Live) or Demo Access path</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/docs-screenshots/44b-admin-create-user-demo-access.png" alt="Create user with Demo Access checkbox" loading="lazy" />
+          <figcaption>Create User (Demo workspace) — “Show on Demo Access login” checkbox</figcaption>
         </figure>
         <p class="meta">
           <strong>Project assignment:</strong> When role is Requester or Approver, Admin must assign
@@ -565,8 +723,9 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
           projects. Those assignments also appear on the user’s <strong>Profile</strong> (view mode only).
           Admin and Processor are not project-scoped (Profile shows Access Scope instead). Existing users with no projects have
           no project access until Admin assigns them.<br/>
-          <strong>Demo badge (<code>isDemo</code>):</strong> Seeded <code>@acefinance.com</code>
-          personas show as Demo in User Management — password-only login (no Email OTP / Authenticator).
+          <strong>Demo Access (<code>isDemo</code>):</strong> In the <strong>Demo</strong> workspace only,
+          Admin can toggle “Show on Demo Access login”. Those users appear on the login Demo Access list
+          (demo DB + demo files only). Seeded <code>@acefinance.com</code> personas are typical training accounts.
         </p>
         <div class="block ok">
           <h4>Users — Success</h4>
@@ -822,6 +981,9 @@ or REJECTED_APPROVER / REJECTED_PROCESSOR</div>
 
       <div class="pad-footer">
         <p style="margin:0 0 10px;font-size:14px;color:#334155;line-height:1.6;">
+          System architecture summary:
+          <a href="#architecture"><strong>Section 0</strong></a>
+          · full repo docs in <code>docs/Architecture/</code>.<br/>
           Demo walkthrough + test accounts:
           <a href="/demo-guide/"><strong>Live Demo Guide</strong></a>.<br/>
           Refresh screenshots from local app:<br/>

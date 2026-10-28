@@ -4,10 +4,10 @@ import { FormEvent, useEffect, useState } from "react";
 import DemoGuideContent from "../../components/demo-guide/DemoGuideContent";
 import FullPageLoader from "../../components/FullPageLoader";
 import {
-  DEMO_ACCESS_CODE,
   isDemoGuideUnlocked,
   unlockDemoGuideAccess,
 } from "../../lib/demo-guide";
+import { API_URL } from "../../lib/api";
 import AppIcon from "../../components/icons/AppIcon";
 
 export default function DemoGuideGatePage() {
@@ -16,6 +16,7 @@ export default function DemoGuideGatePage() {
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(true);
   const [unlocked, setUnlocked] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     setUnlocked(isDemoGuideUnlocked());
@@ -25,19 +26,38 @@ export default function DemoGuideGatePage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    const expected = DEMO_ACCESS_CODE;
-    if (!expected) {
-      setError(
-        "Demo access password is not configured. Set NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD in the environment."
-      );
+    const code = password.trim();
+    if (!code) {
+      setError("Enter the access password.");
       return;
     }
-    if (password.trim() !== expected) {
-      setError("Incorrect access password. Please try again.");
+    if (!API_URL) {
+      setError("API URL is not configured. Set NEXT_PUBLIC_API_URL.");
       return;
     }
-    unlockDemoGuideAccess();
-    setUnlocked(true);
+    setSubmitting(true);
+    try {
+      // Server-side check — code is not compared in the browser bundle
+      const res = await fetch(`${API_URL}/auth/verify-demo-access`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessCode: code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          Array.isArray(data?.message)
+            ? data.message.join(" ")
+            : data?.message || "Incorrect access password. Please try again.",
+        );
+      }
+      unlockDemoGuideAccess(code);
+      setUnlocked(true);
+    } catch (err: any) {
+      setError(err?.message || "Could not verify access password.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (checking) {
@@ -101,6 +121,7 @@ export default function DemoGuideGatePage() {
                 placeholder="Enter access password"
                 autoComplete="current-password"
                 autoFocus
+                disabled={submitting}
               />
               <button
                 type="button"
@@ -133,9 +154,10 @@ export default function DemoGuideGatePage() {
 
             <button
               type="submit"
-              className="w-full rounded-[10px] bg-[var(--af-navy)] py-3.5 text-[0.95rem] font-bold text-white shadow-lg shadow-[var(--af-navy)]/15 transition-all hover:bg-[var(--af-navy-soft)] cursor-pointer"
+              disabled={submitting}
+              className="w-full rounded-[10px] bg-[var(--af-navy)] py-3.5 text-[0.95rem] font-bold text-white shadow-lg shadow-[var(--af-navy)]/15 transition-all hover:bg-[var(--af-navy-soft)] cursor-pointer disabled:opacity-60"
             >
-              Unlock Demo Guide →
+              {submitting ? "Checking…" : "Unlock Demo Guide →"}
             </button>
           </form>
 

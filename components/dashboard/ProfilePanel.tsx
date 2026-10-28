@@ -125,6 +125,9 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [totpRequired, setTotpRequired] = useState(false);
   const [totpAvailable, setTotpAvailable] = useState(true);
+  const [microsoftLinked, setMicrosoftLinked] = useState(
+    Boolean(currentUser.microsoftLinked),
+  );
   const [totpCanDisable, setTotpCanDisable] = useState(false);
   const [totpCanReplace, setTotpCanReplace] = useState(false);
   const [totpBusy, setTotpBusy] = useState(false);
@@ -211,6 +214,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
           setTotpAvailable(data.available !== false);
           setTotpCanDisable(Boolean(data.canDisable));
           setTotpCanReplace(Boolean(data.canReplace ?? data.enabled));
+          setMicrosoftLinked(Boolean(data.microsoftLinked));
         }
       } catch (err: any) {
         if (!cancelled) toast.error(err.message || "Failed to load authenticator status.");
@@ -786,17 +790,21 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
             <h2 className="text-lg font-bold text-slate-900">
               Authenticator App{" "}
               {!totpAvailable
-                ? "(not used)"
+                ? microsoftLinked
+                  ? "(covered by Microsoft)"
+                  : "(not used)"
                 : totpRequired
                   ? "(required)"
                   : "(optional)"}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              {!totpAvailable
-                ? "This demo account uses password-only sign-in (no Email OTP or Authenticator)."
-                : currentUser.role === "ADMIN"
-                  ? "Admins are not required to use email verification. Optionally enable an authenticator app for sign-in."
-                  : "Authenticator app setup is required for your role. You also receive an email verification code at sign-in."}
+              {microsoftLinked
+                ? "You sign in with Microsoft. Your company Microsoft 2-step verification already protects this account, so Ace Finance authenticator is not required."
+                : !totpAvailable
+                  ? "This demo account uses password-only sign-in (no Email OTP or Authenticator)."
+                  : currentUser.role === "ADMIN"
+                    ? "Admins are not required to use email verification. Optionally enable an authenticator app for sign-in."
+                    : "Authenticator app setup is required for your role. You also receive an email verification code at sign-in."}
             </p>
           </div>
 
@@ -805,8 +813,9 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
               <p className="text-sm text-slate-600">Loading security settings...</p>
             ) : !totpAvailable ? (
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                Authenticator setup is skipped for this demo persona so you can switch accounts
-                quickly during project-scoped demos.
+                {microsoftLinked
+                  ? "Microsoft login is linked. Use Sign in with Microsoft on the login page. Ace Finance does not ask for a separate authenticator code."
+                  : "Authenticator setup is skipped for this demo persona so you can switch accounts quickly during project-scoped demos."}
               </div>
             ) : totpSetup ? (
               <>

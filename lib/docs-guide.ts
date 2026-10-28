@@ -4,11 +4,13 @@ export const DOCS_DEMO_GUIDE_URL = "/demo-guide/";
 export const DOCS_APP_URL = DEMO_APP_URL;
 
 export const DOCS_TOC = [
+  { href: "#architecture", label: "0. System architecture (Live / Demo, auth, hosting)" },
   { href: "#status", label: "1. Status legend & flow" },
   { href: "#login", label: "2. All login possibilities" },
   { href: "#login-2fa-methods", label: "2a. After password — Email code + Authenticator" },
   { href: "#first-login-setup", label: "2b. First login — Create Password + Set up Authenticator" },
   { href: "#requester", label: "3. Requester pages (submit, track, edit)" },
+  { href: "#duplicates", label: "3a. Duplicate invoice detection" },
   { href: "#approver", label: "4. Approver — every action" },
   { href: "#processor", label: "5. Processor — every action" },
   { href: "#analytics", label: "6. Analytics, details & Excel" },

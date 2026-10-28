@@ -13,6 +13,10 @@ export interface AuthUser {
   totpEnabled?: boolean;
   assignedProjects?: string[];
   isDemo?: boolean;
+  /** Which Mongo/storage store this session uses. */
+  store?: 'live' | 'demo';
+  /** Linked via Sign in with Microsoft — company MFA covers 2-step. */
+  microsoftLinked?: boolean;
 }
 
 export function getToken(): string | null {
@@ -99,9 +103,19 @@ export function mustSetupTotp(): boolean {
   }
 
   if (role === 'ADMIN') return false;
+  let microsoftLinked = user?.microsoftLinked === true;
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.microsoftLinked === true) microsoftLinked = true;
+    } catch {
+      // ignore
+    }
+  }
+  if (microsoftLinked) return false;
   // Enabled authenticator always wins over a stale mustSetupTotp flag.
   if (totpEnabled) return false;
-  // Explicit server false (password-only demo accounts)
+  // Explicit server false (password-only demo / Microsoft-linked accounts)
   if (mustSetup === false) return false;
   if (mustSetup === true) return true;
   // Non-admin without confirmed TOTP must enroll
@@ -128,4 +142,10 @@ export function getPostAuthDestination(
 export function authHeaders(): HeadersInit {
   const token = getToken();
   return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+}
+
+/** Authorization only — for FormData / multipart (do not set Content-Type). */
+export function authTokenHeaders(): HeadersInit {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }

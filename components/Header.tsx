@@ -95,7 +95,10 @@ export default function Header() {
     path === "/set-password" ||
     path === "/setup-authenticator";
   const isGuidePage =
-    path === "/demo-guide" || path === "/docs-guide" || path.startsWith("/docs-guide/");
+    path === "/demo-guide" ||
+    path === "/docs-guide" ||
+    path.startsWith("/docs-guide/") ||
+    path === "/architecture";
   const isPresentPage = path.startsWith("/docs-guide/present");
   /** Site chrome on password gate only — hide once the guide is unlocked (own toolbar). */
   const hideGuideChrome = isPresentPage || (isGuidePage && guideUnlocked);
@@ -143,6 +146,14 @@ export default function Header() {
               {/* Temporarily hidden — notification bell
               <NotificationBell user={user} />
               */}
+              {(user.store === "demo" || user.isDemo) && (
+                <span
+                  className="hidden sm:inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-800"
+                  title="You are in the demo workspace (isolated data and files)"
+                >
+                  Demo workspace
+                </span>
+              )}
               <div ref={userMenuRef} className="relative">
               <button
                 type="button"
@@ -174,12 +185,24 @@ export default function Header() {
                   <div className="px-4 py-3.5 border-b border-slate-300">
                     <p className="text-base font-bold text-slate-900 truncate">{user.name}</p>
                     <p className="text-sm text-slate-700 truncate mt-1">{user.email}</p>
-                    <span
-                      className={`inline-flex items-center gap-1.5 mt-2.5 rounded-full border px-2.5 py-1 text-xs font-bold tracking-wide ${roleBadgeClass[user.role]}`}
-                    >
-                      <AppIcon name={roleIcon[user.role] || "profile"} size="xs" />
-                      {user.role}
-                    </span>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold tracking-wide ${roleBadgeClass[user.role]}`}
+                      >
+                        <AppIcon name={roleIcon[user.role] || "profile"} size="xs" />
+                        {user.role}
+                      </span>
+                      {(user.store === "demo" || user.isDemo) && (
+                        <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold tracking-wide text-amber-800">
+                          DEMO
+                        </span>
+                      )}
+                      {user.store === "live" && user.role === "ADMIN" && (
+                        <span className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-bold tracking-wide text-emerald-800">
+                          LIVE
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="p-2">

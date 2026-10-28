@@ -7,6 +7,7 @@ import {
   DEMO_API_URL,
   DEMO_APP_URL,
   DEMO_AUDIT_CHECKS,
+  DEMO_ARCHITECTURE_URL,
   DEMO_DOCS_URL,
   DEMO_EXTRA_STAFF,
   DEMO_FLOW_A_STEPS,
@@ -138,6 +139,12 @@ export default function DemoGuideContent() {
       disabled: Boolean(copying),
       onClick: () => void handleCopy("accounts"),
       tone: "emerald",
+    },
+    {
+      id: "architecture",
+      label: "Open Architecture",
+      href: DEMO_ARCHITECTURE_URL,
+      tone: "amber",
     },
     {
       id: "docs",
@@ -360,10 +367,10 @@ export default function DemoGuideContent() {
             </p>
 
             <div className="block info">
-              <h4>Project-scoped demo users (seeded)</h4>
-              Different Requesters and Approvers for different project groups. These accounts are{" "}
-              <strong>password-only</strong> (no Email OTP, no Authenticator) so you can switch
-              personas quickly during demos.
+              <h4>Project-scoped demo users (Demo Access)</h4>
+              Different Requesters and Approvers for different project groups. Prefer{" "}
+              <strong>Demo Access</strong> on the login page (dynamic list from the demo database).
+              One click signs you into the demo store only — no Microsoft / OTP.
             </div>
             <div className="scroll-x">
               <table>

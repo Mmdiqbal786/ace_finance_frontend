@@ -18,10 +18,14 @@ export const DEMO_GUIDE_URL = DEMO_APP_URL
   ? `${DEMO_APP_URL.replace(/\/$/, "")}/demo-guide/`
   : "/demo-guide/";
 
-/** Demo guide unlock password — set via NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD (not committed). */
+/**
+ * @deprecated Prefer server verify via POST /auth/verify-demo-access.
+ * Kept only as optional local fallback when API DEMO_ACCESS_CODE is unset in dev.
+ */
 export const DEMO_ACCESS_CODE =
   process.env.NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD?.trim() || "";
 export const DEMO_DOCS_URL = "/docs-guide/";
+export const DEMO_ARCHITECTURE_URL = "/architecture/";
 /** Session unlock flag after access password (demo + docs + present). */
 export const DEMO_GUIDE_GATE_KEY = "ace_demo_guide_unlocked";
 export const DEMO_GUIDE_GATE_EVENT = "ace-demo-guide-gate";
@@ -42,9 +46,15 @@ export function isDemoGuideUnlocked(): boolean {
   }
 }
 
-export function unlockDemoGuideAccess(): void {
+const DEMO_ACCESS_CODE_SESSION_KEY = "ace_demo_access_code";
+
+export function unlockDemoGuideAccess(accessCode?: string): void {
   try {
     sessionStorage.setItem(DEMO_GUIDE_GATE_KEY, "1");
+    const code = (accessCode || DEMO_ACCESS_CODE || "").trim();
+    if (code) {
+      sessionStorage.setItem(DEMO_ACCESS_CODE_SESSION_KEY, code);
+    }
   } catch {
     // ignore
   }
@@ -55,10 +65,30 @@ export function unlockDemoGuideAccess(): void {
 export function lockDemoGuideAccess(): void {
   try {
     sessionStorage.removeItem(DEMO_GUIDE_GATE_KEY);
+    sessionStorage.removeItem(DEMO_ACCESS_CODE_SESSION_KEY);
   } catch {
     // ignore
   }
   notifyDemoGuideGateChange();
+}
+
+/**
+ * Code for `X-Demo-Access-Code` on demo-accounts / demo-login.
+ * Prefer session value from guide unlock; fall back to build-time env.
+ */
+export function getDemoAccessCodeForApi(): string {
+  try {
+    const fromSession = sessionStorage.getItem(DEMO_ACCESS_CODE_SESSION_KEY);
+    if (fromSession?.trim()) return fromSession.trim();
+  } catch {
+    // ignore
+  }
+  return (DEMO_ACCESS_CODE || "").trim();
+}
+
+export function demoAccessHeaders(): HeadersInit {
+  const code = getDemoAccessCodeForApi();
+  return code ? { "X-Demo-Access-Code": code } : {};
 }
 
 export type DemoAccount = {
@@ -124,7 +154,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   },
 ];
 
-/** Project-scoped demo users (seeded on backend boot). Password-only — no OTP/authenticator. */
+/** Project-scoped demo users (seeded on backend boot). Prefer Demo Access on login. */
 export const DEMO_EXTRA_STAFF: DemoStaff[] = [
   {
     name: "Requester GAC",
@@ -199,13 +229,16 @@ export const DEMO_EXTRA_STAFF: DemoStaff[] = [
 
 export const DEMO_SIGN_IN_STEPS = [
   "Open the Frontend → click Dashboard Login / Sign In",
-  "Enter email + password for a test account",
-  "Primary Gmail Requester / Approver / Processor: after password is accepted, enter the 6-digit Email OTP (and set Authenticator on first use if prompted).",
-  "Project-scoped @acefinance.com demo users: password only — no Email OTP and no Authenticator (seeded for easy project demos).",
-  "Admin: password only (no email OTP by default). Admin can optionally enable an Authenticator app later in Profile.",
+  "Main login is Microsoft-first: Sign in with Microsoft · Demo Access · Use password instead.",
+  "Company staff (@aceolution.*): Sign in with Microsoft. Company MFA covers Ace OTP/TOTP. If the same email exists in Live and Demo, choose a workspace — each option shows your role in that store (e.g. Live REQUESTER / Demo ADMIN).",
+  "Demos / training: Demo Access loads active isDemo users from the demo database (dynamic). Click a role — demo DB + demo file storage only. Admin can add/remove Demo Access users in Demo workspace → Users.",
+  "Admin / legacy / no-Microsoft: Use password instead. Microsoft-linked accounts cannot use password or forgot-password.",
+  "After password (or Microsoft) for dual-store accounts: Choose Live or Demo — role is shown on each card. Header/sidebar shows Live or Demo workspace badge.",
+  "Primary Gmail OTP test accounts (via password on Live): Email OTP (+ Authenticator when enrolled).",
+  "Admin finance@aceolution.com: password → Choose Live/Demo (or Microsoft if that account is Entra-linked). Optional Authenticator in Profile.",
   "You land on /dashboard/ (home). Use the sidebar for your role pages.",
-  "Always Sign Out before switching to another role account.",
-  "Project scoping: each Requester/Approver only sees their assigned projects. Match requester + approver pairs that share a project (e.g. Requester Systems → Approver Systems).",
+  "Always Sign Out before switching role or workspace.",
+  "Project scoping: each Requester/Approver only sees assigned projects. Match requester + approver pairs that share a project.",
 ];
 
 export const DEMO_FLOW_A_STEPS: DemoFlowStep[] = [
@@ -222,7 +255,7 @@ export const DEMO_FLOW_A_STEPS: DemoFlowStep[] = [
       "Status becomes Pending Approver — only Approvers assigned to that project get the email",
       "Check My Requests and confirmation email",
     ],
-    tip: "To demo Systems/Ops projects, use the matching Requester + Approver accounts from the project-scoped table (password-only @acefinance.com demos).",
+    tip: "To demo Systems/Ops projects, use Demo Access (or the matching @acefinance.com personas) for the project-scoped Requester + Approver pair.",
   },
   {
     id: "A2",
@@ -344,13 +377,18 @@ export const DEMO_SECTIONS = [
 ] as const;
 
 export const DEMO_SECURITY_FEATURES = [
-  "Email OTP at login (non-admin)",
-  "Required Authenticator for Requester / Approver / Processor (after welcome email: set password → set authenticator)",
-  "Optional Authenticator for Admin",
-  "Profile → Change authenticator app (password + email code → new QR; old secret deleted)",
-  "Disable authenticator (Admin only) with password + email code",
-  "Forgot password / reset password / first-login set password",
-  "Project scoping: Requester/Approver only submit/approve/email for Admin-assigned projects (Admin/Processor see all)",
+  "Microsoft Entra sign-in for company staff (Ace OTP/TOTP skipped when Microsoft-linked)",
+  "Password login blocked for Microsoft-linked accounts; forgot-password blocked for Microsoft-linked accounts",
+  "Live vs Demo isolated MongoDB databases + Azure blob containers (JWT store claim)",
+  "Workspace picker when the same email exists in Live and Demo (role shown per store)",
+  "Demo Access list is dynamic (isDemo users in demo DB); one-click demo-login",
+  "Email OTP at login (password non-admin, non-Microsoft)",
+  "Required Authenticator for Requester / Approver / Processor (password path after welcome email)",
+  "Optional Authenticator for Admin (password path)",
+  "Profile → Change / disable authenticator (password accounts)",
+  "Forgot password / reset / first-login set password (password accounts only)",
+  "Project scoping: Requester/Approver only submit/approve/email for Admin-assigned projects",
+  "Duplicate invoice hard-block: same file hash or invoice # (request not created); potential duplicate warning needs confirm",
 ];
 
 export const DEMO_UI_CHECKS = [
@@ -360,7 +398,8 @@ export const DEMO_UI_CHECKS = [
   "Excel Change Requests sheet matches the UI history",
   "Submit: attachment preview (PDF/image) under the field, then Confirm submission modal before create",
   "Edit (Changes Requested): Replace attachment optional + Confirm changes before save/resubmit",
-  "Project-scoped demo users (@acefinance.com) login password-only (isDemo)",
+  "Demo Access list matches active isDemo users in demo DB (add/remove via Admin → Demo → Users)",
+  "Live / Demo workspace badge visible after login when applicable",
 ];
 
 export const DEMO_AUDIT_CHECKS = [
@@ -413,7 +452,7 @@ export function buildAccountsCopyText(): string {
     );
   }
   lines.push(
-    "Project-scoped demo users (seeded; password-only — no OTP / authenticator)",
+    "Project-scoped demo users (prefer Demo Access on login; list is dynamic from demo DB)",
     ""
   );
   for (const staff of DEMO_EXTRA_STAFF) {

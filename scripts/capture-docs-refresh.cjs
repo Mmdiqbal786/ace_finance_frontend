@@ -303,7 +303,18 @@ async function main() {
   await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
   await capture(page, "01-landing");
 
-  await openAndCapture(page, "/login/", "02-login-password");
+  // Microsoft-first login home + Demo Access (also covered by capture-docs-login-v2.cjs)
+  await page.goto(`${BASE}/login/`, { waitUntil: "networkidle" });
+  await page.evaluate(() => localStorage.clear());
+  await page.goto(`${BASE}/login/`, { waitUntil: "networkidle" });
+  await capture(page, "02-login-home");
+  await page.getByRole("button", { name: /Demo Access/i }).click();
+  await page.waitForTimeout(1200);
+  await capture(page, "02b-login-demo-access");
+  await page.getByRole("button", { name: /Back/i }).first().click();
+  await page.getByRole("button", { name: /Use password instead/i }).click();
+  await page.waitForSelector("#login-email");
+  await capture(page, "02-login-password");
   await page.fill("#login-email", "finance@aceolution.com");
   await page.fill("#login-password", "WrongPass123");
   await page.click("#login-submit");
@@ -311,9 +322,20 @@ async function main() {
   await capture(page, "03-login-error-invalid", false);
 
   await page.goto(`${BASE}/login/`, { waitUntil: "networkidle" });
+  await page.evaluate(() => localStorage.clear());
+  await page.goto(`${BASE}/login/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Use password instead/i }).click();
+  await page.waitForSelector("#login-email");
   await page.fill("#login-email", "finance@aceolution.com");
   await page.fill("#login-password", "Admin@1234");
   await page.click("#login-submit");
+  await page.waitForTimeout(2000);
+  if ((await page.locator("button").filter({ hasText: /Live|Demo|Production|Sandbox/i }).count()) > 0) {
+    await capture(page, "02c-login-workspace");
+    const liveBtn = page.locator("button").filter({ hasText: /Live|Production/i }).first();
+    if (await liveBtn.count()) await liveBtn.click();
+    else await page.locator("button").filter({ hasText: /Demo|Sandbox/i }).first().click();
+  }
   await page.waitForURL(/\/dashboard/, { timeout: 25000 });
   await page.waitForTimeout(1000);
   await capture(page, "04-login-admin-dashboard");
@@ -323,6 +345,8 @@ async function main() {
     localStorage.clear();
   });
   await page.goto(`${BASE}/login/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Use password instead/i }).click();
+  await page.waitForSelector("#login-email");
   await page.fill("#login-email", "iqbal.ace786@gmail.com");
   await page.fill("#login-password", "Aceolution_2024");
   await page.click("#login-submit");

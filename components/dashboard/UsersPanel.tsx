@@ -60,16 +60,21 @@ export default function UsersPanel({
   const [selected, setSelected] = useState<ManagedUser | null>(null);
   const [modalType, setModalType] = useState<"view" | "edit" | null>(null);
 
+  const inDemoWorkspace =
+    currentUser.store === "demo" || Boolean(currentUser.isDemo);
+
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<UserRole>("APPROVER");
   const [newProjects, setNewProjects] = useState<string[]>([]);
+  const [newIsDemo, setNewIsDemo] = useState(true);
 
   const [editName, setEditName] = useState("");
   const [editRole, setEditRole] = useState<UserRole>("APPROVER");
   const [editActive, setEditActive] = useState(true);
   const [editPassword, setEditPassword] = useState("");
   const [editProjects, setEditProjects] = useState<string[]>([]);
+  const [editIsDemo, setEditIsDemo] = useState(false);
 
   const createForm = useFormValidation<CreateUserField>();
   const editForm = useFormValidation<EditUserField>();
@@ -121,6 +126,7 @@ export default function UsersPanel({
     setNewEmail("");
     setNewRole("APPROVER");
     setNewProjects([]);
+    setNewIsDemo(true);
     createForm.clearAll();
   };
 
@@ -148,12 +154,17 @@ export default function UsersPanel({
           email: newEmail.trim().toLowerCase(),
           role: newRole,
           assignedProjects: roleNeedsProjects(newRole) ? newProjects : [],
+          ...(inDemoWorkspace && newRole !== "ADMIN"
+            ? { isDemo: newIsDemo }
+            : {}),
         }),
       });
       if (!res.ok) throw new Error(await readApiError(res, "Failed to create user"));
       const created = await res.json().catch(() => ({}));
       closeCreate();
-      if (created.welcomeEmailSent) {
+      if (created.isDemo) {
+        toast.success("Demo Access user created — they appear on the login Demo Access list.");
+      } else if (created.welcomeEmailSent) {
         toast.success("User created — welcome email with auto password sent.");
       } else if (created.temporaryPassword) {
         toast.success(
@@ -207,6 +218,7 @@ export default function UsersPanel({
     setEditActive(user.isActive);
     setEditPassword("");
     setEditProjects(Array.isArray(user.assignedProjects) ? [...user.assignedProjects] : []);
+    setEditIsDemo(Boolean(user.isDemo));
     editForm.clearAll();
   };
 
@@ -234,6 +246,9 @@ export default function UsersPanel({
         isActive: editActive,
         assignedProjects: roleNeedsProjects(editRole) ? editProjects : [],
       };
+      if (inDemoWorkspace && editRole !== "ADMIN") {
+        body.isDemo = editIsDemo;
+      }
       if (editPassword.trim()) {
         body.password = editPassword;
       }
@@ -473,6 +488,24 @@ export default function UsersPanel({
               <option value="ADMIN">ADMIN — Full access + user management</option>
             </select>
           </FormField>
+          {inDemoWorkspace && newRole !== "ADMIN" && (
+            <label className="sm:col-span-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newIsDemo}
+                onChange={(e) => setNewIsDemo(e.target.checked)}
+                className="mt-0.5 rounded border-amber-400"
+              />
+              <span>
+                <span className="block text-sm font-bold text-amber-900">
+                  Show on Demo Access login
+                </span>
+                <span className="block text-xs text-amber-800 mt-0.5">
+                  Turns on isDemo — one-click sign-in on the login Demo Access list.
+                </span>
+              </span>
+            </label>
+          )}
           {roleNeedsProjects(newRole) && (
             <div className="sm:col-span-2">
               <FormField
@@ -515,8 +548,9 @@ export default function UsersPanel({
             </div>
           )}
           <p className="sm:col-span-2 text-xs text-slate-600 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
-            A temporary password is generated automatically and emailed to the user. They must set a
-            new password on first login.
+            {inDemoWorkspace && newIsDemo && newRole !== "ADMIN"
+              ? "Demo Access users appear on the login Demo Access list automatically. No welcome email is sent."
+              : "A temporary password is generated automatically and emailed to the user. They must set a new password on first login."}
             {roleNeedsProjects(newRole)
               ? " Requesters and Approvers can only work with the projects you assign here."
               : ""}
@@ -567,9 +601,9 @@ export default function UsersPanel({
               </div>
             )}
             <div className="flex justify-between gap-4">
-              <span className="text-slate-700">Demo account</span>
+              <span className="text-slate-700">Demo Access</span>
               <span className={selected.isDemo ? "text-amber-700 font-semibold" : "text-slate-600"}>
-                {selected.isDemo ? "Yes (password-only login)" : "No"}
+                {selected.isDemo ? "Yes (on login Demo Access list)" : "No"}
               </span>
             </div>
             <div className="flex justify-end pt-2">
@@ -671,6 +705,24 @@ export default function UsersPanel({
                   )}
                 </div>
               </FormField>
+            )}
+            {inDemoWorkspace && editRole !== "ADMIN" && (
+              <label className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editIsDemo}
+                  onChange={(e) => setEditIsDemo(e.target.checked)}
+                  className="mt-0.5 rounded border-amber-400"
+                />
+                <span>
+                  <span className="block text-sm font-bold text-amber-900">
+                    Show on Demo Access login
+                  </span>
+                  <span className="block text-xs text-amber-800 mt-0.5">
+                    Off = removed from the login Demo Access list immediately.
+                  </span>
+                </span>
+              </label>
             )}
             <FormField label="Status">
               <select

@@ -142,6 +142,13 @@ async function main() {
   await shot(page, "01-landing");
 
   await page.goto(`${BASE}/login/`, { waitUntil: "networkidle" });
+  await shot(page, "02-login-home");
+  await page.getByRole("button", { name: /Demo Access/i }).click();
+  await page.waitForTimeout(1000);
+  await shot(page, "02b-login-demo-access");
+  await page.getByRole("button", { name: /Back/i }).first().click();
+  await page.getByRole("button", { name: /Use password instead/i }).click();
+  await page.waitForSelector("#login-email");
   await shot(page, "02-login-password");
 
   await page.fill("#login-email", "finance@aceolution.com");
@@ -150,11 +157,21 @@ async function main() {
   await page.waitForTimeout(1500);
   await shot(page, "03-login-error-invalid", false);
 
-  // Admin password-only success
+  // Admin password → workspace / dashboard
+  await clearAuth(page);
   await page.goto(`${BASE}/login/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Use password instead/i }).click();
+  await page.waitForSelector("#login-email");
   await page.fill("#login-email", "finance@aceolution.com");
   await page.fill("#login-password", "Admin@1234");
   await page.click("#login-submit");
+  await page.waitForTimeout(2000);
+  if ((await page.locator("button").filter({ hasText: /Live|Demo|Production|Sandbox/i }).count()) > 0) {
+    await shot(page, "02c-login-workspace");
+    const liveBtn = page.locator("button").filter({ hasText: /Live|Production/i }).first();
+    if (await liveBtn.count()) await liveBtn.click();
+    else await page.locator("button").filter({ hasText: /Demo|Sandbox/i }).first().click();
+  }
   await page.waitForURL(/\/dashboard/, { timeout: 25000 });
   await page.waitForTimeout(1000);
   await shot(page, "04-login-admin-dashboard");
@@ -162,6 +179,8 @@ async function main() {
   // Requester → OTP challenge (wait for OTP field)
   await clearAuth(page);
   await page.goto(`${BASE}/login/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Use password instead/i }).click();
+  await page.waitForSelector("#login-email");
   await page.fill("#login-email", "iqbal.ace786@gmail.com");
   await page.fill("#login-password", "Aceolution_2024");
   await page.click("#login-submit");

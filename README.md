@@ -11,6 +11,16 @@ Next.js web app for Aceolution Finance spend management: submit expenses, approv
 
 Talks to the NestJS API (`ace_finance_backend`) via `NEXT_PUBLIC_API_URL`.
 
+## Sign-in
+
+Login is **Microsoft-first**:
+
+1. **Sign in with Microsoft** — company staff (`@aceolution.*`); company MFA
+2. **Demo Access** — dynamic list of `isDemo` users from the **demo** store (training only)
+3. **Use password instead** — admin / accounts without Microsoft (OTP + optional TOTP)
+
+If the same email exists in Live and Demo, the app shows **Choose Workspace** with the **role in each store**. Header/sidebar shows a Live or Demo badge. Microsoft-linked users cannot use password or forgot-password.
+
 ## Roles
 
 | Role | Main areas | Project scope |
@@ -36,9 +46,9 @@ Dashboard and queues support filtering by Project and `submittedAt` date range (
 
 ## Pages
 
-- Landing, login, forgot/reset/set password, authenticator setup
-- Dashboard: home, submit expense, my requests, approver, processor, analytics, profile
-- Admin: user management, categories, projects, countries
+- Landing, login (Microsoft / Demo Access / password + workspace picker), forgot/reset/set password, authenticator setup
+- Dashboard: home, submit expense, my requests, approver, processor, analytics, profile (Live/Demo badge in chrome)
+- Admin: user management (incl. Demo Access toggle in Demo workspace), categories, projects, countries
 - Guides: `/demo-guide`, `/docs-guide`, `/docs-guide/present` (password-gated)
 
 ## Setup
@@ -166,6 +176,12 @@ Requires: `npm i -g @azure/static-web-apps-cli`
 
 ## Related
 
-- Backend: sibling repo / folder `ace_finance_backend`
+- Backend: sibling folder `ace_finance_backend` (separate git remote)
+- **Architecture (committed in this repo — safe if you only keep the frontend clone):**
+  - [Index](./docs/Architecture/README.md)
+  - [Full system architecture](./docs/Architecture/aceolution_finance_architecture.md)
+  - [Auth + Live/Demo stores + VAPT](./docs/Architecture/AUTH_LIVE_DEMO_STORES.md)
+  - [Architecture PDF](./docs/Architecture/Aceolution_Finance_Architecture.pdf)
+- Same docs are also in `ace_finance_backend/docs/Architecture/` (keep both in sync)
 - Demo accounts and flows: open `/demo-guide` after unlock
-- Product docs: `/docs-guide`
+- Product docs: `/docs-guide` → section **0. Architecture**

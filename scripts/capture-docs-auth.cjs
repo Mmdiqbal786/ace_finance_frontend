@@ -190,6 +190,8 @@ async function main() {
       }),
     });
   });
+  await page.getByRole("button", { name: /Use password instead/i }).click();
+  await page.waitForSelector("#login-email", { timeout: 10000 });
   await page.fill("#login-email", "iqbal.ace786@gmail.com");
   await page.fill("#login-password", "AnyPass123");
   await page.click("#login-submit");

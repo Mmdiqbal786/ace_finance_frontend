@@ -118,9 +118,26 @@ export default function DashboardSidebar({
           {user?.email && (
             <p className="text-sm text-slate-200 truncate mt-1">{user.email}</p>
           )}
-          <p className="mt-1.5 inline-flex rounded-md bg-white/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-sky-200">
-            {user?.role}
-          </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <p className="inline-flex rounded-md bg-white/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-sky-200">
+              {user?.role}
+            </p>
+            {(user?.store === "demo" || user?.isDemo) && (
+              <p className="inline-flex rounded-md border border-amber-300/50 bg-amber-400/20 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-amber-100">
+                Demo
+              </p>
+            )}
+            {user?.store === "live" && user?.role === "ADMIN" && (
+              <p className="inline-flex rounded-md border border-emerald-300/40 bg-emerald-400/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-emerald-100">
+                Live
+              </p>
+            )}
+          </div>
+          {(user?.store === "demo" || user?.isDemo) && (
+            <p className="mt-2 text-[11px] leading-snug text-amber-100/90">
+              Demo workspace — changes stay in the sandbox database and files.
+            </p>
+          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">

@@ -11,7 +11,10 @@ export default function Footer() {
   const path = pathname?.replace(/\/$/, "") || "";
   const isHome = path === "" || path === "/";
   const isGuidePage =
-    path === "/demo-guide" || path === "/docs-guide" || path.startsWith("/docs-guide/");
+    path === "/demo-guide" ||
+    path === "/docs-guide" ||
+    path.startsWith("/docs-guide/") ||
+    path === "/architecture";
   const isPresentPage = path.startsWith("/docs-guide/present");
   const [guideUnlocked, setGuideUnlocked] = useState(false);
 

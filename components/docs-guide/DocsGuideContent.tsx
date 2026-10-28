@@ -16,7 +16,7 @@ import FullPageLoader from "../FullPageLoader";
 import "./docs-guide.css";
 
 /** Bump when screenshots are refreshed so browsers skip stale cached PNGs. */
-const SCREENSHOT_CACHE_BUST = "20260723a";
+const SCREENSHOT_CACHE_BUST = "20261028d";
 
 const docsBodyHtml = DOCS_GUIDE_BODY_HTML.replace(
   /src="(\/docs-screenshots\/[^"?]+\.png)(?:\?[^"]*)?"/g,
@@ -25,9 +25,11 @@ const docsBodyHtml = DOCS_GUIDE_BODY_HTML.replace(
 
 /** Sticky jump chips — exact hrefs matching section ids in docs-guide-body. */
 const DOCS_JUMP_CHIPS = [
+  { href: "#architecture", label: "0. Architecture" },
   { href: "#status", label: "1. Status" },
   { href: "#login", label: "2. Login" },
   { href: "#requester", label: "3. Requester" },
+  { href: "#duplicates", label: "3a. Duplicates" },
   { href: "#approver", label: "4. Approver" },
   { href: "#processor", label: "5. Processor" },
   { href: "#analytics", label: "6. Analytics" },
@@ -121,6 +123,12 @@ export default function DocsGuideContent() {
       disabled: busy,
       onClick: () => void handleDownloadPptx(),
       tone: "emerald",
+    },
+    {
+      id: "architecture",
+      label: "Open Architecture",
+      href: "/architecture/",
+      tone: "amber",
     },
     {
       id: "demo",

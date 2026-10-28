@@ -57,11 +57,26 @@ function ensureSamplePdf() {
 
 async function loginDemo(page, email, password) {
   await page.goto(`${BASE}/login/`, { waitUntil: "domcontentloaded" });
+  // Prefer Demo Access one-click when available
+  const demoBtn = page.getByRole("button", { name: /Demo Access/i });
+  if (await demoBtn.count()) {
+    await demoBtn.click();
+    await page.waitForTimeout(800);
+    const persona = page.locator("button").filter({ hasText: new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") });
+    // persona cards show name, not always email — fall through to password if needed
+    if (await persona.count()) {
+      await persona.first().click();
+      await page.waitForTimeout(2000);
+      if (!page.url().includes("login")) return;
+    }
+    await page.getByRole("button", { name: /Back/i }).first().click().catch(() => {});
+  }
+  await page.getByRole("button", { name: /Use password instead/i }).click();
+  await page.waitForSelector("#login-email, input[type='email']");
   await page.fill("#login-email, input[type='email']", email);
   await page.fill("#login-password, input[type='password']", password);
   await page.locator("button").filter({ hasText: /Continue|Sign In|Log In/i }).first().click();
   await page.waitForTimeout(2000);
-  // Demo accounts skip 2FA — should land on dashboard
   if (page.url().includes("setup-authenticator") || page.url().includes("login")) {
     throw new Error(`Login did not reach dashboard for ${email}. URL=${page.url()}`);
   }
