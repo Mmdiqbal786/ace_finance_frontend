@@ -11,7 +11,7 @@ import ConfirmDialog from "../ConfirmDialog";
 import StatusToggle from "../StatusToggle";
 import { usePaginatedList } from "../../hooks/usePaginatedList";
 import { useFormValidation } from "../../hooks/useFormValidation";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import { authHeaders } from "../../lib/auth";
 import { readApiError } from "../../lib/apiError";
 import { toast } from "../../lib/toast";
@@ -97,7 +97,7 @@ export default function CatalogAdminPanel({
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/${config.endpoint}`, { headers: authHeaders() });
+      const res = await apiFetch(`${API_URL}/${config.endpoint}`, { headers: authHeaders() });
       if (res.ok) setItems(await res.json());
     } catch {
       toast.error(`Failed to load ${config.plural.toLowerCase()}`);
@@ -148,7 +148,7 @@ export default function CatalogAdminPanel({
       return;
     }
     try {
-      const res = await fetch(`${API_URL}/${config.endpoint}`, {
+      const res = await apiFetch(`${API_URL}/${config.endpoint}`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({
@@ -170,7 +170,7 @@ export default function CatalogAdminPanel({
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`${API_URL}/${config.endpoint}/${id}`, {
+      const res = await apiFetch(`${API_URL}/${config.endpoint}/${id}`, {
         method: "DELETE",
         headers: authHeaders() as HeadersInit,
       });
@@ -188,7 +188,7 @@ export default function CatalogAdminPanel({
 
   const handleToggle = async (item: Item) => {
     try {
-      const res = await fetch(`${API_URL}/${config.endpoint}/${item._id}`, {
+      const res = await apiFetch(`${API_URL}/${config.endpoint}/${item._id}`, {
         method: "PUT",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({ isActive: !item.isActive }),
@@ -227,7 +227,7 @@ export default function CatalogAdminPanel({
       return;
     }
     try {
-      const res = await fetch(`${API_URL}/${config.endpoint}/${selected._id}`, {
+      const res = await apiFetch(`${API_URL}/${config.endpoint}/${selected._id}`, {
         method: "PUT",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({

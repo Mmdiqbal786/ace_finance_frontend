@@ -11,7 +11,7 @@ import {
   setAuth,
   updateStoredUser,
 } from "../../lib/auth";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import { readApiError } from "../../lib/apiError";
 import FormField from "../../components/FormField";
 import AuthSplitLayout from "../../components/AuthSplitLayout";
@@ -50,7 +50,7 @@ export default function SetupAuthenticatorPage() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/auth/totp/setup`, {
+      const res = await apiFetch(`${API_URL}/auth/totp/setup`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
       });
@@ -92,7 +92,7 @@ export default function SetupAuthenticatorPage() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/auth/totp/enable`, {
+      const res = await apiFetch(`${API_URL}/auth/totp/enable`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({ code: cleaned }),

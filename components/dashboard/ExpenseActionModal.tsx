@@ -11,7 +11,7 @@ import ExpenseRequestFields, {
   validatorsForExpenseRequest,
 } from "../expense/ExpenseRequestFields";
 import { useFormValidation } from "../../hooks/useFormValidation";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import { authHeaders, getToken } from "../../lib/auth";
 import { readApiError } from "../../lib/apiError";
 import { toast } from "../../lib/toast";
@@ -39,7 +39,7 @@ type AttachmentPreview = {
 
 async function fetchExpenseInvoice(expenseId: string): Promise<Blob> {
   const token = getToken();
-  const res = await fetch(`${API_URL}/expenses/${expenseId}/invoice`, {
+  const res = await apiFetch(`${API_URL}/expenses/${expenseId}/invoice`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) {
@@ -50,7 +50,7 @@ async function fetchExpenseInvoice(expenseId: string): Promise<Blob> {
 
 async function fetchPaymentReceipt(expenseId: string, fileName: string): Promise<Blob> {
   const token = getToken();
-  const res = await fetch(
+  const res = await apiFetch(
     `${API_URL}/expenses/${expenseId}/payment-receipt/${encodeURIComponent(fileName)}`,
     {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -366,7 +366,7 @@ export default function ExpenseActionModal({
       if (replaceInvoiceFile) {
         const invoiceData = new FormData();
         invoiceData.append("invoice", replaceInvoiceFile);
-        const invoiceRes = await fetch(`${API_URL}/expenses/${expense.id}/invoice`, {
+        const invoiceRes = await apiFetch(`${API_URL}/expenses/${expense.id}/invoice`, {
           method: "PATCH",
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           body: invoiceData,
@@ -376,7 +376,7 @@ export default function ExpenseActionModal({
         }
       }
 
-      const response = await fetch(`${API_URL}/expenses/${expense.id}`, {
+      const response = await apiFetch(`${API_URL}/expenses/${expense.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -492,7 +492,7 @@ export default function ExpenseActionModal({
         if (actionNotes.trim()) formData.append("notes", actionNotes.trim());
         formData.append("receipt", receiptFile as File);
 
-        const response = await fetch(`${API_URL}/expenses/${expense.id}/partial-pay`, {
+        const response = await apiFetch(`${API_URL}/expenses/${expense.id}/partial-pay`, {
           method: "PATCH",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: formData,
@@ -533,7 +533,7 @@ export default function ExpenseActionModal({
 
       setSubmitting(true);
       try {
-        const response = await fetch(`${API_URL}/expenses/${expense.id}/request-changes`, {
+        const response = await apiFetch(`${API_URL}/expenses/${expense.id}/request-changes`, {
           method: "PATCH",
           headers: authHeaders() as HeadersInit,
           body: JSON.stringify({ notes: actionNotes.trim(), target }),
@@ -597,13 +597,13 @@ export default function ExpenseActionModal({
         const formData = new FormData();
         if (actionNotes.trim()) formData.append("notes", actionNotes.trim());
         formData.append("receipt", receiptFile as File);
-        response = await fetch(`${API_URL}/expenses/${expense.id}/process`, {
+        response = await apiFetch(`${API_URL}/expenses/${expense.id}/process`, {
           method: "PATCH",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: formData,
         });
       } else {
-        response = await fetch(`${API_URL}/expenses/${expense.id}/${endpoint}`, {
+        response = await apiFetch(`${API_URL}/expenses/${expense.id}/${endpoint}`, {
           method: "PATCH",
           headers: authHeaders() as HeadersInit,
           body: JSON.stringify({ notes: actionNotes }),
@@ -638,7 +638,7 @@ export default function ExpenseActionModal({
 
     setSubmitting(true);
     try {
-      const response = await fetch(`${API_URL}/expenses/${expense.id}`, {
+      const response = await apiFetch(`${API_URL}/expenses/${expense.id}`, {
         method: "DELETE",
         headers: authHeaders() as HeadersInit,
       });

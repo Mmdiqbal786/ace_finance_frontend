@@ -1,0 +1,19 @@
+{
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Content-Security-Policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data: blob: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://ace-finance-api-f5hnhhd6c3bvffhj.southindia-01.azurewebsites.net https://login.microsoftonline.com https://*.microsoftonline.com; form-action 'self' https://login.microsoftonline.com"
+  },
+  "routes": [
+    {
+      "route": "/architecture/*",
+      "statusCode": 404
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/*.{css,js,png,jpg,jpeg,gif,svg,webp,ico,woff,woff2}"]
+  }
+}

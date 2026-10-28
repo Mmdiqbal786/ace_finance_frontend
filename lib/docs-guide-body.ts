@@ -107,7 +107,7 @@ export const DOCS_GUIDE_BODY_HTML = `
         <div class="block info">
           <h4>Where the full architecture lives</h4>
           Web: <a href="/architecture/"><strong>/architecture/</strong></a>
-          · PDF: <a href="/architecture/Aceolution_Finance_Architecture.pdf" target="_blank" rel="noopener">download</a><br/>
+          · PDF: private repo <code>docs/Architecture/</code> (not a public URL)<br/>
           Git: <code>docs/Architecture/</code> (frontend + backend mirrors)
         </div>
 

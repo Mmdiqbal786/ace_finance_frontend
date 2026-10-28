@@ -18,12 +18,6 @@ export const DEMO_GUIDE_URL = DEMO_APP_URL
   ? `${DEMO_APP_URL.replace(/\/$/, "")}/demo-guide/`
   : "/demo-guide/";
 
-/**
- * @deprecated Prefer server verify via POST /auth/verify-demo-access.
- * Kept only as optional local fallback when API DEMO_ACCESS_CODE is unset in dev.
- */
-export const DEMO_ACCESS_CODE =
-  process.env.NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD?.trim() || "";
 export const DEMO_DOCS_URL = "/docs-guide/";
 export const DEMO_ARCHITECTURE_URL = "/architecture/";
 /** Session unlock flag after access password (demo + docs + present). */
@@ -51,7 +45,7 @@ const DEMO_ACCESS_CODE_SESSION_KEY = "ace_demo_access_code";
 export function unlockDemoGuideAccess(accessCode?: string): void {
   try {
     sessionStorage.setItem(DEMO_GUIDE_GATE_KEY, "1");
-    const code = (accessCode || DEMO_ACCESS_CODE || "").trim();
+    const code = (accessCode || "").trim();
     if (code) {
       sessionStorage.setItem(DEMO_ACCESS_CODE_SESSION_KEY, code);
     }
@@ -73,8 +67,8 @@ export function lockDemoGuideAccess(): void {
 }
 
 /**
- * Code for `X-Demo-Access-Code` on demo-accounts / demo-login.
- * Prefer session value from guide unlock; fall back to build-time env.
+ * Code for `X-Demo-Access-Code` on demo-accounts / demo-login / demo-guide-pack.
+ * Only from session after server-verified unlock — never from NEXT_PUBLIC_*.
  */
 export function getDemoAccessCodeForApi(): string {
   try {
@@ -83,7 +77,7 @@ export function getDemoAccessCodeForApi(): string {
   } catch {
     // ignore
   }
-  return (DEMO_ACCESS_CODE || "").trim();
+  return "";
 }
 
 export function demoAccessHeaders(): HeadersInit {
@@ -117,115 +111,38 @@ export type DemoFlowStep = {
   tip?: string;
 };
 
-/** Keep in sync with ace_finance_backend/src/users/demo-users.seed.ts */
-export const DEMO_ACCOUNTS: DemoAccount[] = [
-  {
-    label: "Requester (Media)",
-    email: "iqbal.ace786@gmail.com",
-    password: "Aceolution_2024",
-    role: "Submit & track — GAC + GNL only",
-    login2fa: "Email OTP",
-    projects: "Google Art and culture (GAC); Google News Lab (GNL)",
-  },
-  {
-    label: "Approver (Media)",
-    email: "iqbal.dev98@gmail.com",
-    password: "Approver@1234",
-    role: "Approve — GAC + GNL + GNP",
-    login2fa: "Email OTP",
-    projects:
-      "Google Art and culture (GAC); Google News Lab (GNL); Google News Program (GNP)",
-  },
-  {
-    label: "Processor",
-    email: "mmdiqbal786@gmail.com",
-    password: "Processor@1234",
-    role: "Pay / partial pay (all projects)",
-    login2fa: "Email OTP",
-    projects: "All projects",
-  },
-  {
-    label: "Admin",
-    email: "finance@aceolution.com",
-    password: "Admin@1234",
-    role: "Users, catalogs, full access",
-    login2fa: "Password only*",
-    projects: "All projects",
-  },
-];
+export type DemoGuidePack = {
+  primaryAccounts: DemoAccount[];
+  demoStaff: DemoStaff[];
+};
 
-/** Project-scoped demo users (seeded on backend boot). Prefer Demo Access on login. */
-export const DEMO_EXTRA_STAFF: DemoStaff[] = [
-  {
-    name: "Requester GAC",
-    email: "requester.gac@acefinance.com",
-    password: "Requester@1234",
-    role: "REQUESTER",
-    projects: "Google Art and culture (GAC)",
-    login2fa: "Password only (demo)",
-  },
-  {
-    name: "Requester News",
-    email: "requester.news@acefinance.com",
-    password: "Requester@1234",
-    role: "REQUESTER",
-    projects: "Google News Lab (GNL); Google News Program (GNP)",
-    login2fa: "Password only (demo)",
-  },
-  {
-    name: "Requester Systems",
-    email: "requester.systems@acefinance.com",
-    password: "Requester@1234",
-    role: "REQUESTER",
-    projects:
-      "Google Information system (GIS) - Bothel; GDO - Google ops (location); Google for Education - Chrome",
-    login2fa: "Password only (demo)",
-  },
-  {
-    name: "Requester Ops",
-    email: "requester.ops@acefinance.com",
-    password: "Requester@1234",
-    role: "REQUESTER",
-    projects:
-      "SV Warehouse - ID & JP; Reimbursements - revenue; Field data collection (FDR) - Global logic; One-time fee (project)",
-    login2fa: "Password only (demo)",
-  },
-  {
-    name: "Approver Media",
-    email: "approver.media@acefinance.com",
-    password: "Approver@1234",
-    role: "APPROVER",
-    projects:
-      "Google Art and culture (GAC); Google News Lab (GNL); Google News Program (GNP)",
-    login2fa: "Password only (demo)",
-  },
-  {
-    name: "Approver Systems",
-    email: "approver.systems@acefinance.com",
-    password: "Approver@1234",
-    role: "APPROVER",
-    projects:
-      "Google Information system (GIS) - Bothel; GDO - Google ops (location); Google for Education - Chrome",
-    login2fa: "Password only (demo)",
-  },
-  {
-    name: "Approver Ops",
-    email: "approver.ops@acefinance.com",
-    password: "Approver@1234",
-    role: "APPROVER",
-    projects:
-      "SV Warehouse - ID & JP; Reimbursements - revenue; Field data collection (FDR) - Global logic; One-time fee (project)",
-    login2fa: "Password only (demo)",
-  },
-  {
-    name: "Alisha",
-    email: "alisha.processor@acefinance.com",
-    password: "Processor@1234",
-    role: "PROCESSOR",
-    projects: "All projects",
-    login2fa: "Password only (demo)",
-  },
-];
+/** Load test credentials from the API after DEMO_ACCESS_CODE unlock (never baked into JS). */
+export async function fetchDemoGuidePack(): Promise<DemoGuidePack> {
+  const { API_URL, apiFetch } = await import("./api");
+  if (!API_URL) {
+    throw new Error("API URL is not configured.");
+  }
+  const res = await apiFetch(`${API_URL}/auth/demo-guide-pack`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...demoAccessHeaders(),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      Array.isArray(data?.message)
+        ? data.message.join(" ")
+        : data?.message || "Could not load demo accounts.",
+    );
+  }
+  return {
+    primaryAccounts: Array.isArray(data?.primaryAccounts)
+      ? data.primaryAccounts
+      : [],
+    demoStaff: Array.isArray(data?.demoStaff) ? data.demoStaff : [],
+  };
+}
 
 export const DEMO_SIGN_IN_STEPS = [
   "Open the Frontend → click Dashboard Login / Sign In",
@@ -428,8 +345,8 @@ export function buildShareInviteText(): string {
     "3) Open the protected demo guide:",
     DEMO_GUIDE_URL,
     "",
-    "4) Access code (enter on the guide page):",
-    DEMO_ACCESS_CODE || "(ask the Aceolution Finance team for the access password)",
+    "4) Access code (enter on the guide page — ask the Aceolution Finance team):",
+    "(shared separately — not embedded in the app)",
     "",
     "After unlock you will see test accounts and the full walkthrough.",
     "",
@@ -438,9 +355,9 @@ export function buildShareInviteText(): string {
   ].join("\n");
 }
 
-export function buildAccountsCopyText(): string {
+export function buildAccountsCopyText(pack: DemoGuidePack): string {
   const lines = ["Test accounts (primary — real inbox OTP)", ""];
-  for (const account of DEMO_ACCOUNTS) {
+  for (const account of pack.primaryAccounts) {
     lines.push(
       account.label,
       `Email: ${account.email}`,
@@ -455,7 +372,7 @@ export function buildAccountsCopyText(): string {
     "Project-scoped demo users (prefer Demo Access on login; list is dynamic from demo DB)",
     ""
   );
-  for (const staff of DEMO_EXTRA_STAFF) {
+  for (const staff of pack.demoStaff) {
     lines.push(
       `${staff.name} — ${staff.email} — ${staff.password} — ${staff.role}`,
       `Login: ${staff.login2fa}`,
@@ -466,7 +383,7 @@ export function buildAccountsCopyText(): string {
   return lines.join("\n");
 }
 
-export function buildFullGuideCopyText(): string {
+export function buildFullGuideCopyText(pack: DemoGuidePack): string {
   const lines: string[] = [
     "Aceolution Finance — Full Live Demo Guide",
     "Expense Approval & Tracking",
@@ -478,7 +395,7 @@ export function buildFullGuideCopyText(): string {
     "Note: Hosted on Azure (Static Web Apps + App Service). Use the Frontend URL for the app and the Backend URL for the API.",
     "",
     "1) Test accounts",
-    buildAccountsCopyText(),
+    buildAccountsCopyText(pack),
     "",
     "2) How to sign in (important)",
     ...DEMO_SIGN_IN_STEPS.map((step, index) => `${String.fromCharCode(65 + index)}. ${step}`),

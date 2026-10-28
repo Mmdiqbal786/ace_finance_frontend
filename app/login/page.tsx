@@ -7,6 +7,7 @@ import { useBlockAuthenticatedGuestPages } from '../../hooks/useBlockAuthenticat
 import {
   setAuth,
   getPostAuthDestination,
+  fetchSessionUser,
   AuthUser,
 } from '../../lib/auth';
 import {
@@ -15,7 +16,7 @@ import {
   unlockDemoGuideAccess,
 } from '../../lib/demo-guide';
 import { resolveAccessibleDashboardPath } from '../../lib/dashboard/routes';
-import { API_URL } from '../../lib/api';
+import { API_URL, apiFetch } from '../../lib/api';
 import FormField from '../../components/FormField';
 import AuthSplitLayout from '../../components/AuthSplitLayout';
 import { useFormValidation } from '../../hooks/useFormValidation';
@@ -44,6 +45,8 @@ function MicrosoftLogo() {
 function userFromAccessToken(token: string): AuthUser | null {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
+    // Reject challenge / workspace / OAuth purpose tokens (API would too).
+    if (payload?.purpose) return null;
     if (!payload?.sub || !payload?.email || !payload?.role) return null;
     return {
       id: String(payload.sub),
@@ -205,6 +208,32 @@ function LoginForm() {
       }
       return;
     }
+    // Preferred: httpOnly cookie set by API callback (`?ms_ok=1`)
+    const msOk = searchParams.get('ms_ok');
+    if (msOk === '1') {
+      setMicrosoftBusy(true);
+      void (async () => {
+        try {
+          window.history.replaceState(
+            null,
+            '',
+            `${window.location.pathname}`,
+          );
+        } catch {
+          // ignore
+        }
+        const user = await fetchSessionUser();
+        if (!user) {
+          setError('Microsoft sign-in session expired. Try again.');
+          setMicrosoftBusy(false);
+          return;
+        }
+        goAfterLogin(user);
+      })();
+      return;
+    }
+
+    // Legacy hash token (older API builds) — still accepted once, then cookie path preferred
     const msToken = qp('ms_token');
     if (!msToken) return;
     try {
@@ -249,7 +278,7 @@ function LoginForm() {
     const controller = new AbortController();
     const timer = window.setTimeout(() => controller.abort(), timeoutMs);
     try {
-      return await fetch(input, { ...init, signal: controller.signal });
+      return await apiFetch(input, { ...init, signal: controller.signal });
     } finally {
       window.clearTimeout(timer);
     }

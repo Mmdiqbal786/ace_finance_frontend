@@ -113,7 +113,7 @@ flowchart LR
   - Header filter controls: Project dropdown + `submittedAt` date range picker (From / To).
 - **Password-Gated Documentation & Guides**:
   - Interactive product guides available at `/demo-guide`, `/docs-guide`, and presentation slide mode at `/docs-guide/present`.
-  - Unlocked by `NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD`.
+  - Unlocked by server-side `DEMO_ACCESS_CODE` (`POST /auth/verify-demo-access`).
 - **In-App Notifications**:
   - Backend notification tracking APIs operational; bell UI temporarily hidden while preserving underlying endpoints.
 

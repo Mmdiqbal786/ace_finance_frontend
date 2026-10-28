@@ -10,7 +10,7 @@ import ExpenseRequestFields, {
 import FormField from "../FormField";
 import Modal from "../Modal";
 import { useFormValidation } from "../../hooks/useFormValidation";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import { AuthUser, authTokenHeaders } from "../../lib/auth";
 import { readApiError } from "../../lib/apiError";
 import { toast } from "../../lib/toast";
@@ -296,7 +296,7 @@ export default function SubmitExpensePanel({
     if (!parsedData?.currency || !parsedData?.amount || !currency) return;
     setConvertingFx(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_URL}/fx/convert?from=${encodeURIComponent(parsedData.currency)}&to=${encodeURIComponent(currency)}&amount=${parsedData.amount}`,
         { headers: authTokenHeaders() },
       );
@@ -343,7 +343,7 @@ export default function SubmitExpensePanel({
       try {
         const formData = new FormData();
         formData.append("file", file);
-        const res = await fetch(`${API_URL}/expenses/parse-invoice`, {
+        const res = await apiFetch(`${API_URL}/expenses/parse-invoice`, {
           method: "POST",
           headers: authTokenHeaders(),
           body: formData,
@@ -490,7 +490,7 @@ export default function SubmitExpensePanel({
         formData.append("idempotencyKey", idempotencyKey);
       }
 
-      const response = await fetch(`${API_URL}/expenses`, {
+      const response = await apiFetch(`${API_URL}/expenses`, {
         method: "POST",
         headers: authTokenHeaders(),
         body: formData,

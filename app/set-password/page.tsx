@@ -10,7 +10,7 @@ import {
   getPostAuthDestination,
   setAuth,
 } from "../../lib/auth";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import { useFormValidation } from "../../hooks/useFormValidation";
 import { validatePassword } from "../../lib/validation";
 import FormField from "../../components/FormField";
@@ -150,7 +150,7 @@ export default function SetPasswordPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/auth/change-password`, {
+      const res = await apiFetch(`${API_URL}/auth/change-password`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({ currentPassword, newPassword }),

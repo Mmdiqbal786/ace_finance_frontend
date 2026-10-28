@@ -3,23 +3,23 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "../../lib/toast";
 import {
-  DEMO_ACCOUNTS,
   DEMO_API_URL,
   DEMO_APP_URL,
   DEMO_AUDIT_CHECKS,
   DEMO_ARCHITECTURE_URL,
   DEMO_DOCS_URL,
-  DEMO_EXTRA_STAFF,
   DEMO_FLOW_A_STEPS,
   DEMO_ROLE_CAPABILITIES,
   DEMO_SECTIONS,
   DEMO_SECURITY_FEATURES,
   DEMO_SIGN_IN_STEPS,
   DEMO_UI_CHECKS,
+  type DemoGuidePack,
   buildAccountsCopyText,
   buildFullGuideCopyText,
   buildShareInviteText,
   copyPlainText,
+  fetchDemoGuidePack,
   lockDemoGuideAccess,
 } from "../../lib/demo-guide";
 import GuideActionBar, { type GuideActionItem } from "../guide/GuideActionBar";
@@ -63,6 +63,9 @@ export default function DemoGuideContent() {
   const topBarRef = useRef<HTMLDivElement>(null);
   const [copying, setCopying] = useState<string | null>(null);
   const [topBarH, setTopBarH] = useState(68);
+  const [pack, setPack] = useState<DemoGuidePack | null>(null);
+  const [packError, setPackError] = useState("");
+  const [packLoading, setPackLoading] = useState(true);
 
   useGuideHashJumps(contentRef);
 
@@ -88,15 +91,40 @@ export default function DemoGuideContent() {
     };
   }, [measureTopBar]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setPackLoading(true);
+      setPackError("");
+      try {
+        const next = await fetchDemoGuidePack();
+        if (!cancelled) setPack(next);
+      } catch (err: any) {
+        if (!cancelled) {
+          setPack(null);
+          setPackError(err?.message || "Could not load test accounts from the API.");
+        }
+      } finally {
+        if (!cancelled) setPackLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function handleCopy(kind: "invite" | "guide" | "accounts") {
     setCopying(kind);
     try {
+      if (kind !== "invite" && !pack) {
+        throw new Error(packError || "Accounts are still loading.");
+      }
       const text =
         kind === "invite"
           ? buildShareInviteText()
           : kind === "guide"
-            ? buildFullGuideCopyText()
-            : buildAccountsCopyText();
+            ? buildFullGuideCopyText(pack!)
+            : buildAccountsCopyText(pack!);
       await copyPlainText(text);
       toast.success(
         kind === "invite"
@@ -105,8 +133,8 @@ export default function DemoGuideContent() {
             ? "Full guide copied as plain text"
             : "Accounts copied"
       );
-    } catch {
-      toast.error("Copy failed — try again");
+    } catch (err: any) {
+      toast.error(err?.message || "Copy failed — try again");
     } finally {
       setCopying(null);
     }
@@ -342,22 +370,32 @@ export default function DemoGuideContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {DEMO_ACCOUNTS.map((account) => (
-                    <tr key={account.email}>
-                      <td>
-                        <strong>{account.label}</strong>
-                      </td>
-                      <td>
-                        <code>{account.email}</code>
-                      </td>
-                      <td>
-                        <code>{account.password}</code>
-                      </td>
-                      <td>{account.role}</td>
-                      <td>{account.projects}</td>
-                      <td>{account.login2fa}</td>
+                  {packLoading ? (
+                    <tr>
+                      <td colSpan={6}>Loading accounts from API…</td>
                     </tr>
-                  ))}
+                  ) : packError ? (
+                    <tr>
+                      <td colSpan={6}>{packError}</td>
+                    </tr>
+                  ) : (
+                    (pack?.primaryAccounts || []).map((account) => (
+                      <tr key={account.email}>
+                        <td>
+                          <strong>{account.label}</strong>
+                        </td>
+                        <td>
+                          <code>{account.email}</code>
+                        </td>
+                        <td>
+                          <code>{account.password}</code>
+                        </td>
+                        <td>{account.role}</td>
+                        <td>{account.projects}</td>
+                        <td>{account.login2fa}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -385,22 +423,32 @@ export default function DemoGuideContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {DEMO_EXTRA_STAFF.map((staff) => (
-                    <tr key={staff.email}>
-                      <td>
-                        <strong>{staff.name}</strong>
-                      </td>
-                      <td>
-                        <code>{staff.email}</code>
-                      </td>
-                      <td>
-                        <code>{staff.password}</code>
-                      </td>
-                      <td>{staff.role}</td>
-                      <td>{staff.projects}</td>
-                      <td>{staff.login2fa}</td>
+                  {packLoading ? (
+                    <tr>
+                      <td colSpan={6}>Loading accounts from API…</td>
                     </tr>
-                  ))}
+                  ) : packError ? (
+                    <tr>
+                      <td colSpan={6}>{packError}</td>
+                    </tr>
+                  ) : (
+                    (pack?.demoStaff || []).map((staff) => (
+                      <tr key={staff.email}>
+                        <td>
+                          <strong>{staff.name}</strong>
+                        </td>
+                        <td>
+                          <code>{staff.email}</code>
+                        </td>
+                        <td>
+                          <code>{staff.password}</code>
+                        </td>
+                        <td>{staff.role}</td>
+                        <td>{staff.projects}</td>
+                        <td>{staff.login2fa}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

@@ -7,7 +7,7 @@ import { useFormValidation } from "../../hooks/useFormValidation";
 import { validatePassword } from "../../lib/validation";
 import FormField from "../../components/FormField";
 import AuthSplitLayout from "../../components/AuthSplitLayout";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import { readApiError } from "../../lib/apiError";
 
 type ResetField = "newPassword" | "confirmPassword";
@@ -102,7 +102,7 @@ function ResetPasswordForm() {
         return;
       }
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `${API_URL}/auth/validate-reset-token?token=${encodeURIComponent(token)}`,
         );
         if (!res.ok) {
@@ -148,7 +148,7 @@ function ResetPasswordForm() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/auth/reset-password`, {
+      const res = await apiFetch(`${API_URL}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword, confirmPassword }),

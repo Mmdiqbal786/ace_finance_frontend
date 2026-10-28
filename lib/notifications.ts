@@ -1,4 +1,4 @@
-import { API_URL } from "./api";
+import { API_URL, apiFetch } from "./api";
 import { authHeaders } from "./auth";
 
 export type NotificationType =
@@ -46,7 +46,7 @@ export function notificationHref(n: AppNotification, role?: string): string {
 }
 
 export async function fetchNotifications(limit = 30): Promise<AppNotification[]> {
-  const res = await fetch(`${API_URL}/notifications?limit=${limit}`, {
+  const res = await apiFetch(`${API_URL}/notifications?limit=${limit}`, {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error("Failed to load notifications");
@@ -54,7 +54,7 @@ export async function fetchNotifications(limit = 30): Promise<AppNotification[]>
 }
 
 export async function fetchUnreadNotificationCount(): Promise<number> {
-  const res = await fetch(`${API_URL}/notifications/unread-count`, {
+  const res = await apiFetch(`${API_URL}/notifications/unread-count`, {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error("Failed to load unread count");
@@ -63,7 +63,7 @@ export async function fetchUnreadNotificationCount(): Promise<number> {
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
-  const res = await fetch(`${API_URL}/notifications/${id}/read`, {
+  const res = await apiFetch(`${API_URL}/notifications/${id}/read`, {
     method: "PATCH",
     headers: authHeaders(),
   });
@@ -71,7 +71,7 @@ export async function markNotificationRead(id: string): Promise<void> {
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  const res = await fetch(`${API_URL}/notifications/read-all`, {
+  const res = await apiFetch(`${API_URL}/notifications/read-all`, {
     method: "PATCH",
     headers: authHeaders(),
   });

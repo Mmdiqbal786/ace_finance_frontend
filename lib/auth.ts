@@ -1,7 +1,9 @@
 import { resolveAccessibleDashboardPath } from './dashboard/routes';
+import { API_URL, apiFetch } from './api';
 
-const TOKEN_KEY = 'ace_finance_token';
 const USER_KEY = 'ace_finance_user';
+/** Legacy key — cleared on set/logout so JWTs are not left in localStorage. */
+const LEGACY_TOKEN_KEY = 'ace_finance_token';
 
 export interface AuthUser {
   id: string;
@@ -20,8 +22,8 @@ export interface AuthUser {
 }
 
 export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
+  // Session is httpOnly cookie — JS must not hold the JWT.
+  return null;
 }
 
 export function getUser(): AuthUser | null {
@@ -34,92 +36,58 @@ export function getUser(): AuthUser | null {
   }
 }
 
-export function setAuth(token: string, user: AuthUser): void {
-  localStorage.setItem(TOKEN_KEY, token);
+/** Persist profile only. JWT lives in httpOnly cookie set by the API. */
+export function setAuth(_token: string | null | undefined, user: AuthUser): void {
+  try {
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+  } catch {
+    // ignore
+  }
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export function updateStoredUser(partial: Partial<AuthUser>): void {
-  const token = getToken();
   const user = getUser();
-  if (!token || !user) return;
-  setAuth(token, { ...user, ...partial });
+  if (!user) return;
+  setAuth(null, { ...user, ...partial });
 }
 
-export function logout(): void {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+export async function logout(): Promise<void> {
+  try {
+    if (API_URL) {
+      await apiFetch(`${API_URL}/auth/logout`, { method: 'POST' });
+    }
+  } catch {
+    // ignore network errors on sign-out
+  }
+  try {
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+  } catch {
+    // ignore
+  }
   window.location.href = '/login';
 }
 
+/** True when a profile is stored; API cookie is validated on the next request. */
 export function isAuthenticated(): boolean {
-  const token = getToken();
-  if (!token) return false;
-  try {
-    // Decode JWT payload (base64) to check expiry
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp > now;
-  } catch {
-    return false;
-  }
+  return Boolean(getUser());
 }
 
 export function mustChangePassword(): boolean {
-  const user = getUser();
-  if (user?.mustChangePassword) return true;
-  const token = getToken();
-  if (!token) return false;
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return Boolean(payload.mustChangePassword);
-  } catch {
-    return false;
-  }
+  return Boolean(getUser()?.mustChangePassword);
 }
 
 /** Non-admin users must enroll authenticator before using the dashboard. */
 export function mustSetupTotp(): boolean {
   const user = getUser();
-  const token = getToken();
-  let role = user?.role;
-  let totpEnabled = user?.totpEnabled === true;
-  // undefined = unknown; false = server said not required (isDemo)
-  let mustSetup: boolean | undefined =
-    typeof user?.mustSetupTotp === 'boolean' ? user.mustSetupTotp : undefined;
-
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      role = role || payload.role;
-      // Either store or JWT saying enabled is enough (avoids stale-flag loops).
-      if (payload.totpEnabled === true) totpEnabled = true;
-      if (typeof payload.mustSetupTotp === 'boolean') {
-        mustSetup = payload.mustSetupTotp;
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  if (role === 'ADMIN') return false;
-  let microsoftLinked = user?.microsoftLinked === true;
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.microsoftLinked === true) microsoftLinked = true;
-    } catch {
-      // ignore
-    }
-  }
-  if (microsoftLinked) return false;
-  // Enabled authenticator always wins over a stale mustSetupTotp flag.
-  if (totpEnabled) return false;
-  // Explicit server false (password-only demo / Microsoft-linked accounts)
-  if (mustSetup === false) return false;
-  if (mustSetup === true) return true;
-  // Non-admin without confirmed TOTP must enroll
-  return Boolean(role);
+  if (!user) return false;
+  if (user.role === 'ADMIN') return false;
+  if (user.microsoftLinked === true) return false;
+  if (user.totpEnabled === true) return false;
+  if (user.mustSetupTotp === false) return false;
+  if (user.mustSetupTotp === true) return true;
+  return Boolean(user.role);
 }
 
 /** Post-auth destination: password change → authenticator → dashboard. */
@@ -128,11 +96,11 @@ export function getPostAuthDestination(
   intendedDashboardPath?: string | null,
 ): string {
   if (user.mustChangePassword) return '/set-password/';
-  // Respect mustSetupTotp: false for isDemo / already waived accounts.
   const needsTotp =
     user.role !== 'ADMIN' &&
     user.totpEnabled !== true &&
-    user.mustSetupTotp !== false;
+    user.mustSetupTotp !== false &&
+    user.microsoftLinked !== true;
   if (needsTotp) {
     return '/setup-authenticator/';
   }
@@ -140,12 +108,24 @@ export function getPostAuthDestination(
 }
 
 export function authHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+  return { 'Content-Type': 'application/json' };
 }
 
-/** Authorization only — for FormData / multipart (do not set Content-Type). */
+/** For FormData / multipart (do not set Content-Type). Cookie carries the session. */
 export function authTokenHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return {};
+}
+
+/** Restore user from httpOnly cookie after Microsoft redirect (`?ms_ok=1`). */
+export async function fetchSessionUser(): Promise<AuthUser | null> {
+  if (!API_URL) return null;
+  const res = await apiFetch(`${API_URL}/auth/me`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null);
+  const user = data?.user as AuthUser | undefined;
+  if (!user?.id || !user?.email || !user?.role) return null;
+  setAuth(null, user);
+  return user;
 }

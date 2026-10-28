@@ -11,7 +11,7 @@ import {
   mustSetupTotp,
   updateStoredUser,
 } from "../../lib/auth";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import DashboardSidebar from "../DashboardSidebar";
 import {
   buildCategoryFilterOptions,
@@ -105,7 +105,7 @@ export default function DashboardWorkspace() {
     // Refresh profile so assignedProjects stay current after Admin edits.
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/users/me`, { headers: authHeaders() });
+        const res = await apiFetch(`${API_URL}/users/me`, { headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         const next: AuthUser = {
@@ -153,7 +153,7 @@ export default function DashboardWorkspace() {
       const headers = authHeaders();
       const isRequester = currentUser.role === "REQUESTER";
       const expensesUrl = isRequester ? `${API_URL}/expenses/mine` : `${API_URL}/expenses`;
-      const expensesResponse = await fetch(expensesUrl, { headers });
+      const expensesResponse = await apiFetch(expensesUrl, { headers });
 
       if (!expensesResponse.ok) {
         throw new Error("Failed to load dashboard data from backend.");
@@ -190,9 +190,9 @@ export default function DashboardWorkspace() {
     try {
       const headers = authHeaders();
       const [catRes, projRes, countryRes] = await Promise.all([
-        fetch(`${API_URL}/categories/active`, { headers }),
-        fetch(`${API_URL}/projects/active`, { headers }),
-        fetch(`${API_URL}/countries/active`, { headers }),
+        apiFetch(`${API_URL}/categories/active`, { headers }),
+        apiFetch(`${API_URL}/projects/active`, { headers }),
+        apiFetch(`${API_URL}/countries/active`, { headers }),
       ]);
       if (catRes.ok) setActiveCategories(await catRes.json());
       if (projRes.ok) setActiveProjects(await projRes.json());
@@ -233,7 +233,7 @@ export default function DashboardWorkspace() {
       let expense = expenses.find((e) => e.id === expenseId) || null;
       if (!expense) {
         try {
-          const res = await fetch(`${API_URL}/expenses/${encodeURIComponent(expenseId)}`, {
+          const res = await apiFetch(`${API_URL}/expenses/${encodeURIComponent(expenseId)}`, {
             headers: authHeaders(),
           });
           if (res.ok) {

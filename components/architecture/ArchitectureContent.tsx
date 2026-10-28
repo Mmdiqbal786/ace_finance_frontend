@@ -74,13 +74,6 @@ export default function ArchitectureContent() {
       tone: "sky",
     },
     {
-      id: "pdf",
-      label: "Download PDF",
-      href: "/architecture/Aceolution_Finance_Architecture.pdf",
-      external: true,
-      tone: "emerald",
-    },
-    {
       id: "docs",
       label: "Open full documentation",
       href: "/docs-guide/",

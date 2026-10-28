@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import FormField, { RequiredFieldsNote } from "../FormField";
 import { useFormValidation } from "../../hooks/useFormValidation";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import { readApiError } from "../../lib/apiError";
 import {
   AuthUser,
@@ -160,7 +160,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/users/me`, { headers: authHeaders() });
+        const res = await apiFetch(`${API_URL}/users/me`, { headers: authHeaders() });
         if (!res.ok) throw new Error(await readApiError(res, "Failed to load profile."));
         const data = await res.json();
         if (cancelled) return;
@@ -205,7 +205,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     (async () => {
       setTotpLoading(true);
       try {
-        const res = await fetch(`${API_URL}/auth/totp/status`, { headers: authHeaders() });
+        const res = await apiFetch(`${API_URL}/auth/totp/status`, { headers: authHeaders() });
         if (!res.ok) throw new Error(await readApiError(res, "Failed to load authenticator status."));
         const data = await res.json();
         if (!cancelled) {
@@ -231,7 +231,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     setTotpBusy(true);
     setTotpError("");
     try {
-      const res = await fetch(`${API_URL}/auth/totp/setup`, {
+      const res = await apiFetch(`${API_URL}/auth/totp/setup`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
       });
@@ -254,7 +254,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     setTotpBusy(true);
     setTotpError("");
     try {
-      const res = await fetch(`${API_URL}/auth/totp/enable`, {
+      const res = await apiFetch(`${API_URL}/auth/totp/enable`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({ code: totpEnableCode }),
@@ -319,7 +319,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     setTotpBusy(true);
     setTotpError("");
     try {
-      const res = await fetch(`${API_URL}/auth/totp/replace/send-code`, {
+      const res = await apiFetch(`${API_URL}/auth/totp/replace/send-code`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({ password: totpReplacePassword }),
@@ -354,7 +354,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     setTotpBusy(true);
     setTotpError("");
     try {
-      const res = await fetch(`${API_URL}/auth/totp/replace/setup`, {
+      const res = await apiFetch(`${API_URL}/auth/totp/replace/setup`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({
@@ -388,7 +388,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     setTotpBusy(true);
     setTotpError("");
     try {
-      const res = await fetch(`${API_URL}/auth/totp/disable/send-code`, {
+      const res = await apiFetch(`${API_URL}/auth/totp/disable/send-code`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({ password: totpDisablePassword }),
@@ -423,7 +423,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     setTotpBusy(true);
     setTotpError("");
     try {
-      const res = await fetch(`${API_URL}/auth/totp/disable`, {
+      const res = await apiFetch(`${API_URL}/auth/totp/disable`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({
@@ -466,7 +466,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     setProfileSaving(true);
     setProfileError("");
     try {
-      const res = await fetch(`${API_URL}/users/me`, {
+      const res = await apiFetch(`${API_URL}/users/me`, {
         method: "PUT",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({ name: editName.trim() }),
@@ -512,7 +512,7 @@ export default function ProfilePanel({ currentUser, onProfileUpdated }: ProfileP
     setPasswordSaving(true);
     setPasswordError("");
     try {
-      const res = await fetch(`${API_URL}/auth/change-password`, {
+      const res = await apiFetch(`${API_URL}/auth/change-password`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),

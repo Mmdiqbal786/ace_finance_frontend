@@ -12,7 +12,7 @@ import ConfirmDialog from "../ConfirmDialog";
 import StatusToggle from "../StatusToggle";
 import { usePaginatedList } from "../../hooks/usePaginatedList";
 import { useFormValidation } from "../../hooks/useFormValidation";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import { AuthUser, authHeaders } from "../../lib/auth";
 import { readApiError } from "../../lib/apiError";
 import { toast } from "../../lib/toast";
@@ -100,7 +100,7 @@ export default function UsersPanel({
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/users`, { headers: authHeaders() });
+      const res = await apiFetch(`${API_URL}/users`, { headers: authHeaders() });
       if (res.ok) setUsers(await res.json());
     } catch {
       toast.error("Failed to load users");
@@ -146,7 +146,7 @@ export default function UsersPanel({
       return;
     }
     try {
-      const res = await fetch(`${API_URL}/users`, {
+      const res = await apiFetch(`${API_URL}/users`, {
         method: "POST",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({
@@ -183,7 +183,7 @@ export default function UsersPanel({
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`${API_URL}/users/${id}`, {
+      const res = await apiFetch(`${API_URL}/users/${id}`, {
         method: "DELETE",
         headers: authHeaders() as HeadersInit,
       });
@@ -198,7 +198,7 @@ export default function UsersPanel({
 
   const handleToggle = async (user: ManagedUser) => {
     try {
-      const res = await fetch(`${API_URL}/users/${user._id}`, {
+      const res = await apiFetch(`${API_URL}/users/${user._id}`, {
         method: "PUT",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify({ isActive: !user.isActive }),
@@ -253,7 +253,7 @@ export default function UsersPanel({
         body.password = editPassword;
       }
 
-      const res = await fetch(`${API_URL}/users/${selected._id}`, {
+      const res = await apiFetch(`${API_URL}/users/${selected._id}`, {
         method: "PUT",
         headers: authHeaders() as HeadersInit,
         body: JSON.stringify(body),

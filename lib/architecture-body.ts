@@ -114,9 +114,9 @@ export const ARCHITECTURE_PAGE_BODY_HTML = `
   <div class="section-title">Repo files &amp; PDF</div>
   <div class="block info">
     <strong>Download PDF (this site):</strong>
-    <a href="/architecture/Aceolution_Finance_Architecture.pdf" target="_blank" rel="noopener">
-      Aceolution_Finance_Architecture.pdf
-    </a><br/><br/>
+    Architecture PDF is kept in the private repo path
+    <code>docs/Architecture/Aceolution_Finance_Architecture.pdf</code>
+    (not published as a public static URL).<br/><br/>
     Git-tracked sources (frontend repo — also mirrored in backend):<br/>
     <code>docs/Architecture/README.md</code><br/>
     <code>docs/Architecture/aceolution_finance_architecture.md</code><br/>

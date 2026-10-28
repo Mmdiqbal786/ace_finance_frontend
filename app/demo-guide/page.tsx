@@ -7,7 +7,7 @@ import {
   isDemoGuideUnlocked,
   unlockDemoGuideAccess,
 } from "../../lib/demo-guide";
-import { API_URL } from "../../lib/api";
+import { API_URL, apiFetch } from "../../lib/api";
 import AppIcon from "../../components/icons/AppIcon";
 
 export default function DemoGuideGatePage() {
@@ -38,7 +38,7 @@ export default function DemoGuideGatePage() {
     setSubmitting(true);
     try {
       // Server-side check — code is not compared in the browser bundle
-      const res = await fetch(`${API_URL}/auth/verify-demo-access`, {
+      const res = await apiFetch(`${API_URL}/auth/verify-demo-access`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessCode: code }),

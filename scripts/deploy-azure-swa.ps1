@@ -54,7 +54,6 @@ if (-not $token -or $token -eq "REPLACE_WITH_AZURE_DEPLOYMENT_TOKEN") {
 foreach ($key in @(
   "NEXT_PUBLIC_API_URL",
   "NEXT_PUBLIC_APP_URL",
-  "NEXT_PUBLIC_DEMO_GUIDE_ACCESS_PASSWORD"
 )) {
   if (-not $deploy[$key]) {
     Write-Error "Missing $key in .env.deploy"
