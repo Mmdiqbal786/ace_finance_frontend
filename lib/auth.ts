@@ -2,8 +2,10 @@ import { resolveAccessibleDashboardPath } from './dashboard/routes';
 import { API_URL, apiFetch } from './api';
 
 const USER_KEY = 'ace_finance_user';
-/** Legacy key — cleared on set/logout so JWTs are not left in localStorage. */
-const LEGACY_TOKEN_KEY = 'ace_finance_token';
+/** Session JWT — sessionStorage (tab-scoped). Needed because FE and API are different sites; httpOnly cookies are often blocked cross-site. */
+const TOKEN_KEY = 'ace_finance_token';
+/** Old localStorage key — always cleared. */
+const LEGACY_LOCAL_TOKEN_KEY = 'ace_finance_token';
 
 export interface AuthUser {
   id: string;
@@ -22,8 +24,12 @@ export interface AuthUser {
 }
 
 export function getToken(): string | null {
-  // Session is httpOnly cookie — JS must not hold the JWT.
-  return null;
+  if (typeof window === 'undefined') return null;
+  try {
+    return sessionStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }
 
 export function getUser(): AuthUser | null {
@@ -36,42 +42,55 @@ export function getUser(): AuthUser | null {
   }
 }
 
-/** Persist profile only. JWT lives in httpOnly cookie set by the API. */
-export function setAuth(_token: string | null | undefined, user: AuthUser): void {
+/**
+ * Persist profile + access token.
+ * Bearer is required for live (SWA ↔ App Service cross-site); httpOnly cookie alone is unreliable there.
+ */
+export function setAuth(token: string | null | undefined, user: AuthUser): void {
   try {
-    localStorage.removeItem(LEGACY_TOKEN_KEY);
+    localStorage.removeItem(LEGACY_LOCAL_TOKEN_KEY);
   } catch {
     // ignore
   }
   localStorage.setItem(USER_KEY, JSON.stringify(user));
+  try {
+    if (token?.trim()) {
+      sessionStorage.setItem(TOKEN_KEY, token.trim());
+    }
+  } catch {
+    // ignore
+  }
 }
 
 export function updateStoredUser(partial: Partial<AuthUser>): void {
   const user = getUser();
   if (!user) return;
-  setAuth(null, { ...user, ...partial });
+  setAuth(getToken(), { ...user, ...partial });
 }
 
 export async function logout(): Promise<void> {
   try {
     if (API_URL) {
-      await apiFetch(`${API_URL}/auth/logout`, { method: 'POST' });
+      await apiFetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        headers: authHeaders(),
+      });
     }
   } catch {
     // ignore network errors on sign-out
   }
   try {
     localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(LEGACY_TOKEN_KEY);
+    localStorage.removeItem(LEGACY_LOCAL_TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
   } catch {
     // ignore
   }
   window.location.href = '/login';
 }
 
-/** True when a profile is stored; API cookie is validated on the next request. */
 export function isAuthenticated(): boolean {
-  return Boolean(getUser());
+  return Boolean(getUser() && getToken());
 }
 
 export function mustChangePassword(): boolean {
@@ -108,15 +127,22 @@ export function getPostAuthDestination(
 }
 
 export function authHeaders(): HeadersInit {
-  return { 'Content-Type': 'application/json' };
+  const token = getToken();
+  return token
+    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' };
 }
 
-/** For FormData / multipart (do not set Content-Type). Cookie carries the session. */
+/** For FormData / multipart (do not set Content-Type). */
 export function authTokenHeaders(): HeadersInit {
-  return {};
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-/** Restore user from httpOnly cookie after Microsoft redirect (`?ms_ok=1`). */
+/**
+ * After Microsoft redirect (`?ms_ok=1`): cookie may work; if not, login page
+ * also accepts `#ms_token=` (set by API callback for cross-site SPAs).
+ */
 export async function fetchSessionUser(): Promise<AuthUser | null> {
   if (!API_URL) return null;
   const res = await apiFetch(`${API_URL}/auth/me`, {
@@ -126,6 +152,7 @@ export async function fetchSessionUser(): Promise<AuthUser | null> {
   const data = await res.json().catch(() => null);
   const user = data?.user as AuthUser | undefined;
   if (!user?.id || !user?.email || !user?.role) return null;
-  setAuth(null, user);
+  // Keep existing Bearer if we already have one; cookie-only me does not return a new token.
+  setAuth(getToken(), user);
   return user;
 }

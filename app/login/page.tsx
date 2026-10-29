@@ -208,8 +208,31 @@ function LoginForm() {
       }
       return;
     }
-    // Preferred: httpOnly cookie set by API callback (`?ms_ok=1`)
+    // Cross-site live (SWA → App Service): use hash token. Cookie alone often blocked.
+    const msToken = qp('ms_token');
     const msOk = searchParams.get('ms_ok');
+    if (msToken) {
+      try {
+        window.history.replaceState(
+          null,
+          '',
+          `${window.location.pathname}`,
+        );
+      } catch {
+        // ignore
+      }
+      const user = userFromAccessToken(msToken);
+      if (!user) {
+        setError('Microsoft sign-in returned an invalid session. Try again.');
+        setMicrosoftBusy(false);
+        return;
+      }
+      setMicrosoftBusy(true);
+      setAuth(msToken, user);
+      goAfterLogin(user);
+      return;
+    }
+
     if (msOk === '1') {
       setMicrosoftBusy(true);
       void (async () => {
@@ -224,32 +247,15 @@ function LoginForm() {
         }
         const user = await fetchSessionUser();
         if (!user) {
-          setError('Microsoft sign-in session expired. Try again.');
+          setError(
+            'Microsoft sign-in session expired. Sign out and try Sign in with Microsoft again.',
+          );
           setMicrosoftBusy(false);
           return;
         }
         goAfterLogin(user);
       })();
-      return;
     }
-
-    // Legacy hash token (older API builds) — still accepted once, then cookie path preferred
-    const msToken = qp('ms_token');
-    if (!msToken) return;
-    try {
-      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
-    } catch {
-      // ignore
-    }
-    const user = userFromAccessToken(msToken);
-    if (!user) {
-      setError('Microsoft sign-in returned an invalid session. Try again.');
-      setMicrosoftBusy(false);
-      return;
-    }
-    setMicrosoftBusy(true);
-    setAuth(msToken, user);
-    goAfterLogin(user);
   }, [searchParams]);
 
   const showFullPageLoader = !guestAllowed;
