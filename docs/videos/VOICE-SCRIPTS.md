@@ -1,22 +1,16 @@
 # Aceolution Finance — Role walkthrough voice scripts (Demo)
 
-Use with the silent screen recordings in `docs/videos/role-walkthroughs/`.
+Use with silent recordings in `docs/videos/role-walkthroughs/`.
 
-**How to add voice**
+**How to add voice:** Clipchamp / CapCut / PowerPoint → import `.webm` → narrate or TTS → export MP4.
 
-1. Open Clipchamp, CapCut, or PowerPoint.
-2. Import the matching `.webm` (or convert to MP4 first).
-3. Record your voice (or paste script into free TTS) and align to the pauses in the video.
-4. Export MP4 for sharing / Teams / training.
-
-**Accounts (Demo)**
+**Demo accounts**
 
 - Requester: Demo Access → Requester GAC · `Requester@1234`
 - Approver: Demo Access → Approver Media · `Approver@1234`
 - Processor: Demo Access → Alisha · `Processor@1234`
-- Admin: Use password → `finance@aceolution.com` · `Admin@1234` → Choose **Demo / training data**
-
-Access code for Demo Access / demo-guide: `Aceolution_2024`
+- Admin: password → `finance@aceolution.com` · `Admin@1234` → **Demo / training data**
+- Access code: `Aceolution_2024`
 
 ---
 
@@ -24,13 +18,15 @@ Access code for Demo Access / demo-guide: `Aceolution_2024`
 
 | Beat | Say |
 |------|-----|
-| Login | Welcome to Aceolution Finance. This is the Requester flow in the Demo workspace. |
-| Demo Access | On the login page, choose Demo Access, unlock with the access code, then pick Requester GAC and sign in. |
-| Dashboard | After login you land on the Dashboard. The Demo badge means you are in the sandbox — not live company data. |
-| Submit | Open Submit Expense. Here the requester chooses country, project, category, amount, description, and attaches an invoice PDF or image, then submits for manager approval. |
-| My Requests | Open My Requests to track status — pending approver, changes requested, approved, paid, or rejected. |
-| Home | Back on Dashboard you see a spend overview for your requests. |
-| Sign out | Sign out when finished. That completes the Requester walkthrough. |
+| Open | Requester flow in the Demo sandbox — success, errors, and duplicate detection. |
+| Login | Unlock Demo Access, pick Requester GAC, and sign in. |
+| Error validation | First, submit without an attachment. The form blocks the request and highlights what is missing. |
+| Error file type | A disallowed file type is rejected — only PDF or image invoices are allowed. |
+| Success | Now a valid submit: country, project, category, due date, amount, description, and invoice. Confirm and Submit. Success — Expense request submitted with an Expense ID. Click Dismiss to continue. |
+| Hard duplicate | Submit the same invoice file again. Hard duplicate — exact file already used. The request is blocked and nothing is created. Dismiss the notice. |
+| Soft duplicate | Submit again with a new file but the same project, category, amount, and date window. Potential Duplicate Detected. Confirm it is a separate expense, then Confirm and Submit Expense. Dismiss the success notice. |
+| My Requests | Open My Requests to track every status — pending, changes requested, approved, paid, or rejected. |
+| Done | Sign out. Next: Approver reviews these requests. |
 
 ---
 
@@ -38,12 +34,13 @@ Access code for Demo Access / demo-guide: `Aceolution_2024`
 
 | Beat | Say |
 |------|-----|
-| Login | This is the Approver flow in Demo. Sign in with Demo Access as Approver Media. |
-| Dashboard | The Approver sees a dashboard overview and a badge for pending items when work is waiting. |
-| Approver panel | Open Approver. This panel lists expense requests for projects assigned to you. |
-| Open row | Open a request to review amount, project, attachment, and notes. From here you can Approve, Reject, or Request Changes — we will only view in this training clip. |
-| Analytics | Analytics and Tracker shows reports for expenses you can access. |
-| Sign out | Sign out. That completes the Approver walkthrough. |
+| Open | Approver flow in Demo. Sign in as Approver Media. |
+| Panel | Approver Panel lists expenses waiting for manager sign-off. |
+| Approve | Actions → Approve → optional notes → Confirm. Ready for Processor. |
+| Request changes | Request Changes → explain what to fix → Send. Goes back to the Requester. |
+| Reject | Reject → clear reason → Confirm. Terminal rejection by manager. |
+| Report | Analytics and Tracker → Export Excel Report. |
+| Done | Sign out. Next: Processor payout. |
 
 ---
 
@@ -51,12 +48,12 @@ Access code for Demo Access / demo-guide: `Aceolution_2024`
 
 | Beat | Say |
 |------|-----|
-| Login | This is the Processor, or finance payout, flow in Demo. Sign in with Demo Access as Alisha. |
-| Dashboard | After login you see the Dashboard for the Demo workspace. |
-| Processor panel | Open Processor. Manager-approved expenses appear here for payment. |
-| Open row | Open a row to review details. You can Mark Paid, Partially Paid, Reject Payout, or Request Changes — view only in this clip. |
-| Analytics | Analytics and Tracker supports finance reporting across accessible expenses. |
-| Sign out | Sign out. That completes the Processor walkthrough. |
+| Open | Processor flow in Demo. Sign in as Alisha. |
+| Full pay | Mark Paid → attach payment receipt → Confirm. Full payment recorded. |
+| Partial | Partially Paid → amount now → receipt → Record Partial Payment. |
+| Changes | Request Changes → Approver or Requester → Send. |
+| Reject payout | Reject Payout with a reason when finance will not pay. |
+| Done | Sign out. Next: Admin setup. |
 
 ---
 
@@ -64,17 +61,15 @@ Access code for Demo Access / demo-guide: `Aceolution_2024`
 
 | Beat | Say |
 |------|-----|
-| Login | This is the Admin flow. Use password instead, sign in as finance at aceolution.com, then choose Demo workspace. |
-| Demo badge | Confirm the Demo badge — catalog and user changes stay in the sandbox. |
-| Users | Open User Management to create and manage staff, roles, and project assignments. |
-| Projects | Projects defines what requesters can pick when submitting expenses. |
-| Categories | Categories controls expense types on the submit form. |
-| Approver / Processor | Admins can also open Approver and Processor panels for oversight. |
-| Analytics | Analytics and Tracker gives a full workspace view. |
-| Sign out | Sign out. That completes the Admin walkthrough. |
+| Open | Admin flow. Password login → choose Demo workspace. |
+| Projects | Create, edit, then delete a training project. |
+| Categories | Create, edit, delete a category. |
+| Countries | Create, edit, delete a country and currency. |
+| Users | Create a Demo Access user, edit, then delete. |
+| Done | Sign out. Admin catalog and users covered. |
 
 ---
 
-## End-to-end story (optional intro for a combined edit)
+## Combined story (optional intro)
 
-> Aceolution Finance moves spend from submit to pay: the Requester submits, the Approver reviews, the Processor pays, and Admin configures users and catalogs. These four Demo clips show each role’s main screens without changing live data.
+> Requesters submit with validation, hard-duplicate block, and soft-duplicate confirm. Approvers approve, send changes, or reject and export reports. Processors pay in full or part, send changes back, or reject payout. Admins manage projects, categories, countries, and users — all in Demo.

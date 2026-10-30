@@ -82,22 +82,29 @@ export async function demoAccessLogin(
 
   const gate = page.locator('#demo-gate-code');
   if (await gate.isVisible().catch(() => false)) {
-    await gate.fill(DEMO_CODE);
-    await page.getByRole('button', { name: 'Unlock Demo Access' }).click();
+    const unlocked = await gate.isDisabled().catch(() => false);
+    if (!unlocked) {
+      await gate.fill(DEMO_CODE);
+      const unlockBtn = page.getByRole('button', { name: /Unlock Demo Access/i });
+      await unlockBtn.click();
+    }
   }
 
-  await expect(
-    page.getByRole('button', { name: new RegExp(opts.nameHint, 'i') }).first(),
-  ).toBeVisible({ timeout: 30_000 });
-  await page
+  // Wait out "Checking…" unlock / pack load
+  await expect(page.getByRole('button', { name: /Checking/i })).toHaveCount(0, {
+    timeout: 90_000,
+  }).catch(() => null);
+
+  const persona = page
     .getByRole('button', { name: new RegExp(opts.nameHint, 'i') })
-    .first()
-    .click();
+    .first();
+  await expect(persona).toBeVisible({ timeout: 90_000 });
+  await persona.click();
 
   await page.locator('#demo-persona-password').fill(opts.password);
   await page.getByRole('button', { name: 'Sign in →' }).click();
 
-  await expect(page).toHaveURL(/\/dashboard\/?/, { timeout: 45_000 });
+  await expect(page).toHaveURL(/\/dashboard\/?/, { timeout: 60_000 });
 }
 
 export async function signOutFromDashboard(page: Page) {

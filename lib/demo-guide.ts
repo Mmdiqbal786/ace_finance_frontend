@@ -285,6 +285,7 @@ export const DEMO_ROLE_CAPABILITIES = [
 export const DEMO_SECTIONS = [
   { id: "accounts", label: "Test accounts" },
   { id: "sign-in", label: "Sign in" },
+  { id: "training-videos", label: "Training videos" },
   { id: "workflow", label: "Full workflow" },
   { id: "audit", label: "Audit trail" },
   { id: "roles", label: "Role capabilities" },

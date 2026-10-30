@@ -22,6 +22,10 @@ import {
   fetchDemoGuidePack,
   lockDemoGuideAccess,
 } from "../../lib/demo-guide";
+import {
+  DOCS_WALKTHROUGH_VIDEOS,
+  docsWalkthroughVideoUrl,
+} from "../../lib/docs-videos";
 import GuideActionBar, { type GuideActionItem } from "../guide/GuideActionBar";
 import GuideJumpBar, { useGuideHashJumps } from "../guide/GuideJumpBar";
 import "../docs-guide/docs-guide.css";
@@ -472,9 +476,72 @@ export default function DemoGuideContent() {
             </div>
           </GuideSection>
 
-          {/* 3 Workflow */}
-          <GuideSection id="workflow" title="3) Complete business flow">
-            <div className="section-title">3) Complete business flow</div>
+          {/* 3 Training videos */}
+          <GuideSection id="training-videos" title="3) Training videos">
+            <div className="section-title">3) Training videos</div>
+            <p className="meta">
+              Short Demo-sandbox walkthroughs with voice (Azure Blob — not in Git). Sticky success /
+              duplicate notices need <strong>Dismiss</strong>.
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gap: 16,
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              }}
+            >
+              {DOCS_WALKTHROUGH_VIDEOS.map((v) => (
+                <div
+                  key={v.id}
+                  style={{
+                    border: "1px solid #cbd5e1",
+                    borderRadius: 12,
+                    padding: 12,
+                    background: "#f8fafc",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 800,
+                      fontSize: 14,
+                      color: "#0f172a",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {v.title}
+                  </div>
+                  <p
+                    style={{
+                      margin: "0 0 10px",
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      color: "#64748b",
+                    }}
+                  >
+                    {v.caption}
+                  </p>
+                  <video
+                    controls
+                    preload="metadata"
+                    playsInline
+                    style={{
+                      width: "100%",
+                      borderRadius: 8,
+                      background: "#0f172a",
+                      maxHeight: 220,
+                    }}
+                    src={docsWalkthroughVideoUrl(v.file)}
+                  >
+                    <a href={docsWalkthroughVideoUrl(v.file)}>Download {v.title}</a>
+                  </video>
+                </div>
+              ))}
+            </div>
+          </GuideSection>
+
+          {/* 4 Workflow */}
+          <GuideSection id="workflow" title="4) Complete business flow">
+            <div className="section-title">4) Complete business flow</div>
             <p className="meta">This is the proper path that exercises every major function.</p>
             <div className="block ex">
               <h4>FLOW A — Happy path with partial payment</h4>
@@ -527,9 +594,9 @@ export default function DemoGuideContent() {
             </div>
           </GuideSection>
 
-          {/* 4 Audit */}
-          <GuideSection id="audit" title="4) Verify audit trail">
-            <div className="section-title">4) Verify audit trail</div>
+          {/* 5 Audit */}
+          <GuideSection id="audit" title="5) Verify audit trail">
+            <div className="section-title">5) Verify audit trail</div>
             <div className="block info">
               <h4>Expense Details &amp; Audit</h4>
               Open the paid request and confirm:
@@ -546,9 +613,9 @@ export default function DemoGuideContent() {
             </div>
           </GuideSection>
 
-          {/* 5 Roles */}
-          <GuideSection id="roles" title="5) Role capabilities">
-            <div className="section-title">5) Role capabilities</div>
+          {/* 6 Roles */}
+          <GuideSection id="roles" title="6) Role capabilities">
+            <div className="section-title">6) Role capabilities</div>
             {DEMO_ROLE_CAPABILITIES.map((role) => (
               <div key={role.role} className="block info">
                 <h4>{role.role}</h4>
@@ -557,9 +624,9 @@ export default function DemoGuideContent() {
             ))}
           </GuideSection>
 
-          {/* 6 Status */}
-          <GuideSection id="status" title="6) Typical status flow">
-            <div className="section-title">6) Typical status flow</div>
+          {/* 7 Status */}
+          <GuideSection id="status" title="7) Typical status flow">
+            <div className="section-title">7) Typical status flow</div>
             <div className="status-box">{`Submitted (Pending Approver)
 → optional Changes Requested → edit → resubmit
 → Approved (Pending Processing)
@@ -568,9 +635,9 @@ export default function DemoGuideContent() {
 (or Rejected by Approver / Rejected by Processor)`}</div>
           </GuideSection>
 
-          {/* 7 Security */}
-          <GuideSection id="security" title="7) Security features to try">
-            <div className="section-title">7) Security features to try</div>
+          {/* 8 Security */}
+          <GuideSection id="security" title="8) Security features to try">
+            <div className="section-title">8) Security features to try</div>
             <div className="block info">
               <h4>Checklist</h4>
               <ul style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.55 }}>
@@ -581,9 +648,9 @@ export default function DemoGuideContent() {
             </div>
           </GuideSection>
 
-          {/* 8 UI */}
-          <GuideSection id="ui-checks" title="8) What to watch for in the UI">
-            <div className="section-title">8) What to watch for in the UI</div>
+          {/* 9 UI */}
+          <GuideSection id="ui-checks" title="9) What to watch for in the UI">
+            <div className="section-title">9) What to watch for in the UI</div>
             <div className="block info">
               <h4>UI checks</h4>
               <ul style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.55 }}>

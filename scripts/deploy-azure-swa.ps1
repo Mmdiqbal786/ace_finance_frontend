@@ -1,4 +1,4 @@
-# Requires: Node 20+, npm, Azure Static Web Apps CLI (`npm i -g @azure/static-web-apps-cli`)
+﻿# Requires: Node 20+, npm, Azure Static Web Apps CLI (`npm i -g @azure/static-web-apps-cli`)
 # Usage (from ace_finance_frontend):
 #   .\scripts\deploy-azure-swa.ps1
 #   .\scripts\deploy-azure-swa.ps1 -CleanNodeModules   # also wipe node_modules + npm install
@@ -58,12 +58,24 @@ foreach ($key in @(
   if (-not $deploy[$key]) {
     Write-Error "Missing $key in .env.deploy"
   }
-  Set-Item -Path "Env:$key" -Value $deploy[$key]
+}
+
+# Bake all NEXT_PUBLIC_* from .env.deploy into this build (overrides local .env)
+foreach ($key in $deploy.Keys) {
+  if ($key -like "NEXT_PUBLIC_*") {
+    Set-Item -Path "Env:$key" -Value $deploy[$key]
+  }
 }
 
 Write-Host "==> Production build env (temporary for this process only)" -ForegroundColor Cyan
 Write-Host "    NEXT_PUBLIC_API_URL=$env:NEXT_PUBLIC_API_URL"
 Write-Host "    NEXT_PUBLIC_APP_URL=$env:NEXT_PUBLIC_APP_URL"
+if ($env:NEXT_PUBLIC_DOCS_VIDEOS_BASE_URL) {
+  Write-Host "    NEXT_PUBLIC_DOCS_VIDEOS_BASE_URL=$env:NEXT_PUBLIC_DOCS_VIDEOS_BASE_URL"
+  Write-Host "    NEXT_PUBLIC_DOCS_VIDEOS_SAS=(set)"
+} else {
+  Write-Host "    NEXT_PUBLIC_DOCS_VIDEOS_* not set — Demo Guide videos use default base without SAS"
+}
 Write-Host "    SWA app=$appName env=$swaEnv"
 Write-Host "    Local .env is NOT modified"
 

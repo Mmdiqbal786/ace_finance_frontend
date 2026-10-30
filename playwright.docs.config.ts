@@ -17,7 +17,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: 1,
-  timeout: 180_000,
+  timeout: 600_000,
   expect: { timeout: 30_000 },
   outputDir: 'test-results/docs-walkthroughs',
   reporter: [['list']],

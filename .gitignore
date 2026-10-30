@@ -19,6 +19,13 @@
 # Large walkthrough recordings (regenerate: npm run test:e2e:docs)
 /docs/videos/role-walkthroughs/*.webm
 /docs/videos/role-walkthroughs/*.mp4
+/docs/videos/role-walkthroughs/with-voice/*.mp4
+/docs/videos/role-walkthroughs/with-voice/azure-urls.env
+/docs/videos/voice-narration/*.wav
+/e2e/fixtures/inv-*.png
+/e2e/fixtures/bad-invoice.txt
+# Local VAPT evidence (repo root)
+/../vapt-evidence/
 
 # next.js
 /.next/
