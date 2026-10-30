@@ -118,28 +118,44 @@ test.describe('Microsoft MFA full login @vapt @mfa', () => {
       const outDir = path.join(process.cwd(), 'test-results');
       fs.mkdirSync(outDir, { recursive: true });
       fs.writeFileSync(path.join(outDir, 'mfa-number.txt'), note, 'utf8');
-
-      await page.waitForURL(/finance\.aceolution\.com/i, {
-        timeout: MFA_TIMEOUT_MS,
-      });
-    } else if (!/finance\.aceolution\.com/i.test(page.url())) {
-      // Might still be on Entra — wait for app
-      await page.waitForURL(/finance\.aceolution\.com/i, {
-        timeout: MFA_TIMEOUT_MS,
-      });
     }
 
-    // Workspace picker or dashboard
-    if (/\/login/i.test(page.url())) {
-      const live = page.getByRole('button', {
-        name: /Production|Live company data/i,
-      });
-      if (await live.first().isVisible({ timeout: 15_000 }).catch(() => false)) {
-        await live.first().click();
+    // After MFA, Entra may show "Stay signed in?" before redirecting
+    const deadline = Date.now() + MFA_TIMEOUT_MS;
+    while (
+      Date.now() < deadline &&
+      !/finance\.aceolution\.com/i.test(page.url())
+    ) {
+      if (await stayNo.first().isVisible().catch(() => false)) {
+        await stayNo.first().click();
+        continue;
       }
+      await page.waitForTimeout(500);
+    }
+    await expect(page).toHaveURL(/finance\.aceolution\.com/i, {
+      timeout: Math.max(5_000, deadline - Date.now()),
+    });
+
+    // Choose Workspace (dual-store) → Live / Production
+    const chooseWs = page.getByRole('heading', { name: /Choose Workspace/i });
+    if (await chooseWs.isVisible({ timeout: 20_000 }).catch(() => false)) {
+      const live = page
+        .getByRole('button')
+        .filter({ hasText: /Live company data/i })
+        .first();
+      await expect(live).toBeVisible({ timeout: 10_000 });
+      await Promise.all([
+        page.waitForResponse(
+          (r) =>
+            /\/auth\/select-workspace\/?$/i.test(r.url()) &&
+            r.request().method() === 'POST',
+          { timeout: 60_000 },
+        ),
+        live.click(),
+      ]);
     }
 
-    await expect(page).toHaveURL(/\/dashboard\/?/, { timeout: 60_000 });
+    await expect(page).toHaveURL(/\/dashboard\/?/, { timeout: 90_000 });
     await expect(
       page.getByRole('heading', { name: /Dashboard/i }).first(),
     ).toBeVisible({ timeout: 30_000 });
