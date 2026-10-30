@@ -106,7 +106,11 @@ export const ARCHITECTURE_PAGE_BODY_HTML = `
   <div class="block ok">
     Prefer <strong>Demo</strong> workspace or Demo Access for destructive tests.
     Microsoft allows customer pen-tests of <em>your</em> Azure web apps under their Cloud Unified Penetration Testing Rules of Engagement
-    (no DoS, no other tenants). Checklist in repo: <code>docs/Architecture/AUTH_LIVE_DEMO_STORES.md</code>.
+    (no DoS, no other tenants).<br/><br/>
+    <strong>Automated:</strong> backend <code>npm run test:api:vapt</code> · frontend <code>npm run test:e2e</code>.
+    Docs: <code>INTERNAL_VAPT_CHECKLIST.md</code> · <code>INTERNAL_VAPT_REPORT_2026-10-29.md</code> ·
+    <code>AUTH_LIVE_DEMO_STORES.md</code>.<br/><br/>
+    Production: Swagger off; catalogs/FX/expenses require JWT; unauthorized peer expense → 404.
   </div>
 </div>
 

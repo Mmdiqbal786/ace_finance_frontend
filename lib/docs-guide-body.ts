@@ -100,8 +100,15 @@ export const DOCS_GUIDE_BODY_HTML = `
           <h4>Security / VAPT note</h4>
           Preferred destructive testing: use <strong>Demo</strong> workspace or Demo Access so Live data stays untouched.
           Microsoft allows customer pen-tests of <em>your</em> Azure web apps under their Cloud Unified Penetration Testing Rules of Engagement
-          (no DoS, no other tenants). Full scope checklist:
-          <code>docs/Architecture/AUTH_LIVE_DEMO_STORES.md</code>.
+          (no DoS, no other tenants).<br/><br/>
+          <strong>Automated retest (repo):</strong><br/>
+          API — <code>ace_finance_backend</code> → <code>npm run test:api:vapt</code><br/>
+          UI — <code>ace_finance_frontend</code> → <code>npm run test:e2e</code> / <code>npm run test:e2e:vapt</code><br/>
+          Checklist / report: <code>docs/Architecture/INTERNAL_VAPT_CHECKLIST.md</code> ·
+          <code>INTERNAL_VAPT_REPORT_2026-10-29.md</code> · stores:
+          <code>AUTH_LIVE_DEMO_STORES.md</code>.<br/><br/>
+          Live API Swagger (<code>/api/docs</code>) is <strong>off</strong> in production. Catalogs, FX, and expense APIs require Bearer JWT
+          (no anonymous track). Peer expense / invoice IDs return <strong>404</strong> (not 403) when unauthorized.
         </div>
 
         <div class="block info">

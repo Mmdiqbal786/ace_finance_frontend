@@ -104,7 +104,7 @@ export const SOP_SLIDES: SopSlide[] = [
       "Microsoft (primary) · Demo Access (dynamic isDemo list) · Use password instead",
       "Dual-store email → Choose Workspace with role per store",
       "Microsoft-linked: no password / forgot-password",
-      "VAPT: prefer Demo workspace for destructive tests",
+      "VAPT: prefer Demo workspace; retest with npm run test:api:vapt + npm run test:e2e",
     ],
   },
 
