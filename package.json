@@ -11,8 +11,9 @@
     "preview": "npx --yes serve@14 out",
     "lint": "eslint",
     "deploy:azure": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/deploy-azure-swa.ps1",
-    "test:e2e": "playwright test",
-    "test:e2e:vapt": "playwright test --grep @vapt",
+    "test:e2e": "playwright test --grep-invert @mfa",
+    "test:e2e:vapt": "playwright test --grep @vapt --grep-invert @mfa",
+    "test:e2e:mfa": "playwright test --grep @mfa --headed",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
