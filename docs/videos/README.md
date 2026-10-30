@@ -29,23 +29,17 @@ Outputs land in `role-walkthroughs/`:
 Live app: https://finance.aceolution.com/  
 Demo guide: https://finance.aceolution.com/demo-guide/ (code `Aceolution_2024`)
 
-## Add voice
+## Add voice (baked into the MP4)
 
-Voice WAV scripts (Windows TTS from [VOICE-SCRIPTS.md](./VOICE-SCRIPTS.md)) live in `voice-narration/`.
+Narration is **action-timed** and **muxed into** the MP4 — one file with picture + sound (not a separate audio track).
 
-Mux with ffmpeg (full video length; audio padded if shorter):
-
-```bash
+```powershell
 # after: winget install Gyan.FFmpeg
-ffmpeg -y -i role-walkthroughs/01-requester-demo.webm -i voice-narration/01-requester.wav ^
-  -filter_complex "[1:a]apad[aud]" -map 0:v:0 -map "[aud]" ^
-  -c:v libx264 -pix_fmt yuv420p -c:a aac -b:a 128k -shortest ^
-  role-walkthroughs/with-voice/01-requester-demo.mp4
+powershell -ExecutionPolicy Bypass -File scripts/build-docs-voice.ps1
 ```
 
-Ready MP4s (with voice): `role-walkthroughs/with-voice/*.mp4`
-
-Or import each `.webm` into Clipchamp / CapCut and narrate from VOICE-SCRIPTS.md.
+Scripts / timing: [VOICE-SCRIPTS.md](./VOICE-SCRIPTS.md)  
+Output: `role-walkthroughs/with-voice/*.mp4`
 
 ## Live (Azure Blob + Demo Guide)
 

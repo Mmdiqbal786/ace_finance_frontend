@@ -34,5 +34,6 @@ if ($copied -lt 4) {
   Write-Warning "Expected 4 videos, copied $copied. Check test-results\docs-walkthroughs"
 } else {
   Write-Host "OK — $copied videos in $dest"
-  Write-Host "Add voice using docs\videos\VOICE-SCRIPTS.md (Clipchamp / CapCut)."
+  Write-Host "Bake timed voice into MP4s: powershell -File scripts/build-docs-voice.ps1"
+  Write-Host "Then upload: npm run docs:upload-videos"
 }

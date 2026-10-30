@@ -22,6 +22,8 @@
 /docs/videos/role-walkthroughs/with-voice/*.mp4
 /docs/videos/role-walkthroughs/with-voice/azure-urls.env
 /docs/videos/voice-narration/*.wav
+/docs/videos/voice-narration/segments/
+/docs/videos/_frames/
 /e2e/fixtures/inv-*.png
 /e2e/fixtures/bad-invoice.txt
 # Local VAPT evidence (repo root)
