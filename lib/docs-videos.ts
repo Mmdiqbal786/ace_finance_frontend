@@ -33,13 +33,14 @@ export const DOCS_WALKTHROUGH_VIDEOS: DocsWalkthroughVideo[] = [
     title: "01 — Requester",
     file: "role-walkthroughs/01-requester-demo.mp4",
     caption:
-      "Validation & bad-file errors · successful submit · hard duplicate (same file blocked) · soft / potential duplicate · My Requests. Sticky notices need Dismiss.",
+      "Assigned projects only · local currency → USD/FX · validation & bad file · success + emails · hard duplicate (same file) · soft/potential duplicate (confirm) · My Requests + View FX. Sticky notices need Dismiss.",
   },
   {
     id: "approver",
     title: "02 — Approver",
     file: "role-walkthroughs/02-approver-demo.mp4",
-    caption: "Approve · request changes · reject · Analytics Excel export.",
+    caption:
+      "Assigned projects only · Approve (processors emailed) · Request Changes · Reject · Analytics Excel export.",
   },
   {
     id: "processor",

@@ -25,14 +25,24 @@ export default defineConfig({
     baseURL,
     trace: 'off',
     screenshot: 'off',
-    video: 'on',
+    // Higher-res recording for Demo Guide training videos
+    video: { mode: 'on', size: { width: 1920, height: 1080 } },
     ignoreHTTPSErrors: true,
-    viewport: { width: 1440, height: 900 },
+    viewport: { width: 1920, height: 1080 },
+    deviceScaleFactor: 1,
+    launchOptions: {
+      // Slight slowdown so clicks/fills are readable on the recording
+      slowMo: 120,
+    },
   },
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1920, height: 1080 },
+        deviceScaleFactor: 1,
+      },
     },
   ],
 });

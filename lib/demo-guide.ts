@@ -163,14 +163,16 @@ export const DEMO_FLOW_A_STEPS: DemoFlowStep[] = [
     id: "A1",
     title: "Requester creates expense",
     body: [
-      "Login as Requester (Media) → Submit Expense",
-      "Project dropdown shows only assigned projects (GAC / GNL for the primary Media requester)",
-      "Fill: Country (auto currency) · Project · Category · Local amount · Due date · Description · Invoice file (invoice number/date optional)",
-      "Attachment shows PDF/image preview under the field",
-      "Submit → Confirm submission modal (review all details + attachment) → Confirm & Submit",
-      "System stores USD amount + FX rate + date",
-      "Status becomes Pending Approver — only Approvers assigned to that project get the email",
-      "Check My Requests and confirmation email",
+      "Login as Requester (Media or Demo Access persona) → Submit Expense",
+      "Project dropdown shows only Admin-assigned projects (e.g. Requester GAC → GAC only)",
+      "Fill: Country (sets local currency) · Project · Category · Local amount · Due date · Description · Invoice (PDF/image; invoice #/date optional)",
+      "Attachment preview under the field",
+      "Submit → Confirm submission (local details) → Confirm & Submit",
+      "Server converts local amount → USD and stores FX rate + rate date (View shows USD + FX line)",
+      "Status → Awaiting Manager Approval",
+      "Emails: requester “submitted”; approvers assigned to that project “awaiting approval”",
+      "Hard duplicate (same file / conflicting invoice #) blocks create; soft/potential duplicate (same project+category+amount within ±1 day) needs confirm",
+      "Track in My Requests; sticky success/error notices need Dismiss",
     ],
     tip: "To demo Systems/Ops projects, use Demo Access (or the matching @acefinance.com personas) for the project-scoped Requester + Approver pair.",
   },
@@ -184,11 +186,19 @@ export const DEMO_FLOW_A_STEPS: DemoFlowStep[] = [
       "Choose one action:",
     ],
     actions: [
-      { action: "Approve", result: "Moves to Processor queue (Pending Processing). Notes saved." },
-      { action: "Reject", result: "Ends workflow (reason required). Requester notified." },
+      {
+        action: "Approve",
+        result:
+          "Status → Approved - Awaiting Processing. Processors emailed. Requester is not emailed on approve (status in app).",
+      },
+      {
+        action: "Reject",
+        result: "Status → Rejected by Manager (reason required). Requester emailed.",
+      },
       {
         action: "Request Changes",
-        result: "Status → Changes Requested. Command/notes saved. Requester must edit & resubmit.",
+        result:
+          "Status → Changes Requested. Requester emailed; Edit available only in this status.",
       },
     ],
     tip: 'Try this: use Request Changes once (e.g. “Please update description / amount”), then continue the loop below.',
@@ -209,9 +219,9 @@ export const DEMO_FLOW_A_STEPS: DemoFlowStep[] = [
     id: "A4",
     title: "Approver approves",
     body: [
-      "Login as Approver → open request → Approve (add notes, e.g. “ok”)",
-      "Status → Pending Processing (ready for finance)",
-      "Processor receives email notification",
+      "Login as Approver (queue = assigned projects only) → open request → Approve",
+      "Status → Approved - Awaiting Processing",
+      "All active processors receive email; requester sees the new status in My Requests",
     ],
   },
   {

@@ -480,8 +480,9 @@ export default function DemoGuideContent() {
           <GuideSection id="training-videos" title="3) Training videos">
             <div className="section-title">3) Training videos</div>
             <p className="meta">
-              Short Demo-sandbox walkthroughs with voice (Azure Blob — not in Git). Sticky success /
-              duplicate notices need <strong>Dismiss</strong>.
+              Demo-sandbox walkthroughs with voice (Azure Blob — not in Git). Covers assigned
+              projects only, local currency → USD/FX, hard vs soft duplicate, and emails where they
+              fire. Sticky success / duplicate notices need <strong>Dismiss</strong>.
             </p>
             <div
               style={{

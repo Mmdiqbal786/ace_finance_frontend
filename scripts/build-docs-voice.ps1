@@ -125,28 +125,24 @@ function Build-MuxedMp4 {
 }
 
 $requester = @(
-  @{ At = 0.6; Text = "We're signed in as Requester GAC in Demo. Dashboard is loading." }
-  @{ At = 5.0; Text = "Submit Expense. I click Submit with an empty form. Red errors show what is required." }
-  @{ At = 15.0; Text = "I attach a text file on purpose. Blocked — invoice must be PDF or an image." }
-  @{ At = 20.0; Text = "Now a valid request: country, category, due date, amount, description, and a real invoice." }
-  @{ At = 25.0; Text = "Confirm submission — review the summary, then Confirm and Submit." }
-  @{ At = 29.0; Text = "Success with an Expense ID. Click Dismiss — this notice stays until you close it." }
-  @{ At = 34.0; Text = "Hard duplicate: same invoice file again." }
-  @{ At = 37.0; Text = "Blocked — that exact file was already used. Nothing new is created. Dismiss." }
-  @{ At = 44.0; Text = "Soft duplicate: new file, same project, category, amount, and date window." }
-  @{ At = 49.0; Text = "If Potential Duplicate appears, confirm it is separate, then submit." }
-  @{ At = 55.0; Text = "Submitted again. Dismiss the success notice." }
-  @{ At = 60.0; Text = "My Requests — track awaiting approval, changes requested, paid, or rejected." }
-  @{ At = 67.0; Text = "Back to dashboard, then sign out. Next is the Approver." }
+  @{ At = 0.8; Text = "Requester GAC in Demo. On Submit Expense, only Admin-assigned projects appear for this persona." }
+  @{ At = 8.0; Text = "Submit with an empty form. Required fields highlight — country, category, due date, amount, description, and invoice." }
+  @{ At = 18.0; Text = "A text file is rejected. Invoices must be a PDF or an image." }
+  @{ At = 26.0; Text = "Valid request. Country sets local currency. Amount is local — the server will convert to USD and store the FX rate. Project is one assigned to this requester." }
+  @{ At = 40.0; Text = "Confirm submission, then Confirm and Submit." }
+  @{ At = 46.0; Text = "Success with an Expense ID. Emails go to the requester and to approvers on this project. Click Dismiss — sticky notices stay until you close them." }
+  @{ At = 56.0; Text = "Hard duplicate: the same invoice file again. Exact file match is blocked. Nothing is created. Dismiss." }
+  @{ At = 68.0; Text = "Soft duplicate: a brand-new file and invoice number, but the same project, category, amount, and day." }
+  @{ At = 78.0; Text = "Potential Duplicate Detected. Confirm it is a separate expense, then Confirm and Submit Expense." }
+  @{ At = 90.0; Text = "Submitted after soft confirm. Dismiss." }
+  @{ At = 100.0; Text = "My Requests tracks every status. Open View to see local amount, USD, and the FX rate. Then sign out." }
 )
 
 $approver = @(
-  @{ At = 0.5; Text = "Signed in as Approver Media in Demo." }
-  @{ At = 4.0; Text = "Approver Panel — expenses waiting for manager sign-off." }
-  @{ At = 8.0; Text = "Approve. Add optional notes, then Confirm Action." }
-  @{ At = 14.0; Text = "Request Changes — explain what to fix, then Send." }
-  @{ At = 20.0; Text = "Reject with a clear reason, then Confirm." }
-  @{ At = 26.0; Text = "Queue updates after each decision." }
+  @{ At = 0.5; Text = "Approver Media in Demo. The Approver Panel lists only expenses for assigned projects." }
+  @{ At = 5.0; Text = "Approve with optional notes, then Confirm. Processors are emailed. The requester sees Approved - Awaiting Processing in the app." }
+  @{ At = 14.0; Text = "Request Changes — explain what to fix, then Send. The requester gets email and can Edit." }
+  @{ At = 22.0; Text = "Reject with a clear reason. The requester is emailed." }
   @{ At = 30.0; Text = "Analytics — Export Excel Report. Then sign out." }
 )
 

@@ -1,85 +1,93 @@
 # Aceolution Finance — Action-synced voice (baked into MP4)
 
-Voice is **not** a separate track you play beside the video.  
-Each line is timed to the on-screen action, then **muxed into** `role-walkthroughs/with-voice/*.mp4`.
-
-Rebuild:
-
-```powershell
-cd ace_finance_frontend
-powershell -ExecutionPolicy Bypass -File scripts/build-docs-voice.ps1
-npm run docs:upload-videos
-```
-
-Style: short coach lines (“Now we…”, “Watch — …”), not a script dump from second zero.
+Voice is **muxed into** `role-walkthroughs/with-voice/*.mp4` (not a separate track).
+Lines are timed to on-screen actions. Rebuild: `npm run docs:build-voice` then `npm run docs:upload-videos`.
 
 ---
 
-## 01 — Requester (~71s) · `01-requester-demo.webm`
+## How the product actually works (read before narrating)
 
-| Start | On screen | Say |
+### Requester
+- **Projects:** dropdown shows **only Admin-assigned projects** (Requester GAC → GAC).
+- **Amount:** enter **local currency** from Country (e.g. INR). On submit the **server converts to USD** and stores FX rate + date. Confirm modal shows local details; **View** later shows USD + FX line.
+- **Emails on submit:** requester gets “submitted”; **approvers assigned to that project** get “awaiting approval”.
+- **Hard duplicate:** same invoice **file** (hash) or conflicting invoice # → **blocked**, nothing created. Sticky toast → **Dismiss**.
+- **Soft / potential duplicate:** **new file** + new invoice #, but same **project + category + amount (+ currency) within ±1 day** (expense date = today). Modal **Potential Duplicate Detected** → check confirm → **Confirm & Submit Expense**.
+- **My Requests:** Awaiting Manager Approval · Changes Requested · Approved - Awaiting Processing · Partially Paid · Disbursed & Paid · Rejected by Manager/Finance. Edit only when Changes Requested.
+
+### Approver
+- **Queue:** **assigned projects only**. Approve / Request Changes / Reject only for those.
+- **Approve:** status → Approved - Awaiting Processing; **processors** emailed (requester is **not** emailed on approve).
+- **Request Changes:** requester emailed; Edit opens for requester.
+- **Reject:** requester emailed; terminal for manager path.
+
+### Processor / Admin
+- Full/partial pay + receipts; paid email when **fully** paid. Admin catalogs + Demo Access users.
+
+---
+
+## 01 — Requester (longer, higher-res recording)
+
+| Start (approx) | On screen | Say |
 |------:|-----------|-----|
-| 0.5s | Dashboard after Demo login | We're in as Requester GAC in the Demo workspace. Dashboard is loading. |
-| 5s | Empty submit — red errors | Opening Submit Expense. I hit Submit with the form empty — see the red messages? Country, category, due date, amount, description, and invoice are required. |
-| 15s | Bad `.txt` attachment | Now I attach a text file on purpose. The app blocks it — invoices must be a PDF or an image. |
-| 20s | Filling a valid form | Filling a real request: country, category, due date, amount, description, and a proper invoice image. |
-| 25s | Confirm submission modal | Confirm submission — reviewing the summary, then Confirm and Submit. |
-| 28s | Success sticky + Dismiss | Success — we got an Expense ID. This notice stays until we click Dismiss. |
-| 33s | Same invoice file again | Hard duplicate test: same invoice file again. |
-| 36s | Confirm / hard-block toast | Confirm… the system blocks it — that exact file was already used. Nothing new is created. Dismiss. |
-| 44s | Soft duplicate path | Soft duplicate: new file, but same project, category, amount, and date window. |
-| 48s | Confirm / potential duplicate | Review, confirm it is a separate expense if asked, then submit. |
-| 55s | Soft success + Dismiss | Submitted again — Dismiss the success notice. |
-| 60s | My Requests table | My Requests — every status lives here: awaiting approval, changes requested, paid, rejected. |
-| 67s | Dashboard / sign out | Back to the dashboard, then sign out. Next up is the Approver. |
+| 0.5s | Demo dashboard | Requester GAC in Demo. Only projects Admin assigned to this persona appear on Submit Expense. |
+| 6s | Empty submit errors | Submit Expense. Project list is scoped. Submit empty — required fields highlight: country, category, due date, amount, description, invoice. |
+| 16s | Bad file | Attach a text file on purpose. Blocked — invoice must be PDF or an image. |
+| 22s | Fill local currency | Valid request. Pick a non-USD country so the amount is local currency. Choose an assigned project only, category, due date, description, and a real invoice image. |
+| 32s | Confirm | Confirm submission — review local details, then Confirm and Submit. |
+| 36s | Success + Dismiss | Success with an Expense ID. The system stored USD and the FX rate. Emails go to the requester and to approvers on this project. Click Dismiss — sticky notices stay until you close them. |
+| 42s | Hard dup same file | Hard duplicate: same invoice file again. New invoice number does not matter — the exact file is blocked. Nothing is created. Dismiss. |
+| 52s | Soft dup fill | Soft duplicate: brand-new file and invoice number, but the same project, category, amount, and day. |
+| 58s | Potential Duplicate modal | Potential Duplicate Detected. Confirm it is a separate expense, then Confirm and Submit Expense. |
+| 68s | Soft success | Submitted after soft confirm. Dismiss. |
+| 78s | My Requests + View | My Requests tracks every status. Open View — local amount, USD, and FX rate. Then sign out. Next: Approver, same assigned projects only. |
+
+*Timings are approximate; `build-docs-voice.ps1` shifts lines so they do not overlap.*
 
 ---
 
-## 02 — Approver (~36s) · `02-approver-demo.webm`
+## 02 — Approver
 
-| Start | On screen | Say |
-|------:|-----------|-----|
-| 0.5s | Approver dashboard | Signed in as Approver Media in Demo. |
-| 4s | Approver Panel queue | Opening the Approver Panel — expenses waiting for manager sign-off. |
-| 8s | Approve modal + notes | Actions, Approve. Optional notes — approved for payment — then Confirm. |
-| 14s | Request Changes modal | Next row — Request Changes. Tell the requester what to fix, then Send. |
-| 20s | Reject modal | Reject with a clear reason, then Confirm. That ends the request for the manager. |
-| 26s | Panel after actions | Queue updates after each decision. |
-| 30s | Analytics + Export Excel | Analytics and Tracker — Export Excel Report for the tracker. Then sign out. |
-
----
-
-## 03 — Processor (~18s) · `03-processor-demo.webm`
-
-| Start | On screen | Say |
-|------:|-----------|-----|
-| 0.3s | Processor dashboard | Processor Alisha in Demo. |
-| 3s | Processor panel / Mark Paid | Processor panel. Mark Paid — attach a payment receipt, add a note, Confirm. Full payment recorded. |
-| 9s | Partial payment | Partially Paid — amount now, receipt, Record Partial Payment. |
-| 13s | Changes / reject if shown | Request Changes back to Approver, or Reject Payout when finance will not pay. |
-| 16s | Sign out | Sign out. Next is Admin setup. |
+| Start | Say |
+|------:|-----|
+| 0.5s | Approver Media in Demo. |
+| 4s | Approver Panel — only expenses for **assigned projects** wait here. |
+| 8s | Approve with optional notes. Confirm. Processors are emailed; the requester sees Approved - Awaiting Processing in the app. |
+| 15s | Request Changes — tell the requester what to fix. They get email and can Edit. |
+| 22s | Reject with a clear reason. Requester is emailed. Terminal for the manager. |
+| 30s | Analytics — Export Excel Report. Sign out. |
 
 ---
 
-## 04 — Admin (~69s) · `04-admin-demo.webm`
+## 03 — Processor
 
-| Start | On screen | Say |
-|------:|-----------|-----|
-| 0.5s | Admin Demo workspace | Admin password login into the Demo workspace. |
-| 4s | Projects create | Projects — Add Project, create a training project. |
-| 10s | Projects edit / delete | Edit the name, save, then delete it so Demo stays clean. |
-| 18s | Categories CRUD | Categories — create, edit, delete a training category. |
-| 30s | Countries CRUD + search | Countries — create one with a unique currency, search to find it, edit, then delete. |
-| 45s | Users create | User Management — Add New User for Demo Access, assign a role and project, Create. |
-| 55s | Users edit / delete | Edit the user, save, then delete. |
-| 62s | Approver / Processor peek | Quick look at Approver and Processor panels, then sign out. |
+| Start | Say |
+|------:|-----|
+| 0.4s | Processor Alisha — pays approved items for all projects. |
+| 3s | Mark Paid — receipt + note. Full payment; requester gets paid email when fully paid. |
+| 9s | Partially Paid — amount now + receipt. |
+| 13s | Request Changes back, or Reject Payout. |
+| 16s | Sign out. |
 
 ---
 
-## Demo accounts (unchanged)
+## 04 — Admin
 
-- Requester: Demo Access → Requester GAC · `Requester@1234`
-- Approver: Demo Access → Approver Media · `Approver@1234`
-- Processor: Demo Access → Alisha · `Processor@1234`
-- Admin: password → `finance@aceolution.com` · `Admin@1234` → **Demo / training data**
+| Start | Say |
+|------:|-----|
+| 0.5s | Admin Demo workspace — catalogs and users drive what requesters and approvers can see. |
+| 4s | Projects create, edit, delete. |
+| 18s | Categories create, edit, delete. |
+| 30s | Countries and currencies — these drive local amount and FX. |
+| 45s | User Management — assign projects to requesters and approvers; Demo Access users appear on login. |
+| 62s | Peek Approver and Processor, then sign out. |
+
+---
+
+## Demo accounts
+
+- Requester GAC · `Requester@1234` · project GAC  
+- Approver Media · `Approver@1234` · GAC + GNL + GNP  
+- Alisha · `Processor@1234`  
+- Admin · `finance@aceolution.com` / `Admin@1234` → Demo  
 - Access code: `Aceolution_2024`

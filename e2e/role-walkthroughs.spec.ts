@@ -15,6 +15,7 @@ import {
   clearExpenseNotices,
   confirmSubmissionModal,
   createDialog,
+  dismissInlineSubmitError,
   dismissStickyToast,
   docsTag,
   fillExpenseForm,
@@ -22,6 +23,7 @@ import {
   rowAction,
   rowActionMatching,
   submitExpenseSuccess,
+  uniqueBlankInvoicePath,
   uniqueInvoicePath,
   writeBadTextFixture,
 } from './docs-flow-helpers';
@@ -40,48 +42,52 @@ import {
  * Narration: docs/videos/VOICE-SCRIPTS.md
  */
 test.describe('Role walkthroughs (Demo) @docs', () => {
-  test.setTimeout(600_000);
+  test.setTimeout(900_000);
 
   test('01 Requester Demo walkthrough', async ({ page }) => {
     await demoAccessLogin(page, DEMO_REQUESTER);
-    await hold(page, 3000);
+    await hold(page, 4000);
     await expect(page.getByText(/Demo/i).first()).toBeVisible();
 
     // --- Error: submit without attachment ---
     await goSubmitExpense(page);
     await clearExpenseNotices(page);
+    await hold(page, 2500); // project dropdown = assigned projects only
     await clickSubmitExpenseRequest(page);
-    await hold(page, 2500);
+    await hold(page, 3000);
     await expect(
-      page.getByText(/fix|attachment|required|highlighted/i).first(),
+      page.getByText(/Form|attachment|required|highlighted/i).first(),
     ).toBeVisible({ timeout: 10_000 });
-    await hold(page, 2500);
+    await hold(page, 3000);
 
     // --- Error: disallowed file type ---
     const badFile = writeBadTextFixture();
     const errTag = docsTag();
     await fillExpenseForm(page, {
       tag: errTag,
-      amount: '18.50',
+      amount: '200',
       invoicePath: badFile,
     });
-    // Browser / input accept may block .txt — if file not selected, show note via hold
     await clickSubmitExpenseRequest(page);
-    await hold(page, 3000);
+    await hold(page, 3500);
 
-    // --- Success submit (unique amount so soft-dup is only vs THIS expense) ---
+    // --- Success: local currency → USD/FX + emails (blank invoice = clean soft-dup anchor) ---
+    // Whole amounts (e.g. 200) — form allows no decimals; also safe above USD $1 after FX
     const successTag = docsTag();
-    const sharedAmount = `${(50 + Math.floor(Math.random() * 40)).toFixed(0)}.${String(Date.now()).slice(-2)}`;
+    const sharedAmount = String(200 + (Date.now() % 90)); // 200–289, no decimal point
     const success = await submitExpenseSuccess(page, {
       tag: successTag,
       amount: sharedAmount,
+      invoicePath: uniqueBlankInvoicePath(successTag),
+      clearInvoiceNumber: true,
     });
-    // submitExpenseSuccess already clicks Dismiss on the sticky toast
+    // Use returned amount (retry may bump it) so soft-dup fuzzy triple matches
+    const softAmount = success.amount;
 
-    // --- Hard duplicate: same invoice FILE hash (new invoice #) ---
+    // --- Hard duplicate: SAME invoice FILE bytes (new invoice #) → blocked ---
     await fillExpenseForm(page, {
       tag: docsTag(),
-      amount: '55.00',
+      amount: '250',
       invoicePath: success.invoicePath,
       invoiceNumber: `HARD-${docsTag()}`,
       reuseLastCatalogs: true,
@@ -95,103 +101,149 @@ test.describe('Role walkthroughs (Demo) @docs', () => {
     ) {
       await confirmSubmissionModal(page);
     }
-    // Sticky toast: "Duplicate invoice detected…" — must click Dismiss (same as success)
     await expect(
       page.getByText(/Duplicate invoice( file)? detected/i).first(),
     ).toBeVisible({ timeout: 90_000 });
-    await hold(page, 2500);
+    await hold(page, 3500);
     await dismissStickyToast(page);
 
-    // --- Soft / potential duplicate: new file + new invoice #, same fuzzy triple ---
-    const softTag = `SOFT-${docsTag()}`;
-    await fillExpenseForm(page, {
-      tag: softTag,
-      amount: sharedAmount,
-      invoicePath: uniqueInvoicePath(softTag),
-      invoiceNumber: softTag,
-      reuseLastCatalogs: true,
-    });
-    await clickSubmitExpenseRequest(page);
+    // --- Soft / potential duplicate (MUST show Potential Duplicate Detected modal) ---
+    // Soft trigger = SAME project + category + amount + currency (country) + expense date (±1 day).
+    // Different file (blank unique PNG) + empty invoice # so HARD file/invoice-# rules do not fire first.
+    async function forceSoftDuplicateModal(amount: string) {
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const tag = `SOFT-${docsTag()}-${attempt}`;
+        await clearExpenseNotices(page);
+        await fillExpenseForm(page, {
+          tag,
+          amount,
+          invoicePath: uniqueBlankInvoicePath(tag),
+          clearInvoiceNumber: true,
+          reuseLastCatalogs: true, // same country(=currency) + project + category as success
+        });
+        // Lock soft-dup fields again after OCR (must match the success row exactly)
+        await page.locator('#invoiceNumber').fill('');
+        await page.locator('#amount').fill('');
+        await page.locator('#amount').fill(amount);
+        const today = new Date().toISOString().slice(0, 10);
+        const dateField = page.locator('#date');
+        if (await dateField.isVisible().catch(() => false)) {
+          await dateField.fill(today);
+        }
+        await hold(page, 1000);
+        await clickSubmitExpenseRequest(page);
 
-    const softHeading = page.getByRole('heading', {
-      name: /Potential Duplicate Detected/i,
-    });
-    const confirmHeading = page.getByRole('heading', { name: /Confirm submission/i });
-    const hardDupText = page.getByText(/Duplicate invoice( file| number)? detected/i).first();
-    await expect(softHeading.or(confirmHeading).or(hardDupText)).toBeVisible({
-      timeout: 90_000,
-    });
+        const softHeading = page.getByRole('heading', {
+          name: /Potential Duplicate Detected/i,
+        });
+        const confirmHeading = page.getByRole('heading', {
+          name: /Confirm submission/i,
+        });
+        const hardDupText = page
+          .getByText(/Duplicate invoice( file| number)? detected/i)
+          .first();
 
-    if (await hardDupText.isVisible().catch(() => false)) {
-      // Unexpected hard block on soft demo — still Dismiss for the video, then continue
-      await hold(page, 2500);
-      await dismissStickyToast(page);
-    } else if (await confirmHeading.isVisible().catch(() => false)) {
-      await confirmSubmissionModal(page);
-      const successText = page.getByText(/Expense request submitted/i).first();
-      await expect(softHeading.or(successText).or(hardDupText)).toBeVisible({
-        timeout: 90_000,
-      });
+        await expect(softHeading.or(confirmHeading).or(hardDupText)).toBeVisible({
+          timeout: 90_000,
+        });
+
+        if (await hardDupText.isVisible().catch(() => false)) {
+          await hold(page, 2000);
+          await dismissStickyToast(page);
+          await dismissInlineSubmitError(page);
+          continue;
+        }
+
+        if (await confirmHeading.isVisible().catch(() => false)) {
+          await confirmSubmissionModal(page);
+        }
+
+        // Soft modal appears after Confirm when API returns POTENTIAL_DUPLICATE
+        const softVisible = await softHeading
+          .isVisible({ timeout: 60_000 })
+          .catch(() => false);
+        if (!softVisible) {
+          // Accidental plain success — create a fresh amount anchor and retry
+          await dismissStickyToast(page);
+          await clearExpenseNotices(page);
+          const refreshed = await submitExpenseSuccess(page, {
+            tag: docsTag(),
+            amount: String(Number(amount) + 10 + attempt), // whole number, same currency path
+            invoicePath: uniqueBlankInvoicePath(`anchor-${docsTag()}`),
+            clearInvoiceNumber: true,
+          });
+          amount = refreshed.amount;
+          continue;
+        }
+
+        // Hold long so the Potential Duplicate form is clear on the video
+        await hold(page, 5000);
+        await page.getByText(/I confirm this is a separate/i).click();
+        await hold(page, 2500);
+        await page.getByRole('button', { name: /Confirm & Submit Expense/i }).click();
+        await expect(page.getByText(/Expense request submitted/i).first()).toBeVisible({
+          timeout: 120_000,
+        });
+        await hold(page, 3000);
+        await dismissStickyToast(page);
+        return;
+      }
+      throw new Error(
+        'Potential Duplicate Detected modal never appeared after retries — soft-dup not captured',
+      );
     }
 
-    if (await softHeading.isVisible().catch(() => false)) {
-      await hold(page, 3000);
-      await page.getByText(/I confirm this is a separate/i).click();
-      await hold(page, 1500);
-      await page.getByRole('button', { name: /Confirm & Submit Expense/i }).click();
-      await expect(page.getByText(/Expense request submitted/i).first()).toBeVisible({
-        timeout: 120_000,
-      });
-      await hold(page, 2000);
-      await dismissStickyToast(page);
-    } else if (await page.getByText(/Expense request submitted/i).first().isVisible().catch(() => false)) {
-      await hold(page, 2000);
-      await dismissStickyToast(page);
-    } else {
-      await clearExpenseNotices(page);
-    }
+    await forceSoftDuplicateModal(softAmount);
 
-    // --- Extra success (unique amount) for Approver queue ---
+    // Extra unique submits so Approver Media (same GAC project) has queue items
     await submitExpenseSuccess(page, {
       tag: docsTag(),
-      amount: `${(70 + Math.random() * 20).toFixed(2)}`,
+      amount: String(300 + (Date.now() % 50)),
+      invoicePath: uniqueBlankInvoicePath(docsTag()),
+      clearInvoiceNumber: true,
+    });
+    await submitExpenseSuccess(page, {
+      tag: docsTag(),
+      amount: String(350 + (Date.now() % 40)),
+      invoicePath: uniqueBlankInvoicePath(docsTag()),
+      clearInvoiceNumber: true,
     });
 
     await page.getByRole('link', { name: 'My Requests', exact: true }).click();
     await expect(page).toHaveURL(/my-requests/);
-    await hold(page, 3500);
-    // Tag may appear in description/invoice columns or be paginated — table rows are enough for the video
-    const tagCell = page.getByText(successTag).first();
-    if (await tagCell.isVisible({ timeout: 15_000 }).catch(() => false)) {
-      await hold(page, 2500);
-    } else {
-      await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 30_000 });
-      await hold(page, 2500);
-    }
+    await hold(page, 4000);
+    await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 30_000 });
+
+    // View — local amount, USD, FX rate (submit already emailed requester + project approvers)
+    await rowAction(page, 'View', 0);
+    await hold(page, 4500);
+    await closeModalIfOpen(page);
+    await hold(page, 1500);
 
     await page.getByRole('link', { name: 'Dashboard', exact: true }).first().click();
-    await hold(page, 2000);
+    await hold(page, 2500);
     await signOutFromDashboard(page);
-    await hold(page, 1500);
+    await hold(page, 2000);
   });
 
   test('02 Approver Demo walkthrough', async ({ page }) => {
     await demoAccessLogin(page, DEMO_APPROVER);
-    await hold(page, 3000);
+    await hold(page, 4000);
 
     await page.getByRole('link', { name: /^Approver/i }).click();
     await expect(page).toHaveURL(/approver/);
-    await hold(page, 3000);
+    await hold(page, 4000); // queue = assigned projects only (e.g. GAC/GNL/GNP for Approver Media)
 
-    // 1) Approve
+    // 1) Approve — processors get email; requester sees status (no approve email)
     await rowAction(page, 'Approve', 0);
     await expect(page.getByRole('heading', { name: /Approve Expense/i })).toBeVisible({
       timeout: 15_000,
     });
+    await hold(page, 2000);
     await page.locator('#notes').fill('Docs video: approved for payment.');
-    await hold(page, 1500);
+    await hold(page, 2000);
     await page.getByRole('button', { name: 'Confirm Action' }).click();
-    await hold(page, 3000);
+    await hold(page, 3500);
 
     // 2) Request Changes → requester
     await rowAction(page, 'Request Changes', 0);

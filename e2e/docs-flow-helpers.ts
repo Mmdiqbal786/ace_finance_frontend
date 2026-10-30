@@ -21,6 +21,27 @@ export function uniqueInvoicePath(tag: string): string {
   return out;
 }
 
+/**
+ * Minimal unique PNG with no receipt text — avoids OCR extracting an invoice #
+ * that hard-blocks soft/potential-duplicate demos.
+ */
+export function uniqueBlankInvoicePath(tag: string): string {
+  // 1x1 PNG + unique trailer (still a valid image upload for the API)
+  const png1x1 = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  );
+  const out = path.join(
+    FIXTURES_DIR,
+    `inv-blank-${tag.replace(/[^a-zA-Z0-9_-]/g, '')}.png`,
+  );
+  fs.writeFileSync(
+    out,
+    Buffer.concat([png1x1, Buffer.from(`\n${tag}-${Date.now()}-${Math.random()}\n`)]),
+  );
+  return out;
+}
+
 export function writeBadTextFixture(): string {
   const out = path.join(FIXTURES_DIR, 'bad-invoice.txt');
   fs.writeFileSync(out, 'not-an-invoice');
@@ -128,8 +149,11 @@ export type FillExpenseOpts = {
   tag: string;
   amount: string;
   invoicePath: string;
+  /** Pass '' to clear invoice # (needed for soft-dup so hard invoice-# rules do not fire). */
   invoiceNumber?: string;
   reuseLastCatalogs?: boolean;
+  /** When true, leave invoice number empty after attach/OCR. */
+  clearInvoiceNumber?: boolean;
 };
 
 let lastCountry: string | null = null;
@@ -141,7 +165,11 @@ export async function fillExpenseForm(page: Page, opts: FillExpenseOpts) {
   await goSubmitExpense(page);
   await clearExpenseNotices(page);
 
-  const invoiceNumber = opts.invoiceNumber || opts.tag;
+  const invoiceNumber = opts.clearInvoiceNumber
+    ? ''
+    : opts.invoiceNumber !== undefined
+      ? opts.invoiceNumber
+      : opts.tag;
 
   const country = page.locator('#country');
   await expect(country).toBeVisible({ timeout: 30_000 });
@@ -152,10 +180,12 @@ export async function fillExpenseForm(page: Page, opts: FillExpenseOpts) {
     await page.locator('#project').selectOption(lastProject);
     await page.locator('#category').selectOption(lastCategory);
   } else {
+    // Prefer INR/AED (stronger vs USD) so local amount ≥ ~200 still clears USD $1 min.
+    // Avoid weak currencies like ALL where small amounts fail FX min and the form looks "stuck".
     const preferred = country
       .locator('option')
       .filter({
-        hasText: /India \(INR\)|United Arab Emirates|United States \(USD\)|American Samoa \(USD\)/i,
+        hasText: /India \(INR\)|United Arab Emirates \(AED\)|United States \(USD\)/i,
       })
       .first();
     if ((await preferred.count()) > 0) {
@@ -165,10 +195,11 @@ export async function fillExpenseForm(page: Page, opts: FillExpenseOpts) {
     } else {
       lastCountry = await selectFirstRealOption(country);
     }
-    await hold(page, 800);
+    await hold(page, 1200);
 
     const project = page.locator('#project');
     await expect(project).toBeEnabled({ timeout: 20_000 });
+    // Requester dropdown = Admin-assigned projects only (GAC for Requester GAC)
     const gac = project
       .locator('option')
       .filter({ hasText: /Art and culture|GAC|News Lab|GNL/i })
@@ -180,7 +211,9 @@ export async function fillExpenseForm(page: Page, opts: FillExpenseOpts) {
     } else {
       lastProject = await selectFirstRealOption(project);
     }
+    await hold(page, 800);
     lastCategory = await selectFirstRealOption(page.locator('#category'));
+    await hold(page, 600);
   }
 
   const today = new Date().toISOString().slice(0, 10);
@@ -191,11 +224,13 @@ export async function fillExpenseForm(page: Page, opts: FillExpenseOpts) {
     await dateField.fill(today);
   }
   await page.locator('#dueDate').fill(due.toISOString().slice(0, 10));
+  await hold(page, 500);
 
   const amountField = page.locator('#amount');
   await expect(amountField).toBeEnabled({ timeout: 15_000 });
   await amountField.fill('');
   await amountField.fill(opts.amount);
+  await hold(page, 600);
 
   const name = page.locator('#requesterName');
   if (!(await name.inputValue()).trim()) {
@@ -205,18 +240,31 @@ export async function fillExpenseForm(page: Page, opts: FillExpenseOpts) {
   await page.locator('#description').fill(
     `${opts.tag} Demo walkthrough expense for training video.`,
   );
+  await hold(page, 500);
 
-  // Attach first — invoice parse may overwrite fields asynchronously
+  // Attach — invoice parse may overwrite fields asynchronously
   await page.locator('#invoice').setInputFiles(opts.invoicePath);
   const analyzing = page.getByText(/Analyzing document/i);
   if (await analyzing.isVisible({ timeout: 2_000 }).catch(() => false)) {
     await analyzing.waitFor({ state: 'hidden', timeout: 60_000 }).catch(() => null);
   }
-  await hold(page, 800);
+  await hold(page, 1000);
 
-  // Re-assert invoice # after parse so hard-dup does not fire on OCR leftovers
+  // Re-assert after OCR so soft-dup amount/hash/invoice # stay intentional
   await page.locator('#invoiceNumber').fill(invoiceNumber);
-  await hold(page, 600);
+  await amountField.fill('');
+  await amountField.fill(opts.amount);
+  if (opts.reuseLastCatalogs && lastCountry && lastProject && lastCategory) {
+    await page.locator('#country').selectOption(lastCountry);
+    await page.locator('#project').selectOption(lastProject);
+    await page.locator('#category').selectOption(lastCategory);
+  }
+  // Second clear — OCR/async parse can repopulate invoice # after first fill
+  if (opts.clearInvoiceNumber) {
+    await hold(page, 500);
+    await page.locator('#invoiceNumber').fill('');
+  }
+  await hold(page, 800);
 }
 
 export async function clickSubmitExpenseRequest(page: Page) {
@@ -243,73 +291,75 @@ export function createDialog(page: Page) {
   return page.locator('div.fixed.inset-0').filter({ has: page.getByLabel('Close modal') }).last();
 }
 
-/** Success path: fill → confirm → toast → Dismiss. */
+/** After Submit click: Confirm modal → maybe Potential Duplicate → success or hard-dup toast. */
+async function finishSubmitThroughModals(page: Page) {
+  const softHeading = page.getByRole('heading', {
+    name: /Potential Duplicate Detected/i,
+  });
+  const confirmHeading = page.getByRole('heading', { name: /Confirm submission/i });
+  const success = page.getByText(/Expense request submitted/i).first();
+  const hardDup = page.getByText(/Duplicate invoice( file| number)? detected/i).first();
+
+  await expect(confirmHeading.or(softHeading).or(success).or(hardDup)).toBeVisible({
+    timeout: 60_000,
+  });
+
+  if (await confirmHeading.isVisible().catch(() => false)) {
+    await confirmSubmissionModal(page);
+  }
+
+  // Soft warning is returned from the API after Confirm — handle it here
+  await expect(softHeading.or(success).or(hardDup)).toBeVisible({ timeout: 120_000 });
+  if (await softHeading.isVisible().catch(() => false)) {
+    await page.getByText(/I confirm this is a separate/i).click();
+    await hold(page, 600);
+    await page.getByRole('button', { name: /Confirm & Submit Expense/i }).click();
+    await expect(success.or(hardDup)).toBeVisible({ timeout: 120_000 });
+  }
+}
+
+/** Success path: fill → confirm → (soft confirm if needed) → toast → Dismiss. */
 export async function submitExpenseSuccess(
   page: Page,
-  opts: { tag: string; amount?: string; invoicePath?: string },
+  opts: {
+    tag: string;
+    amount?: string;
+    invoicePath?: string;
+    clearInvoiceNumber?: boolean;
+  },
 ) {
   await clearExpenseNotices(page);
 
-  const amount = opts.amount || `${(Math.random() * 40 + 12).toFixed(2)}`;
+  // Whole numbers preferred (valid + clear on video); still max 2 dp if caller passes decimals
+  const amount = opts.amount || String(200 + Math.floor(Math.random() * 90));
   const invoicePath = opts.invoicePath || uniqueInvoicePath(opts.tag);
   await fillExpenseForm(page, {
     tag: opts.tag,
     amount,
     invoicePath,
-    invoiceNumber: opts.tag,
+    invoiceNumber: opts.clearInvoiceNumber ? '' : opts.tag,
+    clearInvoiceNumber: opts.clearInvoiceNumber,
   });
   await clickSubmitExpenseRequest(page);
-
-  const dupHeading = page.getByRole('heading', {
-    name: /Potential Duplicate Detected/i,
-  });
-  if (await dupHeading.isVisible({ timeout: 4_000 }).catch(() => false)) {
-    await page.getByText(/I confirm this is a separate/i).click();
-    await hold(page, 800);
-    await page.getByRole('button', { name: /Confirm & Submit Expense/i }).click();
-  } else if (
-    await page
-      .getByRole('heading', { name: /Confirm submission/i })
-      .isVisible({ timeout: 8_000 })
-      .catch(() => false)
-  ) {
-    await confirmSubmissionModal(page);
-  }
+  await finishSubmitThroughModals(page);
 
   const success = page.getByText(/Expense request submitted/i).first();
   const hardDup = page.getByText(/Duplicate invoice( file| number)? detected/i).first();
-  await expect(success.or(hardDup)).toBeVisible({ timeout: 120_000 });
   if (await hardDup.isVisible().catch(() => false)) {
-    // Demo DB may already have matching invoice # / details — dismiss and retry once with fresh ids
     await hold(page, 1500);
     await dismissStickyToast(page);
     await clearExpenseNotices(page);
     const retryTag = `${opts.tag}-R${Date.now().toString().slice(-5)}`;
-    const retryPath = uniqueInvoicePath(retryTag);
-    const retryAmount = `${(Number(amount) + 0.17).toFixed(2)}`;
+    const retryPath = uniqueBlankInvoicePath(retryTag);
+    const retryAmount = String(Math.round(Number(amount) + 11 + Math.floor(Math.random() * 7)));
     await fillExpenseForm(page, {
       tag: retryTag,
       amount: retryAmount,
       invoicePath: retryPath,
-      invoiceNumber: retryTag,
+      clearInvoiceNumber: true,
     });
     await clickSubmitExpenseRequest(page);
-    if (
-      await page
-        .getByRole('heading', { name: /Potential Duplicate Detected/i })
-        .isVisible({ timeout: 3_000 })
-        .catch(() => false)
-    ) {
-      await page.getByText(/I confirm this is a separate/i).click();
-      await page.getByRole('button', { name: /Confirm & Submit Expense/i }).click();
-    } else if (
-      await page
-        .getByRole('heading', { name: /Confirm submission/i })
-        .isVisible({ timeout: 8_000 })
-        .catch(() => false)
-    ) {
-      await confirmSubmissionModal(page);
-    }
+    await finishSubmitThroughModals(page);
     await expect(page.getByText(/Expense request submitted/i).first()).toBeVisible({
       timeout: 120_000,
     });
@@ -317,6 +367,7 @@ export async function submitExpenseSuccess(
     await dismissStickyToast(page);
     return { amount: retryAmount, invoicePath: retryPath, tag: retryTag };
   }
+  await expect(success).toBeVisible({ timeout: 5_000 });
   await hold(page, 2000);
   await dismissStickyToast(page);
   return { amount, invoicePath, tag: opts.tag };
