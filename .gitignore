@@ -16,6 +16,9 @@
 /test-results/
 /blob-report/
 /playwright/.cache/
+# Large walkthrough recordings (regenerate: npm run test:e2e:docs)
+/docs/videos/role-walkthroughs/*.webm
+/docs/videos/role-walkthroughs/*.mp4
 
 # next.js
 /.next/

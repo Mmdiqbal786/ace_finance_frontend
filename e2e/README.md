@@ -5,11 +5,15 @@ Runs against **live** Static Web App by default (`https://finance.aceolution.com
 ## Commands
 
 ```bash
-npm run test:e2e          # full UI suite (excludes @mfa unless password set)
+npm run test:e2e          # full UI suite (excludes @mfa and @docs)
 npm run test:e2e:vapt     # @vapt tagged (includes MFA only if MS_E2E_PASSWORD set)
 npm run test:e2e:mfa      # C04 fresh Entra login + Authenticator number-match (headed)
+npm run test:e2e:docs     # Demo role walkthroughs (Requester/Approver/Processor/Admin) + video
+npm run docs:publish-videos  # copy videos → docs/videos/role-walkthroughs/
 npm run test:e2e:ui       # interactive UI mode
 ```
+
+Voice-over scripts: `docs/videos/VOICE-SCRIPTS.md`
 
 ## Env
 

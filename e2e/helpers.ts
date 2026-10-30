@@ -8,6 +8,56 @@ export const DEMO_REQUESTER = {
   password: process.env.DEMO_REQUESTER_PASSWORD || 'Requester@1234',
 };
 
+export const DEMO_APPROVER = {
+  nameHint: 'Approver Media',
+  password: process.env.DEMO_APPROVER_PASSWORD || 'Approver@1234',
+};
+
+export const DEMO_PROCESSOR = {
+  nameHint: 'Alisha',
+  password: process.env.DEMO_PROCESSOR_PASSWORD || 'Processor@1234',
+};
+
+export const ADMIN_PASSWORD = {
+  email: process.env.ADMIN_E2E_EMAIL || 'finance@aceolution.com',
+  password: process.env.ADMIN_E2E_PASSWORD || 'Admin@1234',
+};
+
+/** Pause so voice-over / viewers can follow (docs walkthroughs). */
+export async function hold(page: Page, ms = 2800) {
+  await page.waitForTimeout(ms);
+}
+
+/** Admin password login → Choose Demo workspace. */
+export async function adminPasswordLoginDemo(page: Page) {
+  await clearAppStorage(page);
+  await page.goto('/login/');
+  await page.getByRole('button', { name: /Use password instead/i }).click();
+  await expect(page.locator('#login-email')).toBeVisible({ timeout: 15_000 });
+  await page.locator('#login-email').fill(ADMIN_PASSWORD.email);
+  await page.locator('#login-password').fill(ADMIN_PASSWORD.password);
+  await page.locator('#login-submit').click();
+
+  const chooseWs = page.getByRole('heading', { name: /Choose Workspace/i });
+  await expect(chooseWs).toBeVisible({ timeout: 30_000 });
+  const demoBtn = page
+    .getByRole('button')
+    .filter({ hasText: /Demo \/ training data/i })
+    .first();
+  await expect(demoBtn).toBeVisible({ timeout: 10_000 });
+  await Promise.all([
+    page.waitForResponse(
+      (r) =>
+        /\/auth\/select-workspace\/?$/i.test(r.url()) &&
+        r.request().method() === 'POST',
+      { timeout: 60_000 },
+    ),
+    demoBtn.click(),
+  ]);
+
+  await expect(page).toHaveURL(/\/dashboard\/?/, { timeout: 60_000 });
+}
+
 export async function clearAppStorage(page: Page) {
   await page.goto('/login/');
   await page.evaluate(() => {
