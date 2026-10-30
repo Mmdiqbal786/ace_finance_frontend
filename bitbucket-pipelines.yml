@@ -1,0 +1,33 @@
+# Aceolution Finance FE — Playwright UI / VAPT against live SWA
+image: mcr.microsoft.com/playwright:v1.51.1-jammy
+
+pipelines:
+  default:
+    - step:
+        name: Playwright E2E + UI VAPT
+        caches:
+          - node
+        script:
+          - npm ci
+          - export BASE_URL="${BASE_URL:-https://finance.aceolution.com}"
+          - export DEMO_ACCESS_CODE="${DEMO_ACCESS_CODE:-Aceolution_2024}"
+          - export DEMO_REQUESTER_PASSWORD="${DEMO_REQUESTER_PASSWORD:-Requester@1234}"
+          - npx playwright test
+        artifacts:
+          - playwright-report/**
+          - test-results/**
+  branches:
+    main:
+      - step:
+          name: Playwright E2E + UI VAPT
+          caches:
+            - node
+          script:
+            - npm ci
+            - export BASE_URL="${BASE_URL:-https://finance.aceolution.com}"
+            - export DEMO_ACCESS_CODE="${DEMO_ACCESS_CODE:-Aceolution_2024}"
+            - export DEMO_REQUESTER_PASSWORD="${DEMO_REQUESTER_PASSWORD:-Requester@1234}"
+            - npx playwright test
+          artifacts:
+            - playwright-report/**
+            - test-results/**
